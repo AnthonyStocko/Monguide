@@ -1,9 +1,0 @@
-{
-  "appId": "com.monguide.app",
-  "appName": "Mon guide",
-  "webDir": "dist",
-  "server": {
-    "url": "https://monguide.alwaysdata.net",
-    "androidScheme": "https"
-  }
-}

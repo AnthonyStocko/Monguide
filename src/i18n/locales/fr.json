@@ -1,0 +1,88 @@
+{
+  "app": {
+    "name": "Mon guide"
+  },
+  "nav": {
+    "label": "Navigation principale",
+    "home": "Accueil",
+    "create": "Créer",
+    "planning": "Planning",
+    "map": "Carte",
+    "favorites": "Favoris",
+    "settings": "Réglages"
+  },
+  "common": {
+    "back": "Retour",
+    "retry": "Réessayer"
+  },
+  "offline": {
+    "message": "Vous êtes hors ligne. Certaines fonctions sont indisponibles."
+  },
+  "error": {
+    "title": "Une erreur est survenue"
+  },
+  "home": {
+    "greeting": "Bonjour",
+    "today": "Nous sommes le {{date}}.",
+    "emptyTitle": "Aucun séjour pour l'instant",
+    "emptyText": "Créez votre premier séjour : Mon guide vous prépare un programme jour par jour.",
+    "createCta": "Créer un séjour"
+  },
+  "create": {
+    "emptyTitle": "Création de séjour bientôt disponible",
+    "emptyText": "L'assistant de création sera ajouté dans une prochaine version."
+  },
+  "planning": {
+    "emptyTitle": "Aucun planning",
+    "emptyText": "Créez un séjour pour voir son programme jour par jour."
+  },
+  "map": {
+    "attribution": "contributeurs d'OpenStreetMap"
+  },
+  "favorites": {
+    "emptyTitle": "Aucun favori",
+    "emptyText": "Les lieux que vous ajoutez en favoris apparaîtront ici."
+  },
+  "settings": {
+    "language": "Langue",
+    "languageHint": "Par défaut, la langue de votre téléphone."
+  },
+  "languages": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "errors": {
+    "offline": "Vous êtes hors ligne. Réessayez une fois la connexion rétablie.",
+    "network": "Le serveur est injoignable. Vérifiez votre connexion et réessayez.",
+    "timeout": "Le serveur met trop de temps à répondre. Réessayez.",
+    "rateLimited": "Trop de demandes, réessayez dans quelques minutes.",
+    "appOutdated": "Cette version de Mon guide n’est plus prise en charge.",
+    "external": "Un service externe est momentanément indisponible. Réessayez plus tard.",
+    "notConfigured": "L’application n’est pas configurée pour joindre le serveur.",
+    "server": "Le serveur a rencontré une erreur. Réessayez plus tard.",
+    "unknown": "Une erreur inattendue est survenue."
+  },
+  "update": {
+    "title": "Mettez à jour Mon guide",
+    "text": "Cette version n’est plus prise en charge. Installez la dernière version de Mon guide depuis votre boutique d’applications pour continuer."
+  },
+  "debug": {
+    "title": "Diagnostic",
+    "appVersion": "Version de l’application",
+    "clientApiVersion": "Version du contrat (application)",
+    "serverApiVersion": "Version du contrat (serveur)",
+    "minAppVersion": "Version minimale exigée",
+    "source": "Origine des règles",
+    "sources": {
+      "server": "Serveur",
+      "saved": "Copie enregistrée",
+      "defaults": "Valeurs par défaut embarquées"
+    },
+    "fetchedAt": "Reçues le",
+    "rainThreshold": "Seuil de pluie",
+    "callServer": "Interroger le serveur",
+    "callOk": "Le serveur a répondu.",
+    "rules": "Règles effectives",
+    "notAvailable": "Non disponible"
+  }
+}

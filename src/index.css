@@ -1,0 +1,104 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "leaflet/dist/leaflet.css";
+
+/*
+ * Design system "adult-friendly".
+ * Contrastes vérifiés (WCAG AA : 4,5:1 texte courant, 3:1 éléments non textuels) :
+ * - ink #0F172A sur surface/canvas : 17,9 / 17,1
+ * - ink-muted #475569 sur canvas : 7,2
+ * - primary #059669 sur blanc : 3,8 -> icônes, bordures, accents uniquement (pas de texte)
+ * - primary-strong #047857 : 5,5 sur blanc (texte, et fond des boutons à texte blanc)
+ * - secondary #0284C7 sur blanc : 4,1 -> non textuel uniquement
+ * - secondary-strong #0369A1 : 5,9 sur blanc
+ * - paires "strong sur soft" des badges : toutes >= 5,2
+ */
+@theme {
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Aucun texte sous 16 px : les petites tailles Tailwind sont ramenées à 16 px. */
+  --text-xs: 1rem;
+  --text-xs--line-height: 1.5rem;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.5rem;
+
+  --color-ink: #0f172a;
+  --color-ink-muted: #475569;
+  --color-surface: #ffffff;
+  --color-canvas: #f8fafc;
+  --color-line: #e2e8f0;
+  --color-subtle: #f1f5f9;
+
+  --color-primary: #059669;
+  --color-primary-strong: #047857;
+  --color-primary-hover: #065f46;
+  --color-primary-soft: #ecfdf5;
+  --color-primary-on-soft: #065f46;
+  --color-primary-soft-2: #d1fae5;
+
+  --color-secondary: #0284c7;
+  --color-secondary-strong: #0369a1;
+  --color-secondary-soft: #e0f2fe;
+  --color-secondary-on-soft: #075985;
+
+  --color-warning-soft: #fef3c7;
+  --color-warning-on-soft: #92400e;
+  --color-danger-soft: #fee2e2;
+  --color-danger-on-soft: #991b1b;
+  --color-neutral-on-soft: #334155;
+
+  --color-focus: #0369a1;
+}
+
+:root {
+  --nav-height: 4.5rem;
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Espace réservé sous le contenu pour la barre d'onglets fixe. */
+@utility pb-nav {
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-canvas font-sans text-base text-ink antialiased;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * Leaflet : même police, texte à 16 px et boutons de zoom à 48 px.
+ * !important nécessaire pour passer devant les sélecteurs de leaflet.css.
+ */
+.leaflet-container {
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.leaflet-control-attribution {
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+}
+
+.leaflet-bar a {
+  width: 48px !important;
+  height: 48px !important;
+  line-height: 48px !important;
+  font-size: 1.5rem !important;
+}

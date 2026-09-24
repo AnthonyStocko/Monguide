@@ -1,8 +1,10 @@
 node_modules/
+dist/
 .env
-web/dist/
-web/node_modules/
+.env.*
+!.env.example
 *.log
 .idea/
-*.db
-*.sqlite
+supabase/.temp/
+supabase/.branches/
+*.stackdump

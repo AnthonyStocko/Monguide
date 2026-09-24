@@ -1,0 +1,88 @@
+{
+  "app": {
+    "name": "Mon guide"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "home": "Home",
+    "create": "Create",
+    "planning": "Schedule",
+    "map": "Map",
+    "favorites": "Favorites",
+    "settings": "Settings"
+  },
+  "common": {
+    "back": "Back",
+    "retry": "Retry"
+  },
+  "offline": {
+    "message": "You are offline. Some features are unavailable."
+  },
+  "error": {
+    "title": "Something went wrong"
+  },
+  "home": {
+    "greeting": "Hello",
+    "today": "Today is {{date}}.",
+    "emptyTitle": "No trips yet",
+    "emptyText": "Create your first trip: Mon guide prepares a day-by-day plan for you.",
+    "createCta": "Create a trip"
+  },
+  "create": {
+    "emptyTitle": "Trip creation coming soon",
+    "emptyText": "The trip creation assistant will be added in an upcoming version."
+  },
+  "planning": {
+    "emptyTitle": "No schedule",
+    "emptyText": "Create a trip to see its day-by-day plan."
+  },
+  "map": {
+    "attribution": "OpenStreetMap contributors"
+  },
+  "favorites": {
+    "emptyTitle": "No favorites",
+    "emptyText": "Places you add to your favorites will appear here."
+  },
+  "settings": {
+    "language": "Language",
+    "languageHint": "Defaults to your phone's language."
+  },
+  "languages": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "errors": {
+    "offline": "You are offline. Try again once you are back online.",
+    "network": "The server cannot be reached. Check your connection and try again.",
+    "timeout": "The server is taking too long to respond. Try again.",
+    "rateLimited": "Too many requests, try again in a few minutes.",
+    "appOutdated": "This version of Mon guide is no longer supported.",
+    "external": "An external service is temporarily unavailable. Try again later.",
+    "notConfigured": "The app is not configured to reach the server.",
+    "server": "The server ran into an error. Try again later.",
+    "unknown": "An unexpected error occurred."
+  },
+  "update": {
+    "title": "Update Mon guide",
+    "text": "This version is no longer supported. Install the latest version of Mon guide from your app store to continue."
+  },
+  "debug": {
+    "title": "Diagnostics",
+    "appVersion": "App version",
+    "clientApiVersion": "Contract version (app)",
+    "serverApiVersion": "Contract version (server)",
+    "minAppVersion": "Minimum required version",
+    "source": "Rules source",
+    "sources": {
+      "server": "Server",
+      "saved": "Saved copy",
+      "defaults": "Built-in defaults"
+    },
+    "fetchedAt": "Received on",
+    "rainThreshold": "Rain threshold",
+    "callServer": "Contact the server",
+    "callOk": "The server responded.",
+    "rules": "Effective rules",
+    "notAvailable": "Not available"
+  }
+}
