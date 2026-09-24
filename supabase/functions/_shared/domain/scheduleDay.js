@@ -1,4 +1,5 @@
 import { durationsFor } from './activity.js';
+import { adviseDeparture } from './departure.js';
 import { fromMinutes, toMinutes } from './time.js';
 import { routeKm, travelMinutes } from './travel.js';
 
@@ -51,11 +52,8 @@ export function scheduleDay(steps, { from, to, mode }, rules) {
   });
 
   const result = { steps: out, legsKm };
-  const first = out.find((s) => s.place);
-  if (from && first) {
-    const travelMin = travelMinutes(from, first.place, mode, rules);
-    result.departure = { time: fromMinutes(toMinutes(first.start) - travelMin), travelMin };
-  }
+  const departure = adviseDeparture(out, from, mode, rules);
+  if (departure) result.departure = departure;
   const last = [...out].reverse().find((s) => s.place);
   if (to && last) {
     result.returnTravelMin = travelMinutes(last.place, to, mode, rules);

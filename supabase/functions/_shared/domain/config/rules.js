@@ -12,7 +12,10 @@
  * charges et restent à valider.
  */
 export const RULES = Object.freeze({
-  /** Gabarit de journée : sert uniquement à la génération initiale. */
+  /**
+   * Gabarit de journée : horaires de la génération initiale. departure sert
+   * aussi de départ conseillé quand une journée commence par un temps libre.
+   */
   dayTemplate: {
     departure: '09:00',
     culture: '10:00',

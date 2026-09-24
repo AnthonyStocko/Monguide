@@ -1,4 +1,5 @@
 import { checkSlotTiming } from './checkSlotTiming.js';
+import { adviseDeparture } from './departure.js';
 import { fromMinutes, toMinutes } from './time.js';
 import { travelMinutes } from './travel.js';
 
@@ -31,12 +32,10 @@ export function recomputeTravel(day, trip, rules) {
     return out;
   });
   const next = { ...day, steps };
-  const first = steps.find((s) => s.place);
   const last = [...steps].reverse().find((s) => s.place);
-  if (start && first) {
-    const travelMin = travelMinutes(start, first.place, trip.mode, rules);
-    next.departure = { time: fromMinutes(toMinutes(first.start) - travelMin), travelMin };
-  } else delete next.departure;
+  const departure = adviseDeparture(steps, start, trip.mode, rules);
+  if (departure) next.departure = departure;
+  else delete next.departure;
   if (end && last) next.returnTravelMin = travelMinutes(last.place, end, trip.mode, rules);
   else delete next.returnTravelMin;
   return next;
