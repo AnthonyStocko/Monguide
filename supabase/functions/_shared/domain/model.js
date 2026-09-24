@@ -44,7 +44,8 @@ export const SCHEMA_VERSION = 1;
 export const CERTIFICATIONS = Object.freeze(['monument_historique', 'musee_de_france', 'protected_heritage', 'referenced_museum']);
 
 /**
- * @typedef {'museum' | 'monument' | 'restaurant' | 'market' | 'farm' | 'park' | 'nature' | 'viewpoint' | 'small_heritage'} PlaceCategory
+ * @typedef {'museum' | 'monument' | 'restaurant' | 'market' | 'farm' | 'park' | 'nature' | 'viewpoint' | 'small_heritage' | 'personal'} PlaceCategory
+ * personal : lieu d'une étape personnelle (source "user"), jamais fourni par le serveur.
  */
 
 /** @type {readonly PlaceCategory[]} */
@@ -57,7 +58,8 @@ export const PLACE_CATEGORIES = Object.freeze([
   'park',
   'nature',
   'viewpoint',
-  'small_heritage'
+  'small_heritage',
+  'personal'
 ]);
 
 /** Carburants possibles d'une voiture (Trip.fuelType), codes communs aux prix et aux facteurs CO2. */
@@ -88,19 +90,24 @@ export const LUNCH_OPTIONS = Object.freeze(['market', 'restaurant', 'both']);
  * @property {'culture' | 'lunch' | 'outdoor' | 'relax' | 'personal'} type
  * @property {string} start "HH:mm"
  * @property {string} end "HH:mm"
- * @property {Place} [place]
- * @property {string} [title]
+ * @property {Place} [place] étape personnelle : lieu facultatif (category "personal", source "user", champ address)
+ * @property {string} [title] titre libre d'une étape personnelle (60 caractères au plus)
  * @property {string} [note]
+ * @property {'personal'} [category] étape personnelle ajoutée par l'utilisateur
+ * @property {'user'} [source] étape personnelle ajoutée par l'utilisateur
  * @property {boolean | null} indoor
  * @property {'planned' | 'done' | 'skipped'} status
- * @property {string} [completedAt] "HH:mm"
- * @property {boolean} customTime
- * @property {boolean} locked
+ * @property {string} [completedAt] "HH:mm" (heure de la destination)
+ * @property {boolean} customTime horaire choisi par l'utilisateur
+ * @property {boolean} locked point fixe (étape personnelle) : jamais déplacé, remplacé ni permuté par l'application
  * @property {number} [travelFromPreviousMin]
  * @property {string[]} badges codes STEP_BADGES, traduits par l'application
- * @property {string[]} [conflicts]
+ * @property {string[]} [conflicts] identifiants des étapes en conflit d'horaire ("Ajouter sans réorganiser"), jusqu'à correction
  * @property {string[]} [specialties] appellations locales (AOC/AOP) associées à une pause gourmande
  */
+
+/** Statuts d'une étape : prévue, terminée, passée. */
+export const STEP_STATUSES = Object.freeze(['planned', 'done', 'skipped']);
 
 /**
  * Badges d'une étape : adaptée à la météo, horaires non confirmés, information

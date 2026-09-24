@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import DeleteAccountSection from '../components/account/DeleteAccountSection.jsx';
 import Page from '../components/layout/Page.jsx';
+import NotificationsSection from '../components/settings/NotificationsSection.jsx';
 import Card from '../components/ui/Card.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 import { setLanguage } from '../i18n/index.js';
@@ -44,6 +45,8 @@ export default function SettingsPage() {
           ))}
         </fieldset>
       </Card>
+
+      <NotificationsSection />
 
       <Card as="section" className="space-y-1 p-2">
         {link('/account', UserRound, session ? t('auth.myAccount') : t('auth.title'))}

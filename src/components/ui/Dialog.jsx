@@ -7,9 +7,10 @@ import Button from './Button.jsx';
  * Panneau modal accessible (role="dialog", aria-modal) : focus placé dans le
  * panneau à l'ouverture et rendu à l'élément d'origine à la fermeture, Échap
  * pour fermer, Tab maintenu dans le panneau.
- * @param {{ title: string, onClose: () => void, children: import('react').ReactNode, footer?: import('react').ReactNode }} props
+ * fullScreen : panneau plein écran (formulaires longs).
+ * @param {{ title: string, onClose: () => void, children: import('react').ReactNode, footer?: import('react').ReactNode, fullScreen?: boolean }} props
  */
-export default function Dialog({ title, onClose, children, footer }) {
+export default function Dialog({ title, onClose, children, footer, fullScreen = false }) {
   const { t } = useTranslation();
   const ref = useRef(null);
   const titleId = useId();
@@ -40,13 +41,16 @@ export default function Dialog({ title, onClose, children, footer }) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-ink/50 sm:items-center" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      className={`fixed inset-0 z-[1200] flex justify-center bg-ink/50 ${fullScreen ? 'items-stretch' : 'items-end sm:items-center'}`}
+      onMouseDown={(e) => !fullScreen && e.target === e.currentTarget && onClose()}
+    >
       <div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-surface p-4 pb-safe shadow-xl sm:rounded-2xl"
+        className={fullScreen ? 'h-dvh w-full max-w-2xl overflow-y-auto bg-surface p-4 pt-safe pb-safe' : 'max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-surface p-4 pb-safe shadow-xl sm:rounded-2xl'}
       >
         <div className="mb-3 flex items-start justify-between gap-2">
           <h2 id={titleId} tabIndex={-1} className="text-xl font-bold">

@@ -71,7 +71,7 @@ export default function MapPage() {
             ))}
           </div>
           <ul className="flex flex-wrap gap-x-4 gap-y-1" aria-label={t('map.legendTitle')}>
-            {['culture', 'food', 'nature', 'heritage', 'lodging'].map((g) => (
+            {['culture', 'food', 'nature', 'heritage', 'personal', 'lodging'].map((g) => (
               <li key={g} className="flex items-center gap-2">
                 <span aria-hidden="true" className="inline-block size-4 rounded-full" style={{ background: GROUP_COLORS[g] }} />
                 {t(`map.groups.${g}`)}

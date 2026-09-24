@@ -33,7 +33,9 @@ export function checkSlotTiming({ day, index, start, end, mode, countryCode }, r
   const warnings = [];
   const place = step.place;
   const { recommendedMin, minimumMin } = durationsFor(place, rules);
-  if (durationMin < minimumMin) warnings.push({ code: 'TOO_SHORT', activity: place ? activityType(place) : 'relax', minimumMin, durationMin });
+  // Étape personnelle : ni durée minimale ni horaires d'ouverture.
+  const personal = step.type === 'personal';
+  if (!personal && durationMin < minimumMin) warnings.push({ code: 'TOO_SHORT', activity: place ? activityType(place) : 'relax', minimumMin, durationMin });
 
   const prev = day.steps[index - 1];
   if (prev) {
@@ -46,16 +48,16 @@ export function checkSlotTiming({ day, index, start, end, mode, countryCode }, r
     if (to + travelMin > toMinutes(next.start)) warnings.push({ code: 'OVERLAP_NEXT', travelMin, nextStart: next.start, mode });
   }
 
-  if (place) {
+  if (place && !personal) {
     const state = openingState(placeOpeningHours(place), { date: day.date, from: start, to: end, lat: place.lat, lon: place.lon, countryCode });
     if (state === 'closed' || state === 'partial') warnings.push({ code: 'CLOSED', openingHours: placeOpeningHours(place) });
-    if (place.indoor !== true && day.weatherAvailable && day.weather) {
-      const rain = averageRain(day.weather, start, end);
-      if (rain !== null && rain > rules.weather.rainThresholdPct) warnings.push({ code: 'RAIN', pct: Math.round(rain) });
-    }
+  }
+  if (place && place.indoor !== true && day.weatherAvailable && day.weather) {
+    const rain = averageRain(day.weather, start, end);
+    if (rain !== null && rain > rules.weather.rainThresholdPct) warnings.push({ code: 'RAIN', pct: Math.round(rain) });
   }
 
   if (to > toMinutes(rules.schedule.lateEnd)) warnings.push({ code: 'LATE', lateEnd: rules.schedule.lateEnd });
 
-  return { warnings, blocking: false, belowRecommended: durationMin >= minimumMin && durationMin < recommendedMin, durationMin };
+  return { warnings, blocking: false, belowRecommended: !personal && durationMin >= minimumMin && durationMin < recommendedMin, durationMin };
 }

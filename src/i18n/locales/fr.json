@@ -58,8 +58,8 @@
     "departure": "Départ de {{place}} à {{time}}",
     "return": "Retour à {{place}} :",
     "lodgingTitle": "Hébergement",
-    "lodgingLater": "La modification des hébergements et le recalcul des journées concernées arrivent dans une prochaine version.",
-    "readOnly": "Ce séjour a été créé avec une version plus récente de Mon guide. Mettez à jour l’application pour modifier ce séjour."
+    "readOnly": "Ce séjour a été créé avec une version plus récente de Mon guide. Mettez à jour l’application pour modifier ce séjour.",
+    "conflict": "Conflit d’horaire"
   },
   "map": {
     "attribution": "contributeurs d'OpenStreetMap",
@@ -70,7 +70,8 @@
       "food": "Gastronomie",
       "nature": "Nature",
       "heritage": "Petit patrimoine",
-      "lodging": "Hébergement"
+      "lodging": "Hébergement",
+      "personal": "Étapes personnelles"
     },
     "lodging": "Hébergement",
     "orderNotice": "Les lignes relient les étapes dans l’ordre de visite ; ce ne sont pas des itinéraires routiers."
@@ -178,7 +179,8 @@
     "park": "Parc",
     "nature": "Espace naturel",
     "viewpoint": "Point de vue",
-    "small_heritage": "Petit patrimoine"
+    "small_heritage": "Petit patrimoine",
+    "personal": "Étape personnelle"
   },
   "certifications": {
     "monument_historique": "Monument historique",
@@ -452,7 +454,8 @@
       "culture": "Visite culturelle",
       "lunch": "Pause gourmande",
       "outdoor": "Plein air",
-      "relax": "Détente"
+      "relax": "Détente",
+      "personal": "Étape personnelle"
     },
     "freeTime": "Temps libre",
     "specialties": "Spécialités locales : {{list}}",
@@ -635,6 +638,175 @@
       "title": "Contact",
       "text": [
         "Pour toute question sur vos données :"
+      ]
+    }
+  },
+  "tracking": {
+    "status": {
+      "planned": "Prévue",
+      "done": "Terminée",
+      "skipped": "Passée"
+    },
+    "validate": "Valider cette étape",
+    "skip": "Passer cette étape",
+    "validateNamed": "Valider l’étape {{name}}",
+    "skipNamed": "Passer l’étape {{name}}",
+    "doneNotice": "Étape validée.",
+    "skippedNotice": "Étape passée."
+  },
+  "replan": {
+    "title": "Planning réajusté",
+    "apply": "Appliquer",
+    "keep": "Garder le planning initial",
+    "applied": "Planning réajusté.",
+    "undo": "Annuler",
+    "undoLabel": "Annuler le réajustement ({{seconds}} s)",
+    "weatherOffline": "Météo non vérifiée (hors ligne)",
+    "kinds": {
+      "shifted": "Décalée",
+      "shortened": "Raccourcie",
+      "replaced": "Remplacée",
+      "postponed": "Reportée",
+      "removed": "Supprimée",
+      "departure": "Départ"
+    },
+    "shifted": "{{name}} : {{start}} – {{end}}",
+    "shortened": "{{name}} : {{start}} – {{end}}",
+    "replaced": {
+      "default": "{{previous}} est remplacé par {{name}}.",
+      "CLOSED": "{{previous}} sera fermé : {{name}} est ouvert à ce moment-là.",
+      "RAIN": "Pluie prévue : {{name}} (à l’abri) remplace {{previous}}.",
+      "TRAVEL": "{{previous}} est trop loin : {{name}} est plus proche.",
+      "TOO_SHORT": "{{previous}} n’a plus assez de temps : {{name}} tient dans le créneau.",
+      "LATE_START": "{{previous}} commencerait trop tard : {{name}} le remplace.",
+      "LATE_END": "{{previous}} finirait trop tard : {{name}} le remplace."
+    },
+    "departure": "{{date}} : départ conseillé à {{time}} de {{place}}",
+    "departureRemoved": "{{date}} : plus d’heure de départ (aucun hébergement)",
+    "dropped": "{{name}} ({{start}}) : {{reason}}",
+    "reasons": {
+      "LUNCH_COVERED": "votre étape couvre la pause déjeuner.",
+      "LATE_START": "commencerait après 19h00.",
+      "LATE_END": "finirait trop tard.",
+      "TOO_SHORT": "plus assez de temps.",
+      "CLOSED": "fermé à ce moment-là.",
+      "RAIN": "pluie prévue.",
+      "TRAVEL": "trajet trop long."
+    },
+    "postponeTo": "Reporter au {{date}}, {{start}} – {{end}}",
+    "remove": "Supprimer cette étape",
+    "willBeRemoved": "Aucun autre jour n’a de place libre : l’étape sera supprimée.",
+    "customTime": "Horaire que vous aviez choisi : {{from}} → {{to}}",
+    "customTimeDropped": "Horaire que vous aviez choisi : {{start}}",
+    "warnings": {
+      "LATE": "Retour après {{lateEnd}} : la journée finit tard.",
+      "TRAVEL_UNKNOWN": "Temps de trajet inconnu : l’étape n’a pas de lieu."
+    }
+  },
+  "personal": {
+    "addBetween": "Ajouter une étape",
+    "addAtEnd": "Ajouter une étape en fin de journée",
+    "addTitle": "Ajouter une étape",
+    "editTitle": "Modifier l’étape",
+    "edit": "Modifier",
+    "editNamed": "Modifier l’étape {{name}}",
+    "delete": "Supprimer l’étape",
+    "save": "Enregistrer",
+    "add": "Ajouter l’étape",
+    "added": "Étape ajoutée.",
+    "deleted": "Étape supprimée.",
+    "titleLabel": "Titre (obligatoire)",
+    "titleCount": "{{count}} / {{max}} caractères",
+    "suggestionsLabel": "Suggestions de titre",
+    "suggestions": {
+      "relative": "Visite d’un proche",
+      "appointment": "Rendez-vous",
+      "friendsMeal": "Repas chez des amis",
+      "break": "Pause"
+    },
+    "placeTitle": "Lieu (facultatif)",
+    "placeHint": "Sans lieu, les temps de trajet ne peuvent pas être calculés.",
+    "placeSearch": "Adresse du lieu",
+    "placeSearchHint": "Saisissez une adresse précise : numéro, rue et commune.",
+    "placePlaceholder": "Ex. 12 rue Nationale, Villefranche",
+    "placeSelected": "Lieu choisi",
+    "chooseOnMap": "Choisir sur la carte",
+    "mapHint": "Appui long sur la carte pour placer le lieu (clic droit sur ordinateur).",
+    "mapLabel": "Carte : appui long pour choisir le lieu de l’étape",
+    "placeName": "Nom du lieu (facultatif)",
+    "placeNamePlaceholder": "Ex. Chez Marie",
+    "removePlace": "Retirer le lieu",
+    "travelUnknown": "Temps de trajet inconnu",
+    "willReplan": "Cette étape chevauche d’autres étapes : un réajustement de la journée vous sera proposé.",
+    "indoorLegend": "Intérieur ou extérieur",
+    "indoorHint": "Utilisé pour les avertissements de pluie.",
+    "indoor": "Intérieur",
+    "outdoor": "Extérieur",
+    "note": "Note (facultative)",
+    "replanIntro": "Pour ajouter « {{name}} », voici les changements proposés :",
+    "addWithoutReplan": "Ajouter sans réorganiser",
+    "errors": {
+      "required": "Donnez un titre à l’étape.",
+      "tooLong": "Le titre ne doit pas dépasser {{max}} caractères.",
+      "INVALID": "La fin doit être après le début.",
+      "OVERLAP_FIXED": "Cette étape chevauche « {{name}} », dont l’horaire est fixé. Choisissez un autre horaire."
+    }
+  },
+  "lodgings": {
+    "title": "Hébergements du séjour",
+    "save": "Enregistrer",
+    "saved": "Hébergements enregistrés.",
+    "none": "Aucun hébergement pour le moment.",
+    "nights": "Nuits dans cet hébergement",
+    "noNight": "Choisissez au moins une nuit, ou supprimez cet hébergement.",
+    "remove": "Supprimer cet hébergement",
+    "removeNamed": "Supprimer l’hébergement {{name}}",
+    "add": "Ajouter un hébergement",
+    "addConfirm": "Ajouter cet hébergement"
+  },
+  "notifications": {
+    "channel": "Rappels du séjour",
+    "summary": {
+      "title": "Demain, {{date}}",
+      "departure": "Départ conseillé à {{time}} de {{lodgingName}}"
+    },
+    "reminder": {
+      "title": "Dans une heure : {{name}}",
+      "body": "De {{start}} à {{end}} · {{trip}}"
+    },
+    "explainer": {
+      "title": "Recevoir des rappels ?",
+      "text": [
+        "Mon guide peut vous envoyer, la veille au soir, le programme du lendemain avec l’heure de départ conseillée, et un rappel une heure avant chaque étape.",
+        "Les rappels sont programmés sur votre téléphone : ils arrivent même sans connexion.",
+        "Vous pourrez changer d’avis à tout moment dans les réglages."
+      ],
+      "allow": "Activer les rappels",
+      "later": "Plus tard",
+      "exactTitle": "Rappels à l’heure exacte"
+    },
+    "settings": {
+      "title": "Rappels",
+      "device": "Recevoir les rappels sur cet appareil",
+      "deviceHint": "Plusieurs téléphones sur le même compte ? Désactivez ce réglage sur ceux qui ne doivent pas sonner.",
+      "summaries": "Résumé de la veille",
+      "summaryTime": "Heure du résumé",
+      "reminders": "Rappel {{minutes}} min avant chaque étape",
+      "pending_one": "{{count}} rappel programmé sur cet appareil.",
+      "pending_other": "{{count}} rappels programmés sur cet appareil.",
+      "allow": "Autoriser les notifications",
+      "permission": {
+        "prompt": "Les notifications ne sont pas encore autorisées : aucun rappel ne sera affiché.",
+        "denied": "Les notifications sont refusées : aucun rappel ne sera affiché. Pour les autoriser : Paramètres du téléphone > Applications > Mon guide > Notifications.",
+        "unavailable": "Les notifications ne sont pas disponibles sur cet appareil. L’application fonctionne normalement sans rappels."
+      },
+      "exactDenied": "Les alarmes exactes ne sont pas autorisées : les rappels peuvent arriver avec quelques minutes de retard.",
+      "openExact": "Ouvrir le réglage",
+      "batteryTitle": "Rappels en retard ou manquants ?",
+      "batteryText": [
+        "Certains fabricants (Xiaomi, Huawei, Oppo, Samsung…) limitent les applications en arrière-plan pour économiser la batterie, ce qui peut retarder ou bloquer les rappels.",
+        "Pour l’éviter : Paramètres du téléphone > Batterie (ou Applications > Mon guide > Batterie), choisissez « Aucune restriction » ou « Non optimisée », et autorisez le démarrage automatique si le réglage existe.",
+        "Rouvrir Mon guide reprogramme les rappels manquants."
       ]
     }
   }

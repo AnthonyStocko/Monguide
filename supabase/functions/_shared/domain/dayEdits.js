@@ -25,6 +25,8 @@ export function recomputeTravel(day, trip, rules) {
     const out = { ...s };
     if (hasPrevious) out.travelFromPreviousMin = s.place && prev ? travelMinutes(prev, s.place, trip.mode, rules) : 0;
     if (s.place) prev = s.place;
+    // Étape personnelle sans lieu : trajet suivant inconnu (pas recalculé depuis l'étape d'avant).
+    else if (s.type === 'personal') prev = null;
     hasPrevious = true;
     return out;
   });

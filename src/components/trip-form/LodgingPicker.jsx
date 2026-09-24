@@ -27,10 +27,13 @@ async function addressAt(point, lang) {
  *   onChange: (place: import('@domain/tripDraft.js').LodgingPlace | null) => void,
  *   destination: { lat: number, lon: number },
  *   error?: string,
- *   searchLabel?: string
- * }} props
+ *   searchLabel?: string,
+ *   labels?: { selected?: string, hint?: string, placeholder?: string, chooseOnMap?: string, mapHint?: string, mapLabel?: string, name?: string, namePlaceholder?: string },
+ *   icon?: import('react').ComponentType<any>,
+ *   longPress?: boolean
+ * }} props labels, icon, longPress : réutilisation pour le lieu d'une étape personnelle
  */
-export default function LodgingPicker({ idPrefix, value, onChange, destination, error, searchLabel }) {
+export default function LodgingPicker({ idPrefix, value, onChange, destination, error, searchLabel, labels = {}, icon: Icon = BedDouble, longPress = false }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage;
   const [showMap, setShowMap] = useState(false);
@@ -57,9 +60,9 @@ export default function LodgingPicker({ idPrefix, value, onChange, destination, 
     <div className="space-y-3">
       {value && (
         <div className="flex items-start gap-3 rounded-xl bg-primary-soft px-3 py-2" aria-live="polite">
-          <BedDouble aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-primary-strong" />
+          <Icon aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-primary-strong" />
           <p>
-            <span className="block text-ink-muted">{t('tripForm.lodging.selected')}</span>
+            <span className="block text-ink-muted">{labels.selected ?? t('tripForm.lodging.selected')}</span>
             {value.name && <span className="block font-semibold">{value.name}</span>}
             <span className={value.name ? '' : 'font-semibold'}>{value.address}</span>
           </p>
@@ -67,10 +70,10 @@ export default function LodgingPicker({ idPrefix, value, onChange, destination, 
       )}
       <PlaceSearch
         label={searchLabel ?? t('tripForm.lodging.search')}
-        hint={t('tripForm.lodging.searchHint')}
+        hint={labels.hint ?? t('tripForm.lodging.searchHint')}
         kind="address"
         bias={destination}
-        placeholder={t('tripForm.lodging.placeholder')}
+        placeholder={labels.placeholder ?? t('tripForm.lodging.placeholder')}
         onSelect={(r) => onChange({ ...(r.name ? { name: r.name } : {}), address: r.address, lat: r.lat, lon: r.lon })}
         error={error}
       />
@@ -79,7 +82,7 @@ export default function LodgingPicker({ idPrefix, value, onChange, destination, 
           {t('tripForm.useMyPosition')}
         </Button>
         <Button variant="secondary" icon={MapIcon} onClick={() => setShowMap((v) => !v)} aria-expanded={showMap} aria-controls={`${idPrefix}-map`}>
-          {t('tripForm.lodging.chooseOnMap')}
+          {labels.chooseOnMap ?? t('tripForm.lodging.chooseOnMap')}
         </Button>
       </div>
       <div role="status" aria-live="polite">
@@ -87,18 +90,18 @@ export default function LodgingPicker({ idPrefix, value, onChange, destination, 
         {busy.status === 'error' && <p className="font-medium text-danger-on-soft">{t(busy.messageKey)}</p>}
       </div>
       <div id={`${idPrefix}-map`} hidden={!showMap}>
-        {showMap && <MapPicker center={value ?? destination} value={value} onPick={(p) => setPoint(p, 'map')} />}
+        {showMap && <MapPicker center={value ?? destination} value={value} onPick={(p) => setPoint(p, 'map')} longPress={longPress} hint={labels.mapHint} label={labels.mapLabel} />}
       </div>
       {value && (
         <div className="space-y-1">
           <label htmlFor={`${idPrefix}-name`} className="block font-medium">
-            {t('tripForm.lodging.name')}
+            {labels.name ?? t('tripForm.lodging.name')}
           </label>
           <input
             id={`${idPrefix}-name`}
             type="text"
             value={value.name ?? ''}
-            placeholder={t('tripForm.lodging.namePlaceholder')}
+            placeholder={labels.namePlaceholder ?? t('tripForm.lodging.namePlaceholder')}
             onChange={(e) => {
               const { name: _old, ...rest } = value;
               onChange(e.target.value.trim() ? { ...rest, name: e.target.value } : rest);

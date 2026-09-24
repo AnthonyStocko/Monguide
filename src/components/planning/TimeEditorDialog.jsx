@@ -17,7 +17,7 @@ function timeOptions(current) {
   return out.sort();
 }
 
-function TimeSelect({ id, label, value, onChange }) {
+export function TimeSelect({ id, label, value, onChange }) {
   return (
     <div className="space-y-1">
       <label htmlFor={id} className="block font-medium">

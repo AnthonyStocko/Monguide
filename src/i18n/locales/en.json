@@ -58,8 +58,8 @@
     "departure": "Leave {{place}} at {{time}}",
     "return": "Back to {{place}}:",
     "lodgingTitle": "Accommodation",
-    "lodgingLater": "Changing accommodation and recalculating the affected days is coming in an upcoming version.",
-    "readOnly": "This trip was created with a newer version of Mon guide. Update the app to edit this trip."
+    "readOnly": "This trip was created with a newer version of Mon guide. Update the app to edit this trip.",
+    "conflict": "Time conflict"
   },
   "map": {
     "attribution": "OpenStreetMap contributors",
@@ -70,7 +70,8 @@
       "food": "Food",
       "nature": "Nature",
       "heritage": "Local heritage",
-      "lodging": "Accommodation"
+      "lodging": "Accommodation",
+      "personal": "Personal stops"
     },
     "lodging": "Accommodation",
     "orderNotice": "Lines connect the stops in visiting order; they are not road routes."
@@ -178,7 +179,8 @@
     "park": "Park",
     "nature": "Nature area",
     "viewpoint": "Viewpoint",
-    "small_heritage": "Local heritage"
+    "small_heritage": "Local heritage",
+    "personal": "Personal stop"
   },
   "certifications": {
     "monument_historique": "Historic monument",
@@ -452,7 +454,8 @@
       "culture": "Cultural visit",
       "lunch": "Food break",
       "outdoor": "Outdoors",
-      "relax": "Relax"
+      "relax": "Relax",
+      "personal": "Personal stop"
     },
     "freeTime": "Free time",
     "specialties": "Local specialties: {{list}}",
@@ -635,6 +638,175 @@
       "title": "Contact",
       "text": [
         "For any question about your data:"
+      ]
+    }
+  },
+  "tracking": {
+    "status": {
+      "planned": "Planned",
+      "done": "Done",
+      "skipped": "Skipped"
+    },
+    "validate": "Mark as done",
+    "skip": "Skip this stop",
+    "validateNamed": "Mark {{name}} as done",
+    "skipNamed": "Skip {{name}}",
+    "doneNotice": "Stop marked as done.",
+    "skippedNotice": "Stop skipped."
+  },
+  "replan": {
+    "title": "Adjusted plan",
+    "apply": "Apply",
+    "keep": "Keep the original plan",
+    "applied": "Plan adjusted.",
+    "undo": "Undo",
+    "undoLabel": "Undo the adjustment ({{seconds}} s)",
+    "weatherOffline": "Weather not checked (offline)",
+    "kinds": {
+      "shifted": "Moved",
+      "shortened": "Shortened",
+      "replaced": "Replaced",
+      "postponed": "Postponed",
+      "removed": "Removed",
+      "departure": "Departure"
+    },
+    "shifted": "{{name}}: {{start}} – {{end}}",
+    "shortened": "{{name}}: {{start}} – {{end}}",
+    "replaced": {
+      "default": "{{previous}} is replaced by {{name}}.",
+      "CLOSED": "{{previous}} will be closed: {{name}} is open at that time.",
+      "RAIN": "Rain expected: {{name}} (indoors) replaces {{previous}}.",
+      "TRAVEL": "{{previous}} is too far: {{name}} is closer.",
+      "TOO_SHORT": "{{previous}} no longer has enough time: {{name}} fits the slot.",
+      "LATE_START": "{{previous}} would start too late: {{name}} replaces it.",
+      "LATE_END": "{{previous}} would end too late: {{name}} replaces it."
+    },
+    "departure": "{{date}}: suggested departure at {{time}} from {{place}}",
+    "departureRemoved": "{{date}}: no departure time any more (no accommodation)",
+    "dropped": "{{name}} ({{start}}): {{reason}}",
+    "reasons": {
+      "LUNCH_COVERED": "your stop covers the lunch break.",
+      "LATE_START": "would start after 7 pm.",
+      "LATE_END": "would end too late.",
+      "TOO_SHORT": "not enough time left.",
+      "CLOSED": "closed at that time.",
+      "RAIN": "rain expected.",
+      "TRAVEL": "journey too long."
+    },
+    "postponeTo": "Postpone to {{date}}, {{start}} – {{end}}",
+    "remove": "Remove this stop",
+    "willBeRemoved": "No other day has free time: the stop will be removed.",
+    "customTime": "Time you had chosen: {{from}} → {{to}}",
+    "customTimeDropped": "Time you had chosen: {{start}}",
+    "warnings": {
+      "LATE": "Back after {{lateEnd}}: the day ends late.",
+      "TRAVEL_UNKNOWN": "Travel time unknown: the stop has no location."
+    }
+  },
+  "personal": {
+    "addBetween": "Add a stop",
+    "addAtEnd": "Add a stop at the end of the day",
+    "addTitle": "Add a stop",
+    "editTitle": "Edit the stop",
+    "edit": "Edit",
+    "editNamed": "Edit the stop {{name}}",
+    "delete": "Delete the stop",
+    "save": "Save",
+    "add": "Add the stop",
+    "added": "Stop added.",
+    "deleted": "Stop deleted.",
+    "titleLabel": "Title (required)",
+    "titleCount": "{{count}} / {{max}} characters",
+    "suggestionsLabel": "Title suggestions",
+    "suggestions": {
+      "relative": "Visiting family",
+      "appointment": "Appointment",
+      "friendsMeal": "Meal with friends",
+      "break": "Break"
+    },
+    "placeTitle": "Location (optional)",
+    "placeHint": "Without a location, travel times cannot be calculated.",
+    "placeSearch": "Address of the place",
+    "placeSearchHint": "Enter a full address: number, street and town.",
+    "placePlaceholder": "e.g. 12 rue Nationale, Villefranche",
+    "placeSelected": "Chosen location",
+    "chooseOnMap": "Choose on the map",
+    "mapHint": "Long-press the map to place the location (right-click on a computer).",
+    "mapLabel": "Map: long-press to choose the location of the stop",
+    "placeName": "Name of the place (optional)",
+    "placeNamePlaceholder": "e.g. At Marie’s",
+    "removePlace": "Remove the location",
+    "travelUnknown": "Travel time unknown",
+    "willReplan": "This stop overlaps other stops: an adjustment of the day will be suggested.",
+    "indoorLegend": "Indoors or outdoors",
+    "indoorHint": "Used for rain warnings.",
+    "indoor": "Indoors",
+    "outdoor": "Outdoors",
+    "note": "Note (optional)",
+    "replanIntro": "To add “{{name}}”, here are the suggested changes:",
+    "addWithoutReplan": "Add without reorganising",
+    "errors": {
+      "required": "Give the stop a title.",
+      "tooLong": "The title must not exceed {{max}} characters.",
+      "INVALID": "The end must be after the start.",
+      "OVERLAP_FIXED": "This stop overlaps “{{name}}”, whose time is fixed. Choose another time."
+    }
+  },
+  "lodgings": {
+    "title": "Accommodation for the trip",
+    "save": "Save",
+    "saved": "Accommodation saved.",
+    "none": "No accommodation yet.",
+    "nights": "Nights at this accommodation",
+    "noNight": "Choose at least one night, or remove this accommodation.",
+    "remove": "Remove this accommodation",
+    "removeNamed": "Remove the accommodation {{name}}",
+    "add": "Add accommodation",
+    "addConfirm": "Add this accommodation"
+  },
+  "notifications": {
+    "channel": "Trip reminders",
+    "summary": {
+      "title": "Tomorrow, {{date}}",
+      "departure": "Suggested departure at {{time}} from {{lodgingName}}"
+    },
+    "reminder": {
+      "title": "In one hour: {{name}}",
+      "body": "From {{start}} to {{end}} · {{trip}}"
+    },
+    "explainer": {
+      "title": "Get reminders?",
+      "text": [
+        "Mon guide can send you, the evening before, the next day’s programme with the suggested departure time, and a reminder one hour before each stop.",
+        "Reminders are scheduled on your phone: they arrive even without a connection.",
+        "You can change your mind at any time in Settings."
+      ],
+      "allow": "Turn on reminders",
+      "later": "Later",
+      "exactTitle": "Reminders on time"
+    },
+    "settings": {
+      "title": "Reminders",
+      "device": "Receive reminders on this device",
+      "deviceHint": "Several phones on the same account? Turn this off on those that should not ring.",
+      "summaries": "Summary the evening before",
+      "summaryTime": "Time of the summary",
+      "reminders": "Reminder {{minutes}} min before each stop",
+      "pending_one": "{{count}} reminder scheduled on this device.",
+      "pending_other": "{{count}} reminders scheduled on this device.",
+      "allow": "Allow notifications",
+      "permission": {
+        "prompt": "Notifications are not allowed yet: no reminder will be shown.",
+        "denied": "Notifications are blocked: no reminder will be shown. To allow them: phone Settings > Apps > Mon guide > Notifications.",
+        "unavailable": "Notifications are not available on this device. The app works normally without reminders."
+      },
+      "exactDenied": "Exact alarms are not allowed: reminders may arrive a few minutes late.",
+      "openExact": "Open the setting",
+      "batteryTitle": "Reminders late or missing?",
+      "batteryText": [
+        "Some manufacturers (Xiaomi, Huawei, Oppo, Samsung…) restrict background apps to save battery, which can delay or block reminders.",
+        "To avoid this: phone Settings > Battery (or Apps > Mon guide > Battery), choose “Unrestricted” or “Not optimised”, and allow auto-start if the setting exists.",
+        "Reopening Mon guide reschedules missing reminders."
       ]
     }
   }

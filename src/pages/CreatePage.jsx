@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 import { setCurrentTripId } from '../services/tripsStore.js';
 import { useTranslation } from 'react-i18next';
 import Page from '../components/layout/Page.jsx';
+import NotificationsExplainer from '../components/notifications/NotificationsExplainer.jsx';
 import TripPreview from '../components/trip/TripPreview.jsx';
 import TripStepper from '../components/trip-form/TripStepper.jsx';
 import Button from '../components/ui/Button.jsx';
@@ -30,6 +31,8 @@ export default function CreatePage() {
           </Button>
         </Card>
         <TripPreview trip={created.trip} warnings={created.warnings} />
+        {/* Premier séjour enregistré : explication, puis demande d'autorisation des rappels. */}
+        <NotificationsExplainer />
         <Button icon={CirclePlus} onClick={() => setCreated(null)} className="w-full">
           {t('tripForm.created.another')}
         </Button>

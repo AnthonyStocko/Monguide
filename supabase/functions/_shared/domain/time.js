@@ -1,7 +1,47 @@
+import { DateTime } from 'luxon';
+
 /**
  * Heures "HH:mm" dans le fuseau du séjour, manipulées en minutes depuis
  * minuit : aucune conversion en instant réel, aucun fuseau de l'appareil.
+ * Seules exceptions : slotToInstant et nowInZone (Luxon, fuseau du séjour),
+ * et destinationLocalDate (horaires d'ouverture).
  */
+
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Exception autorisée à la règle "pas de new Date()" : convertit une heure
+ * locale de la destination en instant absolu, dans le fuseau du séjour. Toute
+ * la programmation des notifications passe par cette fonction.
+ * Changements d'heure : une heure qui n'existe pas (passage à l'heure d'été,
+ * ex. 02:30) est avancée d'une heure ; une heure qui existe deux fois
+ * (passage à l'heure d'hiver) désigne la première occurrence.
+ * @param {string} date "YYYY-MM-DD"
+ * @param {string} time "HH:mm"
+ * @param {string} timezone IANA, ex. "Europe/Lisbon"
+ * @returns {Date}
+ */
+export function slotToInstant(date, time, timezone) {
+  if (!DATE.test(date ?? '')) throw new RangeError(`Date invalide : ${date}`);
+  const minutes = toMinutes(time);
+  const [year, month, day] = date.split('-').map(Number);
+  const dt = DateTime.fromObject({ year, month, day, hour: Math.floor(minutes / 60), minute: minutes % 60 }, { zone: timezone });
+  if (!dt.isValid) throw new RangeError(`Date, heure ou fuseau invalide : ${date} ${time} ${timezone} (${dt.invalidReason})`);
+  return dt.toJSDate();
+}
+
+/**
+ * Date et heure actuelles à destination, pour toutes les comparaisons avec
+ * le planning (jamais l'heure du téléphone).
+ * @param {string} timezone IANA
+ * @param {number} [now] instant (ms) ; par défaut maintenant
+ * @returns {{ date: string, time: string }} "YYYY-MM-DD", "HH:mm"
+ */
+export function nowInZone(timezone, now = DateTime.now().toMillis()) {
+  const dt = DateTime.fromMillis(now, { zone: timezone });
+  if (!dt.isValid) throw new RangeError(`Fuseau invalide : ${timezone}`);
+  return { date: dt.toFormat('yyyy-MM-dd'), time: dt.toFormat('HH:mm') };
+}
 
 const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
 

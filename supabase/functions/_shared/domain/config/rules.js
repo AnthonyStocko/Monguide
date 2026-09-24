@@ -192,8 +192,15 @@ export const RULES = Object.freeze({
     farFactor: 1.5
   },
 
+  /** Étapes personnelles ajoutées par l'utilisateur. */
+  personalStep: {
+    titleMaxLength: 60,
+    /** Durée proposée par défaut à l'ouverture du formulaire (proposition). */
+    defaultDurationMin: 60
+  },
+
   notifications: {
-    /** Heure du résumé envoyé la veille de chaque journée. */
+    /** Heure du résumé envoyé la veille de chaque journée (modifiable dans les réglages). */
     eveningSummaryTime: '19:00',
     /** Délai du rappel avant une étape, en minutes. */
     reminderLeadMin: 60
