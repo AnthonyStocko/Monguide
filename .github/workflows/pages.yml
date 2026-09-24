@@ -1,0 +1,57 @@
+# Pages web publiques (dossier site/) sur GitHub Pages : politique de
+# confidentialité et suppression de compte, en français et en anglais.
+# config.js (URL et clé publique Supabase, version) est généré ici depuis les
+# secrets VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY : il n'est jamais versionné.
+# Adresse : https://anthonystocko.github.io/Monguide/
+
+name: Pages web publiques
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configuration (URL et clé publique Supabase)
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Secrets VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY manquants."
+            exit 1
+          fi
+          version=$(node -p "require('./package.json').version")
+          node -e "
+            const c = { url: process.env.SUPABASE_URL, anonKey: process.env.SUPABASE_ANON_KEY, appVersion: process.argv[1] };
+            require('fs').writeFileSync('site/config.js', '// Généré au déploiement (pages.yml).\nexport const MONGUIDE = ' + JSON.stringify(c) + ';\n');
+          " "$version"
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v5

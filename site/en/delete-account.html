@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delete my account — Mon guide</title>
+  <meta name="description" content="Delete your Mon guide account and all your trips, from a browser.">
+  <meta name="robots" content="noindex">
+  <link rel="alternate" hreflang="fr" href="../fr/suppression-compte.html">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="../index.html">Mon guide</a>
+    <nav class="lang" aria-label="Language"><a href="../fr/suppression-compte.html" hreflang="fr" lang="fr">Français</a></nav>
+  </header>
+  <main>
+    <h1>Delete my Mon guide account</h1>
+    <p>This page deletes your account and <strong>all the trips saved in your account</strong>, on all your devices. This cannot be undone. You can also do it in the app: Settings &gt; Delete my account.</p>
+    <p class="muted">Trips saved on a phone without an account are not affected: they are removed when you uninstall the app.</p>
+
+    <section id="delete-flow" aria-labelledby="flow-title">
+      <h2 id="flow-title">Deletion in three steps</h2>
+
+      <div id="step-email">
+        <p>1. Enter your account's email address: you will receive a sign-in code.</p>
+        <label for="email">Email address</label>
+        <input id="email" type="email" autocomplete="email" inputmode="email" required>
+        <button id="send-code" type="button">Get a code</button>
+      </div>
+
+      <div id="step-code" hidden>
+        <p>2. Enter the code you received by email (check your spam folder too).</p>
+        <label for="code">Code received by email</label>
+        <input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8">
+        <button id="verify-code" type="button">Confirm the code</button>
+        <button id="restart" type="button" class="secondary">Change email address</button>
+      </div>
+
+      <div id="step-confirm" hidden>
+        <p>3. Final check before permanent deletion.</p>
+        <label class="check"><input id="confirm" type="checkbox"> I understand that my account and all my trips will be permanently deleted.</label>
+        <button id="delete" type="button" class="danger" disabled>Permanently delete my account</button>
+      </div>
+
+      <div id="step-done" hidden>
+        <p>Your account and trips have been deleted. You can uninstall the app or keep using it without an account.</p>
+      </div>
+
+      <p id="status" role="status" tabindex="-1" hidden></p>
+    </section>
+
+    <section>
+      <h2>Having trouble?</h2>
+      <p>Write to us from your account's email address asking for its deletion: <span data-contact>loading…</span>. We delete the account and its trips within one month and confirm by email.</p>
+      <p>Data deleted: email address, trips (plans, accommodation and personal stop addresses). No data is kept after deletion.</p>
+    </section>
+  </main>
+  <footer><p><a href="privacy.html">Privacy policy</a> · <a href="../index.html">Home</a></p></footer>
+  <script id="texts" type="application/json">{
+    "contactUnavailable": "address temporarily unavailable, try again later",
+    "emailInvalid": "Enter a valid email address.",
+    "sendFailed": "Sending the code failed. Try again in a few minutes.",
+    "tooManyEmails": "Too many codes requested. Wait a few minutes before trying again.",
+    "codeSent": "If an account exists for {email}, a code has just been sent to it.",
+    "codeFormat": "The code has at least 6 digits.",
+    "codeInvalid": "This code is wrong or has expired. Check it or request a new one.",
+    "signedIn": "Signed in as {email}.",
+    "deleted": "Account deleted.",
+    "deleteFailed": "Deletion failed. Try again, or write to us (address at the bottom of the page)."
+  }</script>
+  <script type="module" src="../assets/site.js"></script>
+</body>
+</html>

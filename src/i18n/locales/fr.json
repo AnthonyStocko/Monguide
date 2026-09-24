@@ -605,7 +605,9 @@
       "title": "Recherches et position",
       "text": [
         "Pour préparer un séjour, l’application envoie à nos serveurs les lieux nécessaires au calcul (destination, hébergements, position si vous l’autorisez). Ils ne sont pas conservés en clair : nos caches et nos journaux techniques n’en gardent qu’une position arrondie (environ 1 km).",
-        "Nos journaux techniques ne contiennent ni adresse e-mail, ni adresse postale."
+        "Nos journaux techniques ne contiennent ni adresse e-mail, ni adresse postale.",
+        "La recherche d’adresses et « Utiliser ma position » passent par le service Photon (komoot, Allemagne), sans aucune information sur votre compte.",
+        "Pour limiter les abus, le serveur garde un jour une empreinte irréversible de l’adresse IP, jamais l’adresse IP elle-même."
       ]
     },
     "purpose": {
@@ -639,7 +641,8 @@
       "text": [
         "Pour toute question sur vos données :"
       ]
-    }
+    },
+    "online": "Version complète, consultable sans compte :"
   },
   "tracking": {
     "status": {
@@ -840,7 +843,20 @@
       "wikidata": "patrimoine et musées",
       "ember": "intensité carbone de l’électricité",
       "oilBulletin": "prix des carburants",
-      "ecb": "taux de change"
+      "ecb": "taux de change",
+      "geoApi": "découpage administratif (départements)"
     }
+  },
+  "about": {
+    "title": "À propos et sources des données",
+    "version": "Version {{version}}",
+    "indicative": "Les temps de trajet, distances, émissions et informations des lieux (horaires d’ouverture, accessibilité, spécialités) sont indicatifs : vérifiez-les avant de vous déplacer.",
+    "sourcesTitle": "Sources des données",
+    "license": "Licence : {{license}}",
+    "visit": "Site de {{name}}",
+    "mapTiles": "Fond de carte : tuiles OpenStreetMap (© contributeurs OpenStreetMap, ODbL), chargées directement par l’application.",
+    "creditsTitle": "Composants utilisés",
+    "privacyOnline": "Politique de confidentialité (en ligne)",
+    "deleteOnline": "Supprimer mon compte depuis un navigateur"
   }
 }

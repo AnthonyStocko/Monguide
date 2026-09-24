@@ -5,7 +5,7 @@ const request = (origin) =>
   new Request('https://x.supabase.co/functions/v1/config', { headers: origin ? { Origin: origin } : {} });
 
 describe('corsHeaders', () => {
-  it.each(['https://localhost', 'capacitor://localhost', 'http://localhost:5173'])('autorise %s', (origin) => {
+  it.each(['https://localhost', 'capacitor://localhost', 'http://localhost:5173', 'https://anthonystocko.github.io'])('autorise %s', (origin) => {
     expect(corsHeaders(request(origin))['Access-Control-Allow-Origin']).toBe(origin);
   });
 

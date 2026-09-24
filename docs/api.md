@@ -77,7 +77,10 @@ l'en-tête `Retry-After` (secondes).
 ### CORS
 
 Origines autorisées : `https://localhost` (Android), `capacitor://localhost`
-(iOS, plus tard), `http://localhost:5173` (développement). En-tête exposé :
+(iOS, plus tard), `http://localhost:5173` (développement),
+`https://anthonystocko.github.io` (pages web publiques : suppression de
+compte depuis un navigateur, qui appelle `config` et `delete-account` avec
+les mêmes en-têtes de version que l'application). En-tête exposé :
 `Retry-After`.
 
 ### Cache
@@ -387,3 +390,4 @@ pg_cron `monguide-purge-deleted-trips` efface les marqueurs de plus de
 | 1 | 2026-09-24 | Ajout compatible : fonction `generate`. |
 | 1 | 2026-09-24 | Ajouts compatibles : table `trips` (RLS), fonction `delete-account`, champ `contact` de `config`. |
 | 1 | 2026-09-24 | Ajouts compatibles : `geocode` renvoie tous les pays (`timezone` null hors liste) ; `places` : sources avec `durationMs`, `query`, message `fallback_osm` ; fonctions `holidays`, `fuel`, `fuel-eu-refresh` ; code `403 forbidden`. |
+| 1 | 2026-09-24 | Ajout compatible : origine CORS `https://anthonystocko.github.io` (pages web publiques). |

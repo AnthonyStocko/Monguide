@@ -19,3 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Mon guide (release minifiée) : les règles de Capacitor gardent les plugins
+# (@CapacitorPlugin, sous-classes de com.getcapacitor.Plugin). On garde en plus
+# le pont JavaScript de la WebView et les annotations lues par réflexion.
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}

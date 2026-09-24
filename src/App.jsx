@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate } from 'react-router';
 import AppLayout from './components/layout/AppLayout.jsx';
 import UpdateRequiredScreen from './components/layout/UpdateRequiredScreen.jsx';
 import { useConfig } from './hooks/useConfig.js';
+import AboutPage from './pages/AboutPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
 import CreatePage from './pages/CreatePage.jsx';
 import DebugPage from './pages/DebugPage.jsx';
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="debug" element={<DebugPage />} />
           <Route path="account" element={<AccountPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
+          <Route path="about" element={<AboutPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

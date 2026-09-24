@@ -1,0 +1,82 @@
+/* Pages publiques de Mon guide (GitHub Pages) : mêmes couleurs que l'application,
+   texte de 16 px au moins, zones tactiles de 48 px, thème sombre. */
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --muted: #475569;
+  --line: #e2e8f0;
+  --primary: #047857;
+  --primary-hover: #065f46;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+  --ok-soft: #d1fae5;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1220;
+    --surface: #111827;
+    --ink: #f1f5f9;
+    --muted: #cbd5e1;
+    --line: #334155;
+    --primary: #34d399;
+    --primary-hover: #6ee7b7;
+    --danger: #fca5a5;
+    --danger-soft: #450a0a;
+    --ok-soft: #064e3b;
+  }
+}
+* { box-sizing: border-box; }
+html { font-size: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 1rem/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+header, main, footer { max-width: 44rem; margin: 0 auto; padding: 1rem; }
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; border-bottom: 1px solid var(--line); }
+header .brand { font-weight: 700; font-size: 1.25rem; color: var(--ink); text-decoration: none; }
+nav a, .lang a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 0.5rem; }
+a { color: var(--primary); }
+a:hover { color: var(--primary-hover); }
+h1 { font-size: 1.75rem; line-height: 1.25; }
+h2 { font-size: 1.25rem; margin-top: 2rem; }
+section { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; padding: 0.25rem 1rem 1rem; margin: 1rem 0; }
+.muted { color: var(--muted); }
+label { display: block; font-weight: 600; margin: 1rem 0 0.25rem; }
+input[type='email'], input[type='text'] {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 0.75rem;
+  font-size: 1rem;
+  border: 2px solid var(--muted);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  color: var(--ink);
+}
+input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.check { display: flex; gap: 0.75rem; align-items: flex-start; font-weight: 400; min-height: 48px; }
+.check input { width: 1.5rem; height: 1.5rem; margin-top: 0.1rem; accent-color: var(--primary); }
+button {
+  min-height: 48px;
+  margin-top: 1rem;
+  padding: 0 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+}
+@media (prefers-color-scheme: dark) { button { color: #0b1220; } }
+button.secondary { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+button.danger { background: var(--danger); }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.message { border-radius: 0.75rem; padding: 0.75rem 1rem; margin-top: 1rem; font-weight: 600; }
+.message.error { background: var(--danger-soft); color: var(--danger); }
+.message.ok { background: var(--ok-soft); }
+[hidden] { display: none !important; }
+footer { color: var(--muted); font-size: 1rem; }

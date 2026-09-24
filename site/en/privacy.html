@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy policy — Mon guide</title>
+  <meta name="description" content="Data collected by the Mon guide app, purpose, hosting, retention and your rights.">
+  <link rel="alternate" hreflang="fr" href="../fr/confidentialite.html">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="../index.html">Mon guide</a>
+    <nav class="lang" aria-label="Language"><a href="../fr/confidentialite.html" hreflang="fr" lang="fr">Français</a></nav>
+  </header>
+  <main>
+    <h1>Privacy policy</h1>
+    <p class="muted">“Mon guide” Android app. Last updated: 24 September 2026.</p>
+
+    <section>
+      <h2>In short</h2>
+      <ul>
+        <li>Without an account, your trips stay on your phone.</li>
+        <li>With an account, only your email address and your trips are kept, so you can find them on your devices.</li>
+        <li>No advertising, no tracking, no analytics, no sale of data.</li>
+        <li>Data hosted in the European Union. You can delete your account at any time.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Data collected</h2>
+      <ul>
+        <li><strong>Email address</strong> (account only): to send you the sign-in code and identify your account.</li>
+        <li><strong>Trips</strong> (account only): destination, dates, preferences, plan, including the <strong>addresses of your accommodation</strong> and of the <strong>places of your personal stops</strong>, with their titles and notes.</li>
+        <li><strong>Location at the time of use</strong>: only if you tap “Use my location” (Android asks for permission at that moment). It is used to find the matching address and is not stored as such.</li>
+        <li><strong>Places you search for</strong> (destination, accommodation): sent to our server to prepare the trip.</li>
+      </ul>
+      <p>Reminders (notifications) are scheduled on your phone: their content never leaves the device.</p>
+    </section>
+
+    <section>
+      <h2>Purpose</h2>
+      <p>This data is only used to prepare your trips, sign you in and find your trips on your devices. It is never sold, rented, or used for advertising or profiling.</p>
+    </section>
+
+    <section>
+      <h2>Data hosting</h2>
+      <p>Accounts, trips and the server are hosted by <strong>Supabase</strong>, in its European Union region (Ireland). Communications between the app and the server are encrypted (HTTPS).</p>
+    </section>
+
+    <section>
+      <h2>How the server processes requests</h2>
+      <p>To prepare a trip, our server queries public data services (OpenStreetMap, Photon, Open-Meteo, Wikidata, French Ministry of Culture data, public holidays…). It sends them the places needed for the calculation, never your email address.</p>
+      <p>Address search and “Use my location” go through the Photon service (komoot, Germany), which receives the searched text or the location, with no information about your account.</p>
+      <p>Locations are not stored as such: our caches and technical logs only keep a rounded value (about 1 km). Logs contain no email address and no street address. To prevent abuse, the server keeps an irreversible fingerprint (salted hash) of the IP address for one day, never the IP address itself.</p>
+      <p>The base map is loaded by the app directly from the OpenStreetMap tile servers, which therefore receive your phone's IP address (<a href="https://osmfoundation.org/wiki/Privacy_Policy">OpenStreetMap Foundation privacy policy</a>).</p>
+    </section>
+
+    <section>
+      <h2>Retention</h2>
+      <ul>
+        <li>Email address and trips: as long as your account exists.</li>
+        <li>Deleted trip: erased from the server immediately; only a technical marker with no content is kept for 90 days to pass the deletion on to your other devices.</li>
+        <li>Account deletion: the account and all its trips are erased immediately.</li>
+        <li>Data without an account: only on your phone, until you delete it or uninstall the app.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Your rights (GDPR)</h2>
+      <p>You have the right to access, correct, erase, restrict, object to the processing of, and port your data.</p>
+      <ul>
+        <li>Delete your account: in the app (Settings &gt; Delete my account) or <a href="delete-account.html">from a browser</a>.</li>
+        <li>Export your trips: in the app (Plan &gt; Export to PDF).</li>
+        <li>Any other request: write to us at the address below; we answer within one month.</li>
+      </ul>
+      <p>You can also lodge a complaint with your data protection authority (in France, the CNIL: <a href="https://www.cnil.fr">cnil.fr</a>).</p>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <p>For any question about your data: <span data-contact>loading…</span></p>
+    </section>
+  </main>
+  <footer><p><a href="delete-account.html">Delete my account</a> · <a href="../index.html">Home</a></p></footer>
+  <script id="texts" type="application/json">{ "contactUnavailable": "address temporarily unavailable, try again later." }</script>
+  <script type="module" src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { ChevronRight, ShieldCheck, Stethoscope, UserRound } from 'lucide-react';
+import { ChevronRight, Info, ShieldCheck, Stethoscope, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import DeleteAccountSection from '../components/account/DeleteAccountSection.jsx';
@@ -51,6 +51,7 @@ export default function SettingsPage() {
       <Card as="section" className="space-y-1 p-2">
         {link('/account', UserRound, session ? t('auth.myAccount') : t('auth.title'))}
         {link('/privacy', ShieldCheck, t('privacy.title'))}
+        {link('/about', Info, t('about.title'))}
         {link('/debug', Stethoscope, t('debug.title'))}
       </Card>
 

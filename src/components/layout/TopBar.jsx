@@ -14,11 +14,12 @@ const TITLES = {
   '/settings': 'nav.settings',
   '/debug': 'debug.title',
   '/account': 'auth.title',
-  '/privacy': 'privacy.title'
+  '/privacy': 'privacy.title',
+  '/about': 'about.title'
 };
 
 // Pages secondaires : bouton Retour au lieu du bouton Réglages.
-const SUB_PAGES = ['/settings', '/debug', '/account', '/privacy'];
+const SUB_PAGES = ['/settings', '/debug', '/account', '/privacy', '/about'];
 
 export default function TopBar() {
   const { t } = useTranslation();

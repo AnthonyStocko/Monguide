@@ -8,3 +8,6 @@ dist/
 supabase/.temp/
 supabase/.branches/
 *.stackdump
+
+# Pages publiques : configuration générée au déploiement (pages.yml)
+site/config.js

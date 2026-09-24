@@ -7,8 +7,10 @@ android {
         applicationId "com.monguide.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Release : versionCode incrémenté et versionName = tag Git, fournis par le
+        // workflow release.yml (-PmonguideVersionCode, -PmonguideVersionName).
+        versionCode((project.findProperty('monguideVersionCode') ?: '1') as Integer)
+        versionName((project.findProperty('monguideVersionName') ?: '0.0.0-dev') as String)
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -35,8 +37,11 @@ android {
             if (keystorePropertiesFile.exists()) {
                 signingConfig signingConfigs.release
             }
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Minification et obfuscation (R8) ; les règles de Capacitor et des plugins
+            // sont fournies par leurs bibliothèques (consumerProguardFiles).
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

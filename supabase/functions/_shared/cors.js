@@ -1,7 +1,10 @@
 import { corsHeaders as supabaseCorsHeaders } from '@supabase/supabase-js/cors';
 
-/** Origines autorisées : application Android, iOS (plus tard), développement. */
-export const ALLOWED_ORIGINS = ['https://localhost', 'capacitor://localhost', 'http://localhost:5173'];
+/**
+ * Origines autorisées : application Android, iOS (plus tard), développement,
+ * et pages web publiques (GitHub Pages : page de suppression de compte).
+ */
+export const ALLOWED_ORIGINS = ['https://localhost', 'capacitor://localhost', 'http://localhost:5173', 'https://anthonystocko.github.io'];
 
 // En-têtes envoyés par le SDK Supabase (liste tenue à jour par le SDK) + ceux de Mon guide.
 const ALLOWED_HEADERS = `${supabaseCorsHeaders['Access-Control-Allow-Headers']}, x-monguide-api, x-monguide-app`;

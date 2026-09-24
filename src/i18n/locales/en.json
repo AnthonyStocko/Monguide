@@ -605,7 +605,9 @@
       "title": "Searches and location",
       "text": [
         "To prepare a trip, the app sends our servers the places needed for the calculation (destination, accommodation, your location if you allow it). They are not stored as such: our caches and technical logs only keep a rounded position (about 1 km).",
-        "Our technical logs contain no email address or street address."
+        "Our technical logs contain no email address or street address.",
+        "Address search and “Use my location” go through the Photon service (komoot, Germany), with no information about your account.",
+        "To prevent abuse, the server keeps an irreversible fingerprint of the IP address for one day, never the IP address itself."
       ]
     },
     "purpose": {
@@ -639,7 +641,8 @@
       "text": [
         "For any question about your data:"
       ]
-    }
+    },
+    "online": "Full version, available without an account:"
   },
   "tracking": {
     "status": {
@@ -840,7 +843,20 @@
       "wikidata": "heritage and museums",
       "ember": "carbon intensity of electricity",
       "oilBulletin": "fuel prices",
-      "ecb": "exchange rates"
+      "ecb": "exchange rates",
+      "geoApi": "administrative areas (départements)"
     }
+  },
+  "about": {
+    "title": "About and data sources",
+    "version": "Version {{version}}",
+    "indicative": "Travel times, distances, emissions and place information (opening hours, accessibility, specialities) are indicative: check them before you go.",
+    "sourcesTitle": "Data sources",
+    "license": "Licence: {{license}}",
+    "visit": "{{name}} website",
+    "mapTiles": "Base map: OpenStreetMap tiles (© OpenStreetMap contributors, ODbL), loaded directly by the app.",
+    "creditsTitle": "Components used",
+    "privacyOnline": "Privacy policy (online)",
+    "deleteOnline": "Delete my account from a browser"
   }
 }

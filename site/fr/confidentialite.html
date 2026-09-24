@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Politique de confidentialité — Mon guide</title>
+  <meta name="description" content="Données collectées par l'application Mon guide, finalité, hébergement, conservation et droits.">
+  <link rel="alternate" hreflang="en" href="../en/privacy.html">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="../index.html">Mon guide</a>
+    <nav class="lang" aria-label="Langue"><a href="../en/privacy.html" hreflang="en" lang="en">English</a></nav>
+  </header>
+  <main>
+    <h1>Politique de confidentialité</h1>
+    <p class="muted">Application Android « Mon guide ». Dernière mise à jour : 24 septembre 2026.</p>
+
+    <section>
+      <h2>En bref</h2>
+      <ul>
+        <li>Sans compte, vos séjours restent sur votre téléphone.</li>
+        <li>Avec un compte, seuls votre adresse e-mail et vos séjours sont conservés, pour les retrouver sur vos appareils.</li>
+        <li>Aucune publicité, aucun suivi, aucune mesure d'audience, aucune revente de données.</li>
+        <li>Données hébergées dans l'Union européenne. Vous pouvez supprimer votre compte à tout moment.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Données collectées</h2>
+      <ul>
+        <li><strong>Adresse e-mail</strong> (avec un compte seulement) : pour vous envoyer le code de connexion et identifier votre compte.</li>
+        <li><strong>Séjours</strong> (avec un compte seulement) : destination, dates, préférences, planning, y compris les <strong>adresses de vos hébergements</strong> et des <strong>lieux de vos étapes personnelles</strong>, avec leurs titres et notes.</li>
+        <li><strong>Position au moment de l'utilisation</strong> : seulement si vous touchez « Utiliser ma position » (autorisation demandée par Android à ce moment-là). Elle sert à retrouver l'adresse correspondante et n'est pas conservée en tant que telle.</li>
+        <li><strong>Lieux recherchés</strong> (destination, hébergements) : envoyés à notre serveur pour préparer le séjour.</li>
+      </ul>
+      <p>Les rappels (notifications) sont programmés sur votre téléphone : leur contenu ne quitte pas l'appareil.</p>
+    </section>
+
+    <section>
+      <h2>Finalité</h2>
+      <p>Ces données servent uniquement à préparer vos séjours, à vous connecter et à retrouver vos séjours sur vos appareils. Elles ne sont ni vendues, ni louées, ni utilisées à des fins publicitaires ou de profilage.</p>
+    </section>
+
+    <section>
+      <h2>Hébergement des données</h2>
+      <p>Comptes, séjours et serveur sont hébergés par <strong>Supabase</strong>, dans sa région de l'Union européenne (Irlande). Les communications entre l'application et le serveur sont chiffrées (HTTPS).</p>
+    </section>
+
+    <section>
+      <h2>Traitement des demandes par le serveur</h2>
+      <p>Pour préparer un séjour, notre serveur interroge des services de données publiques (OpenStreetMap, Photon, Open-Meteo, Wikidata, données du ministère de la Culture, jours fériés…). Il leur transmet les lieux nécessaires au calcul, jamais votre adresse e-mail.</p>
+      <p>La recherche d'adresses et « Utiliser ma position » passent par le service Photon (komoot, Allemagne), qui reçoit le texte recherché ou la position, sans aucune information sur votre compte.</p>
+      <p>Les positions ne sont pas conservées en clair : nos caches et nos journaux techniques n'en gardent qu'une valeur arrondie (environ 1 km). Les journaux ne contiennent ni adresse e-mail, ni adresse postale. Pour limiter les abus, le serveur conserve une empreinte irréversible (hachage salé) de l'adresse IP pendant un jour, jamais l'adresse IP elle-même.</p>
+      <p>Le fond de carte est chargé par l'application directement depuis les serveurs de tuiles d'OpenStreetMap, qui reçoivent donc l'adresse IP de votre téléphone (<a href="https://osmfoundation.org/wiki/Privacy_Policy">politique de confidentialité de la fondation OpenStreetMap</a>).</p>
+    </section>
+
+    <section>
+      <h2>Durée de conservation</h2>
+      <ul>
+        <li>Adresse e-mail et séjours : tant que votre compte existe.</li>
+        <li>Séjour supprimé : effacé immédiatement du serveur ; seul un marqueur technique sans contenu est conservé 90 jours, pour propager la suppression à vos autres appareils.</li>
+        <li>Suppression du compte : le compte et tous ses séjours sont effacés immédiatement.</li>
+        <li>Données sans compte : uniquement sur votre téléphone, jusqu'à ce que vous les supprimiez ou désinstalliez l'application.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Vos droits (RGPD)</h2>
+      <p>Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données.</p>
+      <ul>
+        <li>Supprimer votre compte : dans l'application (Réglages &gt; Supprimer mon compte) ou <a href="suppression-compte.html">depuis un navigateur</a>.</li>
+        <li>Exporter vos séjours : dans l'application (Planning &gt; Exporter en PDF).</li>
+        <li>Toute autre demande : écrivez-nous à l'adresse ci-dessous ; nous répondons sous un mois.</li>
+      </ul>
+      <p>Vous pouvez aussi adresser une réclamation à la CNIL (<a href="https://www.cnil.fr">cnil.fr</a>).</p>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <p>Pour toute question sur vos données : <span data-contact>chargement…</span></p>
+    </section>
+  </main>
+  <footer><p><a href="suppression-compte.html">Supprimer mon compte</a> · <a href="../index.html">Accueil</a></p></footer>
+  <script id="texts" type="application/json">{ "contactUnavailable": "adresse momentanément indisponible, réessayez plus tard." }</script>
+  <script type="module" src="../assets/site.js"></script>
+</body>
+</html>

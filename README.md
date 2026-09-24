@@ -66,6 +66,44 @@ redémarrage du téléphone). `USE_EXACT_ALARM`, réservée par Google Play aux
 réveils et agendas, n'est jamais déclarée (le workflow le vérifie dans le
 manifeste fusionné).
 
+## Publication sur Google Play
+
+- **Release signée** : pousser un tag `vX.Y.Z` (`git tag v1.0.0 && git push
+  origin v1.0.0`). Le workflow `.github/workflows/release.yml` construit
+  l'Android App Bundle (`.aab`, format exigé par Google Play) et une APK
+  release de test, minifiés (R8) et signés, publiés en artefacts
+  (`mon-guide-X.Y.Z-aab`, `mon-guide-X.Y.Z-release-apk`). `versionName` = tag
+  sans le « v » (aussi affichée dans l'application) ; `versionCode` = numéro
+  d'exécution du workflow, qui augmente à chaque release.
+- **Keystore d'upload** : jamais dans le dépôt (`*.jks` et
+  `keystore.properties` sont exclus par `android/.gitignore`). Il est fourni
+  au workflow par les secrets GitHub `ANDROID_KEYSTORE_BASE64` (fichier en
+  base64), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` et
+  `ANDROID_KEY_PASSWORD`. **Sauvegarder le fichier `.jks` et ses mots de
+  passe hors de GitHub** (gestionnaire de mots de passe, sauvegarde chiffrée) :
+  les secrets GitHub ne peuvent pas être relus.
+- **Signature des applications par Google Play (recommandée)** : à activer à la
+  création de l'application dans la Play Console. Google conserve la clé de
+  signature ; le keystore du dépôt n'est qu'une clé d'upload, réinitialisable
+  auprès de Google en cas de perte. Sans elle, perdre le keystore empêche
+  toute mise à jour de l'application.
+- **Build release en local** (facultatif) : créer `android/keystore.properties`
+  (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`), puis
+  `cd android && ./gradlew bundleRelease -PmonguideVersionCode=1 -PmonguideVersionName=1.0.0`.
+- **Fiche, sécurité des données, checklist** : dossier `store/`
+  (`node store/check-listing.mjs` vérifie les longueurs de la fiche).
+
+## Pages web publiques
+
+Le dossier `site/` (politique de confidentialité et suppression de compte,
+en français et en anglais) est publié sur GitHub Pages par
+`.github/workflows/pages.yml` : https://anthonystocko.github.io/Monguide/.
+`site/config.js` (URL et clé publique Supabase) est généré au déploiement
+depuis les secrets GitHub et n'est pas versionné. La page de suppression
+utilise la même connexion par code e-mail que l'application (sans jamais
+créer de compte), puis la fonction `delete-account` ; l'origine
+`https://anthonystocko.github.io` est autorisée par le serveur (CORS).
+
 ## Pays pris en charge (32)
 
 Union européenne : Allemagne, Autriche, Belgique, Bulgarie, Chypre, Croatie,

@@ -15,6 +15,7 @@ export const DATA_SOURCES = Object.freeze([
   { id: 'nagerDate', name: 'Nager.Date', holder: 'Nager.Date', license: 'MIT', url: 'https://date.nager.at', scope: 'all' },
   { id: 'ademe', name: 'Base Carbone®', holder: 'ADEME', license: 'Licence Ouverte (Etalab)', url: 'https://base-empreinte.ademe.fr', scope: 'all' },
   { id: 'culture', name: 'Mérimée et Muséofile', holder: 'Ministère de la Culture', license: 'Licence Ouverte (Etalab)', url: 'https://www.data.gouv.fr', scope: 'fr' },
+  { id: 'geoApi', name: 'API Géo', holder: 'Etalab (geo.api.gouv.fr)', license: 'Licence Ouverte (Etalab)', url: 'https://geo.api.gouv.fr', scope: 'fr' },
   { id: 'inao', name: 'Aires géographiques des AOC/AOP', holder: 'INAO', license: 'Licence Ouverte (Etalab)', url: 'https://www.data.gouv.fr', scope: 'fr' },
   { id: 'fuelFr', name: 'Prix des carburants', holder: 'Ministère de l’Économie', license: 'Licence Ouverte (Etalab)', url: 'https://www.data.gouv.fr', scope: 'fr', carOnly: true },
   { id: 'wikidata', name: 'Wikidata', holder: 'Wikimedia Foundation', license: 'CC0 1.0', url: 'https://www.wikidata.org', scope: 'eu' },
