@@ -437,3 +437,18 @@ entrypoint = "./functions/weather/index.js"
 verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/places/index.js"
+
+[functions.holidays]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/holidays/index.js"
+
+[functions.fuel]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/fuel/index.js"
+
+[functions.fuel-eu-refresh]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/fuel-eu-refresh/index.js"

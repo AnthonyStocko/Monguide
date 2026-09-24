@@ -118,7 +118,25 @@
       "appellations": "Appellations du terroir : {{count}}",
       "indoor": "Intérieur",
       "outdoor": "Extérieur",
-      "unknown": "Intérieur ou extérieur : inconnu"
+      "unknown": "Intérieur ou extérieur : inconnu",
+      "origin": "Source : {{source}}"
+    },
+    "holidays": {
+      "title": "Jours fériés (holidays)",
+      "hint": "Jours fériés des 12 prochains mois dans le pays de destination.",
+      "run": "Voir les jours fériés",
+      "none": "Aucun jour férié sur la période.",
+      "regional": "Férié dans certaines régions"
+    },
+    "fuel": {
+      "title": "Carburant (fuel)",
+      "run": "Voir les prix",
+      "unavailable": "Prix du carburant indisponible pour ce pays.",
+      "estimate": "Estimation",
+      "official": "Prix officiels",
+      "date": "Prix du {{date}}",
+      "perLitre": "{{price}} / litre",
+      "source": "Source : {{source}}"
     }
   },
   "categories": {
@@ -134,7 +152,9 @@
   },
   "certifications": {
     "monument_historique": "Monument historique",
-    "musee_de_france": "Musée de France"
+    "musee_de_france": "Musée de France",
+    "protected_heritage": "Patrimoine protégé",
+    "referenced_museum": "Musée référencé"
   },
   "sources": {
     "status": {
@@ -145,12 +165,12 @@
     "failed": "Source momentanément indisponible.",
     "stale": "Données enregistrées : la source est momentanément indisponible.",
     "monuments": {
-      "name": "Monuments historiques",
-      "failed": "Monuments historiques momentanément indisponibles."
+      "name": "Monuments protégés",
+      "failed": "Monuments momentanément indisponibles."
     },
     "museums": {
-      "name": "Musées de France",
-      "failed": "Musées de France momentanément indisponibles."
+      "name": "Musées",
+      "failed": "Musées momentanément indisponibles."
     },
     "osm": {
       "name": "Marchés, restaurants et petit patrimoine (OpenStreetMap)",
@@ -159,7 +179,11 @@
     "terroir": {
       "name": "Produits du terroir (AOC/AOP)",
       "failed": "Produits du terroir momentanément indisponibles."
-    }
+    },
+    "duration": "{{value}} s",
+    "fallbackOsm": "Données issues d’OpenStreetMap : Wikidata est momentanément indisponible.",
+    "noRegionalData": "Pas de spécialité locale référencée pour cette région.",
+    "query": "Voir la requête envoyée"
   },
   "food": {
     "cuisine": "Cuisine",
@@ -174,5 +198,20 @@
     "vegetarian": "Végétarien",
     "phone": "Téléphone",
     "website": "Site"
+  },
+  "destination": {
+    "unsupported": "Cette destination n’est pas encore prise en charge.",
+    "unsupportedShort": "pas encore prise en charge"
+  },
+  "holiday": {
+    "badge": "Jour férié : horaires susceptibles de changer"
+  },
+  "fuels": {
+    "sp95": "Sans plomb 95",
+    "sp98": "Sans plomb 98",
+    "e10": "SP95-E10",
+    "e85": "Superéthanol E85",
+    "diesel": "Gazole",
+    "lpg": "GPL"
   }
 }

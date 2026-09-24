@@ -27,12 +27,21 @@ export const SCHEMA_VERSION = 1;
  * @property {number} lon
  * @property {string} source nom de la source (ex. "monuments", "museums", "osm")
  * @property {boolean} certified lieu labellisé par une source officielle
- * @property {string} [certification] code du label (ex. "monument_historique", "musee_de_france"), traduit par l'application
+ * @property {Certification} [certification] code du label, traduit par l'application
+ * @property {string} [wikidata] identifiant Wikidata (ex. "Q1234") : deux lieux de même identifiant sont un seul lieu
  * @property {boolean | null} indoor true intérieur, false extérieur, null inconnu (traité comme extérieur)
  * @property {string} [description]
  * @property {string} [url]
  * @property {PlaceFood} [food]
  */
+
+/**
+ * @typedef {'monument_historique' | 'musee_de_france' | 'protected_heritage' | 'referenced_museum'} Certification
+ * France : Mérimée, Muséofile ; autres pays : Wikidata (ou OpenStreetMap en repli).
+ */
+
+/** @type {readonly Certification[]} */
+export const CERTIFICATIONS = Object.freeze(['monument_historique', 'musee_de_france', 'protected_heritage', 'referenced_museum']);
 
 /**
  * @typedef {'museum' | 'monument' | 'restaurant' | 'market' | 'farm' | 'park' | 'nature' | 'viewpoint' | 'small_heritage'} PlaceCategory
@@ -138,6 +147,8 @@ export function isPlace(place) {
   if (!isFiniteNumber(p.lon) || p.lon < -180 || p.lon > 180) return false;
   if (typeof p.source !== 'string' || typeof p.certified !== 'boolean') return false;
   if (!(p.indoor === null || typeof p.indoor === 'boolean')) return false;
+  if (p.certification !== undefined && !CERTIFICATIONS.includes(p.certification)) return false;
+  if (p.wikidata !== undefined && !/^Q\d+$/.test(p.wikidata)) return false;
   if (p.food !== undefined) {
     if (!p.food || typeof p.food.regional !== 'boolean') return false;
     if (p.food.wheelchair !== undefined && !WHEELCHAIR.includes(p.food.wheelchair)) return false;

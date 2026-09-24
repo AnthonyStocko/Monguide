@@ -1,8 +1,9 @@
-import { countryInfo } from '../domain/countries.js';
+import { countryInfo } from '../domain/config/countries.js';
+import eu from './eu/index.js';
 import fr from './fr/index.js';
 
 /** @type {Record<string, import('./types.js').CountryProvider>} */
-const PROVIDERS = { fr };
+const PROVIDERS = { fr, eu };
 
 /**
  * Fournisseur de données du pays de la destination ; null si le pays n'est

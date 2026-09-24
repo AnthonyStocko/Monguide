@@ -37,6 +37,7 @@ export async function collectPlaces(provider, point, radiusKm, { lunch }, ctx) {
   return {
     places,
     appellations: terroir.data ?? [],
-    sources: outcomes.map(({ name, status, message }) => (message ? { name, status, message } : { name, status }))
+    // État de chaque source, sans ses données (durée et requête incluses pour le diagnostic).
+    sources: outcomes.map(({ data, ...source }) => source)
   };
 }

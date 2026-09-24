@@ -21,7 +21,7 @@ describe('merimeeToPlace', () => {
       category: 'monument',
       lat: 45.9880320673964,
       lon: 4.71817168046388,
-      source: 'monuments',
+      source: 'merimee',
       certified: true,
       certification: 'monument_historique',
       indoor: true,

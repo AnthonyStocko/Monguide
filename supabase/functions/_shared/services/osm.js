@@ -1,7 +1,7 @@
 import { boundingBox, distanceKm } from '../domain/geo.js';
 import { ExternalError } from '../errors.js';
 import { fetchExternal } from '../http.js';
-import { osmElementToPlace } from './osmMapping.js';
+import { osmElementToPlace, osmHeritageElementToPlace } from './osmMapping.js';
 
 /**
  * Instance Overpass (secret OVERPASS_URL pour une autre instance ou un test).
@@ -56,18 +56,15 @@ export function buildOverpassQuery(point, radiusKm, rules, { includeRestaurants 
 }
 
 /**
- * Lieux OpenStreetMap autour d'un point. Exception à la règle HTTP globale :
- * délai client strict (rules.osm.timeoutSec) et UN SEUL essai : pas de
- * nouvelle tentative, en particulier sur 429 et 504, car réessayer aggrave le
- * blocage. L'échec est géré par l'appelant (cache, ou source "failed").
- *
- * @param {{ lat: number, lon: number }} point
- * @param {number} radiusKm
- * @param {{ rules: any, lang: string, includeRestaurants: boolean }} options
- * @returns {Promise<import('../domain/model.js').Place[]>}
+ * Exécute une requête Overpass. Exception à la règle HTTP globale : délai
+ * client strict (rules.osm.timeoutSec) et UN SEUL essai : pas de nouvelle
+ * tentative, en particulier sur 429 et 504, car réessayer aggrave le blocage.
+ * L'échec est géré par l'appelant (cache, ou source "failed").
+ * @param {string} query
+ * @param {any} rules
+ * @returns {Promise<any[]>} éléments
  */
-export async function fetchOsmPlaces(point, radiusKm, { rules, lang, includeRestaurants }) {
-  const query = buildOverpassQuery(point, radiusKm, rules, { includeRestaurants });
+async function runOverpass(query, rules) {
   const res = await fetchExternal(OVERPASS_URL(), {
     source: 'overpass',
     method: 'POST',
@@ -85,10 +82,53 @@ export async function fetchOsmPlaces(point, radiusKm, { rules, lang, includeRest
   // Overpass peut répondre 200 avec une erreur d'exécution (délai dépassé) :
   // c'est un échec, surtout pas un résultat vide à mettre en cache.
   if (typeof json.remark === 'string' && /error/i.test(json.remark)) throw new ExternalError('overpass', 504, false);
+  return json.elements ?? [];
+}
 
+/**
+ * Lieux OpenStreetMap autour d'un point (marchés, restaurants, nature, petit
+ * patrimoine), limités au rayon.
+ * @param {{ lat: number, lon: number }} point
+ * @param {number} radiusKm
+ * @param {{ rules: any, lang: string, includeRestaurants: boolean }} options
+ * @returns {Promise<import('../domain/model.js').Place[]>}
+ */
+export async function fetchOsmPlaces(point, radiusKm, { rules, lang, includeRestaurants }) {
+  const elements = await runOverpass(buildOverpassQuery(point, radiusKm, rules, { includeRestaurants }), rules);
   const options = { lang, regionalCuisines: rules.places.regionalCuisines };
   const foodRadiusKm = Math.min(radiusKm, rules.osm.restaurantRadiusKm);
-  return (json.elements ?? [])
+  return elements
     .map((el) => osmElementToPlace(el, options))
     .filter((p) => p && distanceKm(point, p) <= (p.category === 'restaurant' ? foodRadiusKm : radiusKm));
+}
+
+/**
+ * Requête de repli du patrimoine quand Wikidata échoue : monuments protégés
+ * (heritage=1 ou 2) et musées (tourism=museum), 150 de chaque au plus.
+ * @param {{ lat: number, lon: number }} point
+ * @param {number} radiusKm
+ * @param {any} rules
+ */
+export function buildOsmHeritageQuery(point, radiusKm, rules) {
+  const r = bbox(point, radiusKm);
+  return [
+    `[out:json][timeout:${rules.osm.timeoutSec}];`,
+    `nwr["heritage"~"^(1|2)$"]["name"]${r};`,
+    'out center tags qt 150;',
+    `nwr["tourism"="museum"]["name"]${r};`,
+    'out center tags qt 150;'
+  ].join('\n');
+}
+
+/**
+ * Patrimoine OpenStreetMap (repli), séparé en monuments et musées.
+ * @param {{ lat: number, lon: number }} point
+ * @param {number} radiusKm
+ * @param {{ rules: any, lang: string }} options
+ * @returns {Promise<{ monuments: import('../domain/model.js').Place[], museums: import('../domain/model.js').Place[] }>}
+ */
+export async function fetchOsmHeritage(point, radiusKm, { rules, lang }) {
+  const elements = await runOverpass(buildOsmHeritageQuery(point, radiusKm, rules), rules);
+  const places = elements.map((el) => osmHeritageElementToPlace(el, { lang })).filter((p) => p && distanceKm(point, p) <= radiusKm);
+  return { monuments: places.filter((p) => p.category === 'monument'), museums: places.filter((p) => p.category === 'museum') };
 }

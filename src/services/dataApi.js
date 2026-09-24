@@ -1,4 +1,5 @@
 import { callFunction } from './api.js';
+import { getRules } from './rules.js';
 
 /**
  * Appels aux fonctions de données du serveur (docs/api.md). Passe par
@@ -33,5 +34,24 @@ export function getWeather(params) {
  */
 export function getPlaces(params) {
   const key = ['places', params.lat, params.lon, params.radiusKm, params.countryCode, params.lunch, params.lang].join(':');
-  return callFunction('places', { method: 'POST', body: params, cacheKey: key });
+  // Délai propre : les sources ont leurs propres délais côté serveur (Wikidata 15 s).
+  return callFunction('places', { method: 'POST', body: params, cacheKey: key, timeoutMs: getRules().api.placesTimeoutMs });
+}
+
+/**
+ * Jours fériés d'un pays entre deux dates.
+ * @param {{ countryCode: string, startDate: string, endDate: string }} params
+ */
+export function getHolidays(params) {
+  const qs = new URLSearchParams(params);
+  return callFunction(`holidays?${qs}`, { method: 'GET', cacheKey: `holidays:${qs}` });
+}
+
+/**
+ * Prix des carburants à destination, dans la monnaie du pays.
+ * @param {{ lat: number, lon: number, radiusKm: number, countryCode: string }} params
+ */
+export function getFuel(params) {
+  const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]));
+  return callFunction(`fuel?${qs}`, { method: 'GET', cacheKey: `fuel:${qs}` });
 }

@@ -1,4 +1,3 @@
-import { countryInfo } from '../domain/countries.js';
 import { fetchExternalJson } from '../http.js';
 
 /**
@@ -18,26 +17,27 @@ const PHOTON_LANGS = ['fr', 'en'];
 /**
  * @typedef {object} GeocodeResult
  * @property {string} name
- * @property {string} [region] département ou région
- * @property {string} country
+ * @property {string} [region] département, province ou région
+ * @property {string} country nom du pays, dans la langue demandée
  * @property {string} countryCode ISO 3166-1 alpha-2
  * @property {number} lat
  * @property {number} lon
- * @property {string} timezone IANA
+ * @property {string | null} timezone IANA, ajouté par la fonction geocode (null si pays non pris en charge)
  */
 
 /**
- * Convertit un résultat Photon ; null s'il n'est pas une commune d'un pays
- * pris en charge.
+ * Convertit un résultat Photon ; null s'il ne s'agit pas d'une commune.
+ * Les communes de TOUS les pays sont gardées : l'application signale celles
+ * qui ne sont pas encore prises en charge (domain/config/countries.js).
  * @param {{ properties: Record<string, any>, geometry: { coordinates: [number, number] } }} feature
- * @returns {GeocodeResult | null}
+ * @returns {Omit<GeocodeResult, 'timezone'> | null}
  */
 export function photonToResult(feature) {
   const p = feature?.properties ?? {};
   const [lon, lat] = feature?.geometry?.coordinates ?? [];
-  const country = countryInfo(p.countrycode);
-  if (!country || p.type !== 'city' || !p.name || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-  const result = { name: p.name, country: p.country ?? country.code, countryCode: country.code, lat, lon, timezone: country.timezone };
+  if (p.type !== 'city' || !p.name || typeof p.countrycode !== 'string' || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const countryCode = p.countrycode.toUpperCase();
+  const result = { name: p.name, country: p.country ?? countryCode, countryCode, lat, lon };
   const region = p.county ?? p.state;
   return region ? { ...result, region } : result;
 }
@@ -66,7 +66,7 @@ function photonParams(lang) {
  */
 export async function searchCities(q, lang, maxResults) {
   // On demande plus de résultats que nécessaire : certains sont filtrés
-  // (pays non pris en charge, doublons).
+  // (doublons, résultats qui ne sont pas des communes).
   const params = new URLSearchParams({ q, limit: String(maxResults * 2), ...photonParams(lang) });
   const json = await fetchExternalJson(`${PHOTON_URL()}/api/?${params}`, { source: 'photon' });
   return unique((json.features ?? []).map(photonToResult).filter(Boolean)).slice(0, maxResults);

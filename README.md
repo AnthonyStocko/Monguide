@@ -36,6 +36,14 @@ npm run android    # build, synchronisation Capacitor, ouverture d'Android Studi
    requêtes venant de Supabase, voir `supabase/functions/_shared/services/osm.js`)
    et `PHOTON_URL` (Photon, pour une instance dédiée en cas de diffusion large).
 
+   Tâche hebdomadaire des prix des carburants (fuel-eu-refresh) : créer une
+   fois deux secrets Vault depuis le SQL Editor (jamais dans le dépôt) :
+
+   ```sql
+   select vault.create_secret('https://<ref>.supabase.co', 'monguide_project_url');
+   select vault.create_secret('<clé service_role>', 'monguide_service_role_key');
+   ```
+
 2. Copier `.env.example` en `.env` et y mettre l'URL du projet et sa clé
    publique (Project Settings > API). Aucune autre clé dans l'application.
 

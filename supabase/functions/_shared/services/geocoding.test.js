@@ -15,13 +15,16 @@ describe('photonToResult', () => {
       country: 'France',
       countryCode: 'FR',
       lat: 45.9864749,
-      lon: 4.726611,
-      timezone: 'Europe/Paris'
+      lon: 4.726611
     });
   });
 
-  it('écarte un pays non pris en charge, un résultat qui n\'est pas une commune ou sans nom', () => {
-    expect(photonToResult(feature({ name: 'Genève', countrycode: 'CH' }))).toBeNull();
+  it("garde les communes de tous les pays (le filtrage est fait par l'application)", () => {
+    expect(photonToResult(feature({ name: 'Istanbul', countrycode: 'tr', country: 'Turquie' }))).toMatchObject({ countryCode: 'TR' });
+  });
+
+  it("écarte un résultat qui n'est pas une commune, sans nom ou sans pays", () => {
+    expect(photonToResult(feature({ name: 'X', countrycode: undefined }))).toBeNull();
     expect(photonToResult(feature({ name: 'Rue de la Paix', type: 'street' }))).toBeNull();
     expect(photonToResult(feature({ name: undefined }))).toBeNull();
     expect(photonToResult({})).toBeNull();
@@ -46,7 +49,7 @@ describe('searchCities / reverseCity', () => {
     respond([
       feature({ name: 'Villefranche-sur-Saône' }),
       feature({ name: 'Villefranche-sur-Saône' }),
-      feature({ name: 'Villefranche', countrycode: 'CH' }),
+      feature({ name: 'Rue Villefranche', type: 'street' }),
       feature({ name: 'Villefranche-de-Rouergue', county: 'Aveyron' })
     ]);
     const results = await searchCities('Villefranche', 'fr', 10);

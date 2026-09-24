@@ -14,6 +14,8 @@ describe('averageFuelPrices', () => {
     expect(averageFuelPrices(rows, POINT, 20)).toEqual({
       currency: 'EUR',
       stationCount: 2,
+      source: 'Prix des carburants en France, flux instantané v2',
+      estimate: false,
       prices: {
         diesel: { average: 2.45, stations: 2 },
         sp98: { average: 2.25, stations: 2 },
@@ -23,6 +25,6 @@ describe('averageFuelPrices', () => {
   });
 
   it('renvoie une liste vide sans station', () => {
-    expect(averageFuelPrices([], POINT, 20)).toEqual({ currency: 'EUR', stationCount: 0, prices: {} });
+    expect(averageFuelPrices([], POINT, 20)).toEqual({ currency: 'EUR', stationCount: 0, prices: {}, source: 'Prix des carburants en France, flux instantané v2', estimate: false });
   });
 });

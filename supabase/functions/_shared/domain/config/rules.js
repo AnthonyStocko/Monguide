@@ -98,6 +98,16 @@ export const RULES = Object.freeze({
     limits: { food: 80, local: 40, nature: 40, heritage: 40 }
   },
 
+  /**
+   * Requêtes Wikidata (patrimoine hors de France). Exception à la règle HTTP :
+   * délai client de 15 s, jamais de nouvelle tentative (429 compris).
+   */
+  wikidata: {
+    timeoutSec: 15,
+    /** LIMIT de chaque requête SPARQL. */
+    limit: 300
+  },
+
   terroir: {
     /** Communes voisines prises en compte autour de la destination, en km (proposition). */
     neighborRadiusKm: 10
@@ -128,7 +138,13 @@ export const RULES = Object.freeze({
   /** Appels de l'application vers le serveur. */
   api: {
     timeoutMs: 10000,
-    generateTimeoutMs: 25000
+    generateTimeoutMs: 25000,
+    /**
+     * Fonction places : ses sources ont leur propre délai côté serveur
+     * (Wikidata 15 s, Overpass 8 s) ; l'application attend donc plus que
+     * 10 s pour ne pas abandonner avant la réponse (proposition).
+     */
+    placesTimeoutMs: 20000
   },
 
   /** Appels du serveur vers les API externes (module _shared/http.js). */
@@ -157,6 +173,10 @@ export const RULES = Object.freeze({
     weather: 3600,
     heritage: 2592000,
     osm: 604800,
+    /** Wikidata : 7 jours (cahier des charges). */
+    wikidata: 604800,
+    /** Jours fériés : 30 jours (cahier des charges). */
+    holidays: 2592000,
     terroir: 2592000,
     /** Découpage administratif (départements, communes). */
     admin: 2592000,

@@ -118,7 +118,25 @@
       "appellations": "Local appellations: {{count}}",
       "indoor": "Indoor",
       "outdoor": "Outdoor",
-      "unknown": "Indoor or outdoor: unknown"
+      "unknown": "Indoor or outdoor: unknown",
+      "origin": "Source: {{source}}"
+    },
+    "holidays": {
+      "title": "Public holidays (holidays)",
+      "hint": "Public holidays over the next 12 months in the destination country.",
+      "run": "Show public holidays",
+      "none": "No public holidays in this period.",
+      "regional": "Holiday in some regions"
+    },
+    "fuel": {
+      "title": "Fuel (fuel)",
+      "run": "Show prices",
+      "unavailable": "Fuel prices unavailable for this country.",
+      "estimate": "Estimate",
+      "official": "Official prices",
+      "date": "Prices of {{date}}",
+      "perLitre": "{{price}} / litre",
+      "source": "Source: {{source}}"
     }
   },
   "categories": {
@@ -134,7 +152,9 @@
   },
   "certifications": {
     "monument_historique": "Historic monument",
-    "musee_de_france": "Musée de France"
+    "musee_de_france": "Musée de France",
+    "protected_heritage": "Protected heritage",
+    "referenced_museum": "Listed museum"
   },
   "sources": {
     "status": {
@@ -145,12 +165,12 @@
     "failed": "Source temporarily unavailable.",
     "stale": "Saved data: the source is temporarily unavailable.",
     "monuments": {
-      "name": "Historic monuments",
-      "failed": "Historic monuments temporarily unavailable."
+      "name": "Protected monuments",
+      "failed": "Monuments temporarily unavailable."
     },
     "museums": {
-      "name": "Musées de France",
-      "failed": "Musées de France temporarily unavailable."
+      "name": "Museums",
+      "failed": "Museums temporarily unavailable."
     },
     "osm": {
       "name": "Markets, restaurants and local heritage (OpenStreetMap)",
@@ -159,7 +179,11 @@
     "terroir": {
       "name": "Local produce (PDO)",
       "failed": "Local produce temporarily unavailable."
-    }
+    },
+    "duration": "{{value}} s",
+    "fallbackOsm": "Data from OpenStreetMap: Wikidata is temporarily unavailable.",
+    "noRegionalData": "No listed local specialty for this region.",
+    "query": "Show the query sent"
   },
   "food": {
     "cuisine": "Cuisine",
@@ -174,5 +198,20 @@
     "vegetarian": "Vegetarian",
     "phone": "Phone",
     "website": "Website"
+  },
+  "destination": {
+    "unsupported": "This destination is not supported yet.",
+    "unsupportedShort": "not supported yet"
+  },
+  "holiday": {
+    "badge": "Public holiday: opening hours may change"
+  },
+  "fuels": {
+    "sp95": "Unleaded 95",
+    "sp98": "Unleaded 98",
+    "e10": "E10 petrol",
+    "e85": "E85 ethanol",
+    "diesel": "Diesel",
+    "lpg": "LPG"
   }
 }

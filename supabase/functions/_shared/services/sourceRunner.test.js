@@ -24,7 +24,7 @@ describe('runSource', () => {
   it('appelle la source et met le résultat en cache (status ok)', async () => {
     const cache = memoryCache();
     const fetcher = vi.fn().mockResolvedValue(['a']);
-    expect(await runSource({ ...base, fetcher, cache })).toEqual({ name: 'osm', status: 'ok', data: ['a'] });
+    expect(await runSource({ ...base, fetcher, cache })).toEqual({ name: 'osm', status: 'ok', durationMs: expect.any(Number), data: ['a'] });
     expect(cache.set).toHaveBeenCalledWith(KEY, 'osm', ['a'], 60);
   });
 
@@ -40,18 +40,23 @@ describe('runSource', () => {
   it('resservit une copie expirée si la source échoue (status cache, stale)', async () => {
     const cache = memoryCache({ [KEY]: { value: ['old'], fresh: false } });
     const fetcher = vi.fn().mockRejectedValue(new ExternalError('overpass', 429, false));
-    expect(await runSource({ ...base, fetcher, cache })).toEqual({ name: 'osm', status: 'cache', message: 'stale', data: ['old'] });
+    expect(await runSource({ ...base, fetcher, cache })).toEqual({ name: 'osm', status: 'cache', message: 'stale', durationMs: expect.any(Number), data: ['old'] });
   });
 
   it('signale l\'échec sans lever d\'exception quand rien n\'est en cache', async () => {
     const cache = memoryCache();
     const fetcher = vi.fn().mockRejectedValue(new ExternalError('overpass', 504, false));
-    expect(await runSource({ ...base, fetcher, cache })).toEqual({ name: 'osm', status: 'failed', message: 'upstream 504' });
+    expect(await runSource({ ...base, fetcher, cache })).toEqual({ name: 'osm', status: 'failed', message: 'upstream 504', durationMs: expect.any(Number) });
+  });
+
+  it('joint la requête envoyée, pour le diagnostic', async () => {
+    const out = await runSource({ ...base, query: 'SELECT 1', fetcher: vi.fn().mockResolvedValue([]), cache: memoryCache() });
+    expect(out.query).toBe('SELECT 1');
   });
 
   it('fonctionne même si le cache est en panne', async () => {
     const cache = { lookup: vi.fn().mockRejectedValue(new Error('db')), set: vi.fn().mockRejectedValue(new Error('db')) };
     const fetcher = vi.fn().mockResolvedValue(['a']);
-    expect(await runSource({ ...base, fetcher, cache })).toEqual({ name: 'osm', status: 'ok', data: ['a'] });
+    expect(await runSource({ ...base, fetcher, cache })).toMatchObject({ name: 'osm', status: 'ok', data: ['a'] });
   });
 });

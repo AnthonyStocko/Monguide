@@ -78,9 +78,43 @@ export function osmElementToPlace(element, { lang, regionalCuisines }) {
     certified: false,
     indoor: classifyIndoor({ category: kind.category, name, type: kind.type })
   };
+  return withCommonTags(place, tags, kind.category === 'restaurant' ? osmFood(tags, regionalCuisines) : undefined);
+}
+
+/** Site web, description, identifiant Wikidata (dédoublonnage) et champ food. */
+function withCommonTags(place, tags, food) {
   const website = tags.website ?? tags['contact:website'];
   if (website) place.url = website;
   if (tags.description) place.description = tags.description;
-  if (kind.category === 'restaurant') place.food = osmFood(tags, regionalCuisines);
+  if (/^Q\d+$/.test(tags.wikidata ?? '')) place.wikidata = tags.wikidata;
+  if (food) place.food = food;
   return place;
+}
+
+/**
+ * Repli OpenStreetMap du patrimoine (quand Wikidata échoue) : heritage=1 ou 2
+ * -> monument protégé (certifié) ; tourism=museum -> musée (non certifié).
+ * @param {{ type: string, id: number, lat?: number, lon?: number, center?: { lat: number, lon: number }, tags?: Record<string, string> }} element
+ * @param {{ lang: string }} options
+ * @returns {import('../domain/model.js').Place | null}
+ */
+export function osmHeritageElementToPlace(element, { lang }) {
+  const tags = element.tags ?? {};
+  const name = (tags[`name:${lang}`] ?? tags.name ?? '').trim();
+  const lat = element.lat ?? element.center?.lat;
+  const lon = element.lon ?? element.center?.lon;
+  if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+  const base = { id: `osm:${element.type}/${element.id}`, name, lat, lon, source: 'osm' };
+  const type = tags.historic ?? tags.building ?? tags.amenity ?? '';
+  if (tags.tourism === 'museum') {
+    return withCommonTags({ ...base, category: 'museum', certified: false, indoor: classifyIndoor({ category: 'museum', name, type }) }, tags);
+  }
+  if (tags.heritage === '1' || tags.heritage === '2') {
+    return withCommonTags(
+      { ...base, category: 'monument', certified: true, certification: 'protected_heritage', indoor: classifyIndoor({ category: 'monument', name, type }) },
+      tags
+    );
+  }
+  return null;
 }

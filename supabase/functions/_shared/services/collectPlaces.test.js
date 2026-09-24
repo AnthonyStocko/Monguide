@@ -43,7 +43,7 @@ describe('collectPlaces', () => {
     expect(result.sources).toEqual([
       { name: 'monuments', status: 'ok' },
       { name: 'museums', status: 'cache' },
-      { name: 'osm', status: 'ok' },
+      { name: 'osm', status: 'ok', durationMs: expect.any(Number) },
       { name: 'terroir', status: 'ok' }
     ]);
   });
@@ -52,7 +52,7 @@ describe('collectPlaces', () => {
     fetchMock.mockResolvedValue(new Response('Too Many Requests', { status: 429 }));
     const result = await collectPlaces(provider(), POINT, 20, { lunch: 'both' }, ctx());
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(result.sources).toContainEqual({ name: 'osm', status: 'failed', message: 'upstream 429' });
+    expect(result.sources).toContainEqual({ name: 'osm', status: 'failed', message: 'upstream 429', durationMs: expect.any(Number) });
     expect(result.places.map((p) => p.id)).toEqual(['merimee:PA1']);
     expect(result.appellations).toHaveLength(1);
   });

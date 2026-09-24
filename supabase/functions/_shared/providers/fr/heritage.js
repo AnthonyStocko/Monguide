@@ -50,7 +50,7 @@ export function merimeeToPlace(row) {
     category: 'monument',
     lat: pos.lat,
     lon: pos.lon,
-    source: 'monuments',
+    source: 'merimee',
     certified: true,
     certification: 'monument_historique',
     indoor: classifyIndoor({ category: 'monument', name, type: denomination }),
@@ -75,7 +75,7 @@ export function museofileToPlace(row) {
     category: 'museum',
     lat: pos.lat,
     lon: pos.lon,
-    source: 'museums',
+    source: 'museofile',
     certified: true,
     certification: 'musee_de_france',
     indoor: true

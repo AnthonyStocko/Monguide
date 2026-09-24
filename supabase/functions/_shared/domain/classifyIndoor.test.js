@@ -38,6 +38,26 @@ describe('classifyIndoor', () => {
     expect(classifyIndoor({ category: 'monument' })).toBeNull();
   });
 
+  it.each([
+    ['Igreja de São Roque', ''],
+    ['Església de Santa Maria del Mar', ''],
+    ['Kościół Mariacki', ''],
+    ['Castello Sforzesco', ''],
+    ['Schloss Schönbrunn', ''],
+    ['Zamek Królewski na Wawelu', '']
+  ])('reconnaît le monument « %s » (langue locale) en intérieur', (name, type) => {
+    expect(classifyIndoor({ category: 'monument', name, type })).toBe(true);
+  });
+
+  it('classe les ruines en langue locale en extérieur', () => {
+    expect(classifyIndoor({ category: 'monument', name: 'Ruinas del castillo' })).toBe(false);
+  });
+
+  it('classe un musée de plein air en extérieur', () => {
+    expect(classifyIndoor({ category: 'museum', name: 'Skansen' })).toBe(false);
+    expect(classifyIndoor({ category: 'museum', name: 'Village', type: 'open-air museum' })).toBe(false);
+  });
+
   it('ne se laisse pas piéger par un mot contenu dans un autre', () => {
     expect(classifyIndoor({ category: 'monument', name: 'Chateaubriand', type: 'maison' })).toBeNull();
   });

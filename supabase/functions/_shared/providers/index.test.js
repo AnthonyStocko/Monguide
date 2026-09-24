@@ -11,8 +11,12 @@ describe('getProvider', () => {
     expect(getProvider('fr')).toBe(provider);
   });
 
+  it('renvoie le fournisseur "eu" pour les autres pays pris en charge', () => {
+    for (const code of ['PT', 'ES', 'PL', 'GB', 'CH']) expect(getProvider(code)?.code).toBe('eu');
+  });
+
   it('renvoie null pour un pays non pris en charge', () => {
-    expect(getProvider('DE')).toBeNull();
+    expect(getProvider('TR')).toBeNull();
     expect(getProvider(undefined)).toBeNull();
   });
 });

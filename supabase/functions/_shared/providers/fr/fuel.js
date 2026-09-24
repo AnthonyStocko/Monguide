@@ -42,7 +42,7 @@ export function averageFuelPrices(rows, point, radiusKm) {
       prices[code] = { average: Math.round(average * 1000) / 1000, stations: values.length };
     }
   }
-  return { currency: 'EUR', stationCount: stations.length, prices };
+  return { currency: 'EUR', stationCount: stations.length, prices, source: 'Prix des carburants en France, flux instantané v2', estimate: false };
 }
 
 /**

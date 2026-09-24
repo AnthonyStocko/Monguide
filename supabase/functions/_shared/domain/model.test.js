@@ -26,6 +26,7 @@ describe('isPlace', () => {
     expect(isPlace(valid)).toBe(true);
     const { food, ...minimal } = valid;
     expect(isPlace({ ...minimal, indoor: null })).toBe(true);
+    expect(isPlace({ ...minimal, certified: true, certification: 'protected_heritage', wikidata: 'Q1492' })).toBe(true);
   });
 
   it.each([
@@ -38,7 +39,9 @@ describe('isPlace', () => {
     ['indoor indéfini', { indoor: undefined }],
     ['food sans regional', { food: { cuisine: [] } }],
     ['wheelchair invalide', { food: { regional: false, wheelchair: 'partial' } }],
-    ['cuisine non tableau', { food: { regional: false, cuisine: 'pizza' } }]
+    ['cuisine non tableau', { food: { regional: false, cuisine: 'pizza' } }],
+    ['certification inconnue', { certification: 'unesco' }],
+    ['identifiant Wikidata invalide', { wikidata: 'P31' }]
   ])('refuse un lieu %s', (_, patch) => {
     expect(isPlace({ ...valid, ...patch })).toBe(false);
   });

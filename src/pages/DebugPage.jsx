@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { API_VERSION } from '@domain/version.js';
+import FuelDebug from '../components/debug/FuelDebug.jsx';
 import GeocodeDebug from '../components/debug/GeocodeDebug.jsx';
+import HolidaysDebug from '../components/debug/HolidaysDebug.jsx';
 import PlacesDebug from '../components/debug/PlacesDebug.jsx';
 import WeatherDebug from '../components/debug/WeatherDebug.jsx';
 import Page from '../components/layout/Page.jsx';
@@ -90,6 +92,8 @@ export default function DebugPage() {
       <GeocodeDebug selected={destination} onSelect={setDestination} />
       <WeatherDebug destination={destination} />
       <PlacesDebug destination={destination} />
+      <HolidaysDebug destination={destination} />
+      <FuelDebug destination={destination} />
 
       <Card as="section">
         <details>

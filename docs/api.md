@@ -67,6 +67,7 @@ l'en-tête `Retry-After` (secondes).
 | 400 | `invalid_app_version` | `x-monguide-app` absent ou mal formé |
 | 400 | `unsupported_country` | pays de destination non pris en charge |
 | 401 | `unauthorized` | jeton absent ou invalide |
+| 403 | `forbidden` | rôle insuffisant (fonction interne) |
 | 405 | `method_not_allowed` | méthode HTTP non prise en charge (en-tête `Allow`) |
 | 426 | `app_outdated` | application trop ancienne (contrat ou `minAppVersion`) |
 | 429 | `rate_limited` | trop de requêtes (en-tête `Retry-After`) |
@@ -146,7 +147,9 @@ Autocomplétion des villes et villages (source : Photon, OpenStreetMap).
   300 ms sans frappe (`geocode.minChars`, `geocode.debounceMs`).
 
 - **Sortie** : `{ "results": GeocodeResult[] }`, 10 résultats au plus
-  (0 ou 1 en recherche inverse), limités aux pays pris en charge.
+  (0 ou 1 en recherche inverse), de TOUS les pays : l'application affiche
+  « Cette destination n'est pas encore prise en charge » pour ceux absents de
+  `domain/config/countries.js` (leur `timezone` vaut `null`).
 
   | Champ | Type | Description |
   |---|---|---|
@@ -155,7 +158,7 @@ Autocomplétion des villes et villages (source : Photon, OpenStreetMap).
   | `country` | chaîne | nom du pays, dans la langue demandée |
   | `countryCode` | chaîne | code ISO 3166-1 alpha-2 (ex. `FR`) |
   | `lat`, `lon` | nombres | position |
-  | `timezone` | chaîne | fuseau horaire IANA de la destination |
+  | `timezone` | chaîne | null | fuseau horaire IANA, déterminé par la position (Open-Meteo, `timezone=auto`, cache 30 jours) ; `null` si pays non pris en charge |
 
 - **Cache serveur** : 30 jours (`cacheTtlSec.geocode`), clé = texte
   normalisé + langue, ou position arrondie à 0,01°.
@@ -221,8 +224,8 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
     "places": [Place],
     "appellations": [{ "name": "Beaujolais", "local": false }],
     "sources": [
-      { "name": "monuments", "status": "ok" },
-      { "name": "museums", "status": "cache" },
+      { "name": "monuments", "status": "ok", "durationMs": 2100, "query": "SELECT …" },
+      { "name": "museums", "status": "ok", "message": "fallback_osm" },
       { "name": "osm", "status": "failed", "message": "upstream 429" },
       { "name": "terroir", "status": "ok" }
     ]
@@ -230,8 +233,9 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
   ```
 
   - `places` : format `Place` (`supabase/functions/_shared/domain/model.js`),
-    dédoublonnés (même nom à moins de `places.dedupDistanceM` mètres, le lieu
-    certifié l'emporte).
+    dédoublonnés : même identifiant Wikidata (`wikidata`), puis même nom à
+    moins de `places.dedupDistanceM` mètres ; le lieu certifié l'emporte.
+    `source` indique l'origine : `merimee`, `museofile`, `wikidata`, `osm`.
   - `appellations` : AOC/AOP de la commune de destination (`local: true`) et
     des communes voisines (`terroir.neighborRadiusKm`).
   - `sources[].status` : `ok` (réponse fraîche), `cache` (cache partagé, y
@@ -239,8 +243,17 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
     `message: "stale"`), `failed` (aucune donnée ; l'application affiche un
     message propre à la source, ex. « Marchés et petit patrimoine
     momentanément indisponibles » pour `osm`).
-  - Sources de la France : `monuments` (Mérimée), `museums` (Muséofile),
-    `osm` (Overpass, commun à tous les pays), `terroir` (INAO).
+  - `sources[].message` : `stale`, `fallback_osm` (Wikidata en échec, lieux
+    issus d'OpenStreetMap : à signaler), `no_regional_data` (aucune
+    appellation régionale disponible), ou la cause d'un échec.
+  - `sources[].durationMs` : durée de l'appel (absente si servi par le
+    cache) ; `sources[].query` : requête SPARQL envoyée (Wikidata).
+  - France : `monuments` (Mérimée), `museums` (Muséofile), `terroir` (INAO).
+    Autres pays : `monuments` et `museums` (Wikidata, repli OpenStreetMap),
+    `terroir` (liste vide : eAmbrosia n'indique pas les régions).
+    Tous les pays : `osm` (Overpass).
+  - L'application attend jusqu'à `api.placesTimeoutMs` (20 s) : Wikidata a
+    un délai de 15 s côté serveur.
 
 - **Cache serveur** : par source, clé = position arrondie + rayon (+ langue
   et type de déjeuner pour `osm`) ; durées `cacheTtlSec.heritage`, `.osm`,
@@ -248,11 +261,48 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
 - **Erreurs** : codes communs ; `400 unsupported_country` si `countryCode`
   n'est pas pris en charge.
 
+### `holidays` — jours fériés
+
+Source : Nager.Date (`/api/v3/PublicHolidays/{année}/{pays}`), tous les pays.
+
+- **Méthode** : `GET`
+- **Entrée** : `countryCode` (pris en charge), `startDate`, `endDate`
+  (`YYYY-MM-DD`, 400 jours au plus).
+- **Sortie** : `{ "holidays": [{ "date": "2027-08-15", "name": "Assumption Day", "localName": "Ferragosto o Assunzione", "global": true }] }`
+  ; `regions` (codes ISO 3166-2) quand `global` vaut `false`.
+- **Cache serveur** : 30 jours par pays et année (`cacheTtlSec.holidays`).
+- **Erreurs** : codes communs ; `400 unsupported_country`.
+
+### `fuel` — prix des carburants
+
+- **Méthode** : `GET`
+- **Entrée** : `lat`, `lon`, `radiusKm`, `countryCode`.
+- **Sortie** : `{ "fuel": FuelPrices | null, "source": { "name": "fuel", "status": "ok" | "failed", "message"? } }`
+
+  | Champ de `fuel` | Description |
+  |---|---|
+  | `currency` | monnaie du pays (ISO 4217) |
+  | `prices` | `{ <carburant>: { average, stations? } }`, prix par litre ; carburants `sp95`, `sp98`, `e10`, `e85`, `diesel`, `lpg` |
+  | `date` | date des prix (bulletin, relevé) |
+  | `source` | origine des prix |
+  | `estimate` | `true` : valeur fixe (pays hors UE), à afficher comme « estimation » |
+
+  France : moyenne des stations du rayon (flux instantané). UE : moyenne
+  nationale du Bulletin pétrolier, convertie avec les taux BCE. Royaume-Uni,
+  Norvège : estimations fixes. Suisse, Liechtenstein, Islande : `fuel: null`.
+
+### `fuel-eu-refresh` — tâche planifiée (interne)
+
+Appelée chaque mercredi à 06:00 UTC par pg_cron + pg_net ; réservée au rôle
+`service_role` (`403 forbidden` sinon). `POST`, sans corps. Télécharge le
+Bulletin pétrolier et les taux BCE et remplit `fuel_prices_eu`. Sortie :
+`{ bulletinDate, exchangeRateDate, countries, rows }`. En cas d'échec,
+rien n'est modifié.
+
 ### Fonctions prévues (à documenter avant d'être codées)
 
 | Fonction | Phase | Rôle |
 |---|---|---|
-| `fuel-eu-refresh` | 2 bis | mise à jour des prix des carburants (pays européens hors France) |
 | `generate` | 4 | génération d'un séjour (délai client 25 s) |
 | `delete-account` | 5 bis | suppression du compte et des données |
 
@@ -262,3 +312,4 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
 |---|---|---|
 | 1 | 2026-09-24 | Version initiale : cadre commun, fonction `config`. |
 | 1 | 2026-09-24 | Ajouts compatibles : fonctions `geocode`, `weather`, `places` ; code `400 unsupported_country`. |
+| 1 | 2026-09-24 | Ajouts compatibles : `geocode` renvoie tous les pays (`timezone` null hors liste) ; `places` : sources avec `durationMs`, `query`, message `fallback_osm` ; fonctions `holidays`, `fuel`, `fuel-eu-refresh` ; code `403 forbidden`. |
