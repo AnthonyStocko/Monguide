@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarDays, Heart, Trash2 } from 'lucide-react';
+import { CalendarDays, CloudCheck, Heart, Trash2, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import Page from '../components/layout/Page.jsx';
@@ -8,8 +8,9 @@ import Card from '../components/ui/Card.jsx';
 import Dialog from '../components/ui/Dialog.jsx';
 import EmptyState from '../components/ui/EmptyState.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
+import { useAuth } from '../hooks/useAuth.js';
 import { useFormat } from '../i18n/useFormat.js';
-import { deleteTrip, listTrips, setCurrentTripId } from '../services/tripsStore.js';
+import { deleteTrip, listTrips, onTripsChanged, setCurrentTripId } from '../services/tripsStore.js';
 
 /** Séjours enregistrés sur l'appareil (historique), consultables hors ligne. */
 export default function FavoritesPage() {
@@ -18,10 +19,13 @@ export default function FavoritesPage() {
   const navigate = useNavigate();
   const [trips, setTrips] = useState(null);
   const [confirm, setConfirm] = useState(null);
+  const { session, email, syncStatus } = useAuth();
 
   const load = () => listTrips().then(setTrips).catch(() => setTrips([]));
   useEffect(() => {
     load();
+    // Liste mise à jour quand la synchronisation apporte ou supprime des séjours.
+    return onTripsChanged(load);
   }, []);
 
   const open = async (trip) => {
@@ -38,6 +42,22 @@ export default function FavoritesPage() {
   return (
     <Page>
       <h2 className="text-2xl font-bold">{t('trips.title')}</h2>
+      {session === null && (
+        <Card className="space-y-3">
+          <p>{t('auth.cta')}</p>
+          <Button icon={UserRound} onClick={() => navigate('/account')} className="w-full">
+            {t('auth.signInButton')}
+          </Button>
+        </Card>
+      )}
+      {session && (
+        <p className="flex items-center gap-2 text-ink-muted">
+          <CloudCheck aria-hidden="true" className="size-5 shrink-0" />
+          <span>
+            {t('auth.syncedWith', { email })} · {t(`sync.status.${syncStatus}`)}
+          </span>
+        </p>
+      )}
       {trips === null && <Skeleton className="h-24 w-full" />}
       {trips?.length === 0 && (
         <Card>

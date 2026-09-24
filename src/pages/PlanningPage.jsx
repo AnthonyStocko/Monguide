@@ -23,7 +23,7 @@ export default function PlanningPage() {
   const navigate = useNavigate();
   const format = useFormat();
   const { rules } = useConfig().config;
-  const { status, trip, save } = useCurrentTrip(tripId);
+  const { status, trip, readOnly, save } = useCurrentTrip(tripId);
   const [dayIndex, setDayIndex] = useState(0);
   const [dialog, setDialog] = useState(null);
   const tabRefs = useRef([]);
@@ -83,6 +83,12 @@ export default function PlanningPage() {
         </p>
       </header>
 
+      {readOnly && (
+        <p role="status" className="rounded-xl bg-warning-soft px-3 py-2 font-medium text-warning-on-soft">
+          {t('planning.readOnly')}
+        </p>
+      )}
+
       <div role="tablist" aria-label={t('planning.days')} className="flex gap-2 overflow-x-auto pb-1">
         {trip.days.map((d, i) => (
           <button
@@ -108,9 +114,9 @@ export default function PlanningPage() {
           trip={trip}
           dayIndex={day}
           rules={rules}
-          onEditTime={(i) => setDialog({ kind: 'time', stepIndex: i })}
-          onReplace={(i) => setDialog({ kind: 'replace', stepIndex: i })}
-          onLodging={() => setDialog({ kind: 'lodging' })}
+          onEditTime={(i) => !readOnly && setDialog({ kind: 'time', stepIndex: i })}
+          onReplace={(i) => !readOnly && setDialog({ kind: 'replace', stepIndex: i })}
+          onLodging={() => !readOnly && setDialog({ kind: 'lodging' })}
         />
       </section>
 

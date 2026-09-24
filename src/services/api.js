@@ -143,3 +143,93 @@ export async function callFunction(name, { method = 'POST', body, timeoutMs, cac
     throw error;
   }
 }
+
+/** Délai garanti pour un appel au client Supabase (authentification, table trips). */
+function withTimeout(promise, timeoutMs) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new ApiError('timeout')), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+function ensureOnline() {
+  if (!supabase) throw new ApiError('not_configured');
+  if (!navigator.onLine) throw new ApiError('offline');
+}
+
+/** Erreurs d'authentification Supabase -> clés de traduction. */
+const AUTH_MESSAGES = {
+  otp_expired: 'auth.errors.codeInvalid',
+  invalid_credentials: 'auth.errors.codeInvalid',
+  over_email_send_rate_limit: 'auth.errors.tooManyEmails',
+  over_request_rate_limit: 'auth.errors.tooManyEmails',
+  email_address_not_authorized: 'auth.errors.emailNotAuthorized',
+  email_address_invalid: 'auth.errors.emailInvalid',
+  validation_failed: 'auth.errors.emailInvalid'
+};
+
+function authError(error) {
+  const e = new ApiError(error?.code ?? 'auth', { status: error?.status ?? null });
+  e.messageKey = AUTH_MESSAGES[error?.code] ?? (error?.status === 429 ? 'auth.errors.tooManyEmails' : error?.status ? 'auth.errors.generic' : 'errors.network');
+  return e;
+}
+
+/**
+ * Comptes : connexion par code à usage unique envoyé par e-mail (OTP
+ * Supabase, sans lien magique). La session est conservée par le client
+ * (services/supabase.js) ; les appels aux fonctions utilisent alors le jeton
+ * de l'utilisateur, sinon la clé publique (mode invité).
+ */
+export const authApi = {
+  async sendCode(email) {
+    ensureOnline();
+    const { error } = await withTimeout(supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } }), getRules().api.timeoutMs);
+    if (error) throw authError(error);
+  },
+  async verifyCode(email, token) {
+    ensureOnline();
+    const { data, error } = await withTimeout(supabase.auth.verifyOtp({ email, token, type: 'email' }), getRules().api.timeoutMs);
+    if (error) throw authError(error);
+    return data.session;
+  },
+  async signOut() {
+    if (supabase) await supabase.auth.signOut({ scope: 'local' });
+  },
+  async getSession() {
+    if (!supabase) return null;
+    const { data } = await supabase.auth.getSession();
+    return data.session;
+  },
+  /** @param {(session: object | null) => void} listener @returns {() => void} */
+  onChange(listener) {
+    if (!supabase) return () => {};
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => listener(session));
+    return () => data.subscription.unsubscribe();
+  }
+};
+
+/** Table trips (RLS : uniquement les séjours de l'utilisateur connecté). */
+export const tripsRemote = {
+  /** Lignes modifiées depuis `since` (ISO), de la plus ancienne à la plus récente. */
+  async pullSince(since) {
+    ensureOnline();
+    let query = supabase.from('trips').select('*').order('updated_at', { ascending: true });
+    if (since) query = query.gt('updated_at', since);
+    const { data, error } = await withTimeout(query, getRules().api.timeoutMs);
+    if (error) throw new ApiError('server', { status: error.code ? 500 : null });
+    return data;
+  },
+  /** Envoie des lignes (création ou mise à jour). */
+  async push(rows) {
+    if (!rows.length) return;
+    ensureOnline();
+    const { error } = await withTimeout(supabase.from('trips').upsert(rows, { onConflict: 'id' }), getRules().api.timeoutMs);
+    if (error) throw new ApiError('server');
+  }
+};
+
+/** Suppression du compte et de tous ses séjours (fonction delete-account). */
+export async function deleteAccount() {
+  await callFunction('delete-account', { method: 'POST', body: {} });
+}

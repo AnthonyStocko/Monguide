@@ -11,6 +11,7 @@ import { setRules } from './rules.js';
  * @property {number | null} apiVersion version du contrat annoncée par le serveur
  * @property {string | null} minAppVersion
  * @property {typeof RULES} rules règles effectives
+ * @property {string | null} contact contact de l'équipe (écran Confidentialité)
  * @property {string | null} fetchedAt date de réception par le serveur (ISO)
  * @property {boolean} updateRequired l'application est trop ancienne
  * @property {import('./api.js').ApiError} [error] raison du repli éventuel
@@ -23,6 +24,7 @@ export function defaultConfig(error) {
     apiVersion: null,
     minAppVersion: null,
     rules: RULES,
+    contact: null,
     fetchedAt: null,
     updateRequired: error?.code === 'app_outdated',
     error
@@ -40,6 +42,7 @@ function fromServer(data, source, fetchedAt, error) {
     apiVersion: Number.isInteger(data?.apiVersion) ? data.apiVersion : null,
     minAppVersion,
     rules,
+    contact: typeof data?.contact === 'string' && data.contact ? data.contact : null,
     fetchedAt,
     updateRequired: tooOld || error?.code === 'app_outdated',
     error

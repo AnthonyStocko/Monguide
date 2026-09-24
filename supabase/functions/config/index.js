@@ -1,13 +1,15 @@
 import { API_VERSION } from '../_shared/domain/version.js';
 import { serveFunction } from '../_shared/handler.js';
 
-// GET /functions/v1/config -> { apiVersion, minAppVersion, rules } (docs/api.md).
+// GET /functions/v1/config -> { apiVersion, minAppVersion, rules, contact } (docs/api.md).
 serveFunction({
   name: 'config',
   methods: ['GET'],
   handle: ({ appConfig }) => ({
     apiVersion: API_VERSION,
     minAppVersion: appConfig.minAppVersion,
-    rules: appConfig.rules
+    rules: appConfig.rules,
+    // Contact de l'équipe (écran Confidentialité), repris du secret MONGUIDE_CONTACT.
+    contact: globalThis.Deno?.env.get('MONGUIDE_CONTACT') || null
   })
 });

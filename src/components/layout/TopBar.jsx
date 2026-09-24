@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import Button from '../ui/Button.jsx';
 import OfflineBanner from '../ui/OfflineBanner.jsx';
+import SyncIndicator from './SyncIndicator.jsx';
 
 const TITLES = {
   '/': 'app.name',
@@ -11,11 +12,13 @@ const TITLES = {
   '/map': 'nav.map',
   '/favorites': 'nav.favorites',
   '/settings': 'nav.settings',
-  '/debug': 'debug.title'
+  '/debug': 'debug.title',
+  '/account': 'auth.title',
+  '/privacy': 'privacy.title'
 };
 
 // Pages secondaires : bouton Retour au lieu du bouton Réglages.
-const SUB_PAGES = ['/settings', '/debug'];
+const SUB_PAGES = ['/settings', '/debug', '/account', '/privacy'];
 
 export default function TopBar() {
   const { t } = useTranslation();
@@ -31,6 +34,7 @@ export default function TopBar() {
       <div className="flex min-h-14 items-center gap-1 px-2">
         {isSubPage && <Button variant="ghost" icon={ArrowLeft} aria-label={t('common.back')} onClick={goBack} />}
         <h1 className="flex-1 px-2 text-xl font-bold">{t(TITLES[location.pathname] ?? (location.pathname.startsWith('/planning/') ? 'nav.planning' : 'app.name'))}</h1>
+        <SyncIndicator />
         {!isSubPage && (
           <Button variant="ghost" icon={Settings} aria-label={t('nav.settings')} onClick={() => navigate('/settings')} />
         )}

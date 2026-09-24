@@ -100,7 +100,8 @@ Appelée au lancement de l'application.
   {
     "apiVersion": 1,
     "minAppVersion": "0.0.0",
-    "rules": { "weather": { "rainThresholdPct": 50 }, "…": "…" }
+    "rules": { "weather": { "rainThresholdPct": 50 }, "…": "…" },
+    "contact": "contact@exemple.org"
   }
   ```
 
@@ -109,6 +110,7 @@ Appelée au lancement de l'application.
   | `apiVersion` | entier | version courante du contrat côté serveur |
   | `minAppVersion` | chaîne `x.y.z` | version minimale de l'application (`0.0.0` si non définie) |
   | `rules` | objet | règles effectives : valeurs par défaut de `rules.js` fusionnées avec `app_config` |
+  | `contact` | chaîne ? | contact de l'équipe (secret `MONGUIDE_CONTACT`), affiché dans l'écran Confidentialité ; `null` si non défini |
 
 - **Cache serveur** : 5 minutes (`cacheTtlSec.config`), invalidé dès qu'une
   ligne de `app_config` change.
@@ -336,11 +338,44 @@ rien n'est modifié.
   150 s de durée, 2 s de temps CPU par requête, 256 Mo.
 - **Erreurs** : codes communs ; `400 unsupported_country`.
 
+### Table `trips` — séjours des comptes (accès direct, RLS)
+
+Accès par l'API REST de Supabase (`supabase.from('trips')`), uniquement pour
+un utilisateur connecté. RLS : chacun ne lit, ne crée, ne modifie et ne
+supprime que ses lignes (`user_id = auth.uid()`, fixé par la base).
+
+| Colonne | Type | Contenu |
+|---|---|---|
+| `id` | uuid | identifiant du séjour (créé sur l'appareil) |
+| `user_id` | uuid | propriétaire (défaut `auth.uid()`, suppression en cascade) |
+| `title`, `destination` | text, jsonb | titre, destination |
+| `start_date`, `end_date` | date | dates du séjour |
+| `params` | jsonb | reste du séjour (`domain/tripRow.js`) |
+| `planning` | jsonb | journées (`Trip.days`) |
+| `created_at`, `updated_at` | timestamptz | horodatages de l'appareil ; conflit : le plus récent l'emporte |
+| `deleted` | boolean | suppression logique, propagée aux autres appareils |
+
+Synchronisation (`src/services/sync.js`) : lecture des lignes
+`updated_at > dernière synchronisation`, puis `upsert` des séjours modifiés
+localement.
+
+Un séjour supprimé est envoyé comme marqueur sans contenu (`title` vide,
+`destination`, `params` et `planning` vides, `deleted = true`). La tâche
+pg_cron `monguide-purge-deleted-trips` efface les marqueurs de plus de
+90 jours (`rules.sync.deletedRetentionDays`).
+
+### `delete-account` — suppression du compte
+
+- **Méthode** : `POST`, sans corps ; utilisateur connecté uniquement
+  (`401 unauthorized` en mode invité).
+- **Sortie** : `{ "deleted": true }`. Le compte est supprimé ; ses séjours
+  le sont en cascade.
+- **Erreurs** : codes communs ; `500 internal_error` si la suppression échoue.
+
 ### Fonctions prévues (à documenter avant d'être codées)
 
 | Fonction | Phase | Rôle |
 |---|---|---|
-| `delete-account` | 5 bis | suppression du compte et des données |
 
 ## Historique
 
@@ -350,4 +385,5 @@ rien n'est modifié.
 | 1 | 2026-09-24 | Ajouts compatibles : fonctions `geocode`, `weather`, `places` ; code `400 unsupported_country`. |
 | 1 | 2026-09-24 | Ajout compatible : `geocode?kind=address` (adresses précises des hébergements). |
 | 1 | 2026-09-24 | Ajout compatible : fonction `generate`. |
+| 1 | 2026-09-24 | Ajouts compatibles : table `trips` (RLS), fonction `delete-account`, champ `contact` de `config`. |
 | 1 | 2026-09-24 | Ajouts compatibles : `geocode` renvoie tous les pays (`timezone` null hors liste) ; `places` : sources avec `durationMs`, `query`, message `fallback_osm` ; fonctions `holidays`, `fuel`, `fuel-eu-refresh` ; code `403 forbidden`. |

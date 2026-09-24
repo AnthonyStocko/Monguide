@@ -2,12 +2,14 @@ import { Navigate, Route, Routes } from 'react-router';
 import AppLayout from './components/layout/AppLayout.jsx';
 import UpdateRequiredScreen from './components/layout/UpdateRequiredScreen.jsx';
 import { useConfig } from './hooks/useConfig.js';
+import AccountPage from './pages/AccountPage.jsx';
 import CreatePage from './pages/CreatePage.jsx';
 import DebugPage from './pages/DebugPage.jsx';
 import FavoritesPage from './pages/FavoritesPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import MapPage from './pages/MapPage.jsx';
 import PlanningPage from './pages/PlanningPage.jsx';
+import PrivacyPage from './pages/PrivacyPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 
 export default function App() {
@@ -25,6 +27,8 @@ export default function App() {
         <Route path="favorites" element={<FavoritesPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="debug" element={<DebugPage />} />
+        <Route path="account" element={<AccountPage />} />
+        <Route path="privacy" element={<PrivacyPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -58,7 +58,8 @@
     "departure": "Départ de {{place}} à {{time}}",
     "return": "Retour à {{place}} :",
     "lodgingTitle": "Hébergement",
-    "lodgingLater": "La modification des hébergements et le recalcul des journées concernées arrivent dans une prochaine version."
+    "lodgingLater": "La modification des hébergements et le recalcul des journées concernées arrivent dans une prochaine version.",
+    "readOnly": "Ce séjour a été créé avec une version plus récente de Mon guide. Mettez à jour l’application pour modifier ce séjour."
   },
   "map": {
     "attribution": "contributeurs d'OpenStreetMap",
@@ -532,5 +533,109 @@
     "confirmTitle": "Supprimer ce séjour ?",
     "confirmText": "Le séjour à {{name}} sera supprimé de ce téléphone.",
     "confirm": "Supprimer"
+  },
+  "auth": {
+    "title": "Se connecter",
+    "myAccount": "Mon compte",
+    "intro": "Recevez un code par e-mail pour retrouver vos séjours sur tous vos appareils. Pas de mot de passe à retenir.",
+    "email": "Adresse e-mail",
+    "sendCode": "Recevoir un code",
+    "guestNote": "Sans compte, vos séjours restent enregistrés sur cet appareil uniquement.",
+    "codeSent": "Un code à {{length}} chiffres a été envoyé à {{email}}. Il peut mettre une minute à arriver ; pensez à vérifier les courriers indésirables.",
+    "code": "Code à {{length}} chiffres",
+    "signIn": "Me connecter",
+    "resend": "Renvoyer le code",
+    "resendIn": "Renvoyer le code dans {{seconds}} s",
+    "changeEmail": "Changer d’adresse e-mail",
+    "signedInAs": "Connecté avec {{email}}",
+    "syncedWith": "Séjours synchronisés avec {{email}}",
+    "signOut": "Me déconnecter",
+    "signOutTitle": "Se déconnecter",
+    "signOutText": "Voulez-vous garder vos séjours sur cet appareil ? Ils resteront de toute façon disponibles dans votre compte.",
+    "keepTrips": "Garder sur cet appareil",
+    "eraseTrips": "Effacer de cet appareil",
+    "cta": "Se connecter pour retrouver vos séjours sur tous vos appareils.",
+    "signInButton": "Se connecter",
+    "errors": {
+      "emailInvalid": "Saisissez une adresse e-mail valide, par exemple nom@exemple.fr.",
+      "codeFormat": "Le code comporte {{length}} chiffres.",
+      "codeInvalid": "Ce code est incorrect ou a expiré. Vérifiez-le ou demandez-en un nouveau.",
+      "tooManyEmails": "Trop de codes demandés. Patientez quelques minutes avant de réessayer.",
+      "emailNotAuthorized": "L’envoi d’e-mails vers cette adresse n’est pas encore possible. Réessayez plus tard.",
+      "generic": "La connexion a échoué. Réessayez."
+    }
+  },
+  "sync": {
+    "now": "Synchroniser maintenant",
+    "status": {
+      "guest": "Séjours enregistrés sur cet appareil uniquement",
+      "synced": "Séjours synchronisés",
+      "pending": "Modifications en attente d’envoi",
+      "syncing": "Synchronisation en cours…",
+      "offline": "Hors ligne : les modifications seront envoyées au retour du réseau",
+      "error": "Synchronisation impossible pour le moment, nouvel essai automatique"
+    }
+  },
+  "account": {
+    "deleteTitle": "Supprimer mon compte",
+    "deleteHint": "Supprime votre compte et tous les séjours enregistrés dans votre compte. Cette action est définitive.",
+    "delete": "Supprimer mon compte",
+    "confirm1Title": "Supprimer votre compte ?",
+    "confirm1Text": "Votre compte et tous vos séjours synchronisés seront supprimés, sur tous vos appareils.",
+    "continue": "Continuer",
+    "confirm2Title": "Confirmation définitive",
+    "confirm2Text": "Cette action est irréversible : aucun séjour ne pourra être récupéré. Confirmez-vous la suppression ?",
+    "confirmFinal": "Supprimer définitivement",
+    "deleted": "Votre compte et vos séjours ont été supprimés."
+  },
+  "privacy": {
+    "title": "Confidentialité",
+    "contactUnknown": "Le contact de l’équipe n’a pas pu être chargé. Réessayez une fois en ligne.",
+    "data": {
+      "title": "Données collectées",
+      "text": [
+        "Sans compte, vos séjours sont enregistrés uniquement sur votre appareil.",
+        "Avec un compte : votre adresse e-mail (pour vous envoyer le code de connexion) et vos séjours, y compris les adresses de vos hébergements et de vos étapes personnelles."
+      ]
+    },
+    "server": {
+      "title": "Recherches et position",
+      "text": [
+        "Pour préparer un séjour, l’application envoie à nos serveurs les lieux nécessaires au calcul (destination, hébergements, position si vous l’autorisez). Ils ne sont pas conservés en clair : nos caches et nos journaux techniques n’en gardent qu’une position arrondie (environ 1 km).",
+        "Nos journaux techniques ne contiennent ni adresse e-mail, ni adresse postale."
+      ]
+    },
+    "purpose": {
+      "title": "Finalité",
+      "text": [
+        "Ces données servent uniquement à vous connecter et à retrouver vos séjours sur vos appareils. Elles ne sont ni vendues, ni utilisées à des fins publicitaires."
+      ]
+    },
+    "hosting": {
+      "title": "Hébergement",
+      "text": [
+        "Les données sont hébergées dans l’Union européenne (Irlande) par Supabase."
+      ]
+    },
+    "retention": {
+      "title": "Durée de conservation",
+      "text": [
+        "Vos séjours sont conservés tant que votre compte existe.",
+        "Un séjour supprimé est immédiatement effacé du serveur ; seul un marqueur technique sans contenu est conservé 90 jours pour propager la suppression à vos autres appareils."
+      ]
+    },
+    "rights": {
+      "title": "Vos droits",
+      "text": [
+        "Vous pouvez supprimer votre compte à tout moment depuis les réglages : votre compte et tous vos séjours sont alors effacés.",
+        "Vous pouvez aussi demander l’accès à vos données ou leur rectification en nous écrivant."
+      ]
+    },
+    "contact": {
+      "title": "Contact",
+      "text": [
+        "Pour toute question sur vos données :"
+      ]
+    }
   }
 }

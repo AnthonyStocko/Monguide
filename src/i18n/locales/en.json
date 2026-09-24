@@ -58,7 +58,8 @@
     "departure": "Leave {{place}} at {{time}}",
     "return": "Back to {{place}}:",
     "lodgingTitle": "Accommodation",
-    "lodgingLater": "Changing accommodation and recalculating the affected days is coming in an upcoming version."
+    "lodgingLater": "Changing accommodation and recalculating the affected days is coming in an upcoming version.",
+    "readOnly": "This trip was created with a newer version of Mon guide. Update the app to edit this trip."
   },
   "map": {
     "attribution": "OpenStreetMap contributors",
@@ -532,5 +533,109 @@
     "confirmTitle": "Delete this trip?",
     "confirmText": "The trip to {{name}} will be deleted from this phone.",
     "confirm": "Delete"
+  },
+  "auth": {
+    "title": "Sign in",
+    "myAccount": "My account",
+    "intro": "Get a code by email to find your trips on all your devices. No password to remember.",
+    "email": "Email address",
+    "sendCode": "Get a code",
+    "guestNote": "Without an account, your trips are saved on this device only.",
+    "codeSent": "A {{length}}-digit code has been sent to {{email}}. It may take a minute to arrive; check your spam folder too.",
+    "code": "{{length}}-digit code",
+    "signIn": "Sign in",
+    "resend": "Resend code",
+    "resendIn": "Resend code in {{seconds}} s",
+    "changeEmail": "Change email address",
+    "signedInAs": "Signed in as {{email}}",
+    "syncedWith": "Trips synced with {{email}}",
+    "signOut": "Sign out",
+    "signOutTitle": "Sign out",
+    "signOutText": "Do you want to keep your trips on this device? They will stay available in your account either way.",
+    "keepTrips": "Keep on this device",
+    "eraseTrips": "Erase from this device",
+    "cta": "Sign in to find your trips on all your devices.",
+    "signInButton": "Sign in",
+    "errors": {
+      "emailInvalid": "Enter a valid email address, for example name@example.com.",
+      "codeFormat": "The code has {{length}} digits.",
+      "codeInvalid": "This code is wrong or has expired. Check it or request a new one.",
+      "tooManyEmails": "Too many codes requested. Wait a few minutes before trying again.",
+      "emailNotAuthorized": "Emails cannot be sent to this address yet. Try again later.",
+      "generic": "Sign-in failed. Try again."
+    }
+  },
+  "sync": {
+    "now": "Sync now",
+    "status": {
+      "guest": "Trips saved on this device only",
+      "synced": "Trips synced",
+      "pending": "Changes waiting to be sent",
+      "syncing": "Syncing…",
+      "offline": "Offline: changes will be sent when the connection is back",
+      "error": "Sync not possible right now, retrying automatically"
+    }
+  },
+  "account": {
+    "deleteTitle": "Delete my account",
+    "deleteHint": "Deletes your account and all the trips saved in it. This cannot be undone.",
+    "delete": "Delete my account",
+    "confirm1Title": "Delete your account?",
+    "confirm1Text": "Your account and all your synced trips will be deleted, on all your devices.",
+    "continue": "Continue",
+    "confirm2Title": "Final confirmation",
+    "confirm2Text": "This is irreversible: no trip can be recovered. Do you confirm the deletion?",
+    "confirmFinal": "Delete permanently",
+    "deleted": "Your account and trips have been deleted."
+  },
+  "privacy": {
+    "title": "Privacy",
+    "contactUnknown": "The team contact could not be loaded. Try again once online.",
+    "data": {
+      "title": "Data collected",
+      "text": [
+        "Without an account, your trips are saved on your device only.",
+        "With an account: your email address (to send you the sign-in code) and your trips, including the addresses of your accommodation and personal stops."
+      ]
+    },
+    "server": {
+      "title": "Searches and location",
+      "text": [
+        "To prepare a trip, the app sends our servers the places needed for the calculation (destination, accommodation, your location if you allow it). They are not stored as such: our caches and technical logs only keep a rounded position (about 1 km).",
+        "Our technical logs contain no email address or street address."
+      ]
+    },
+    "purpose": {
+      "title": "Purpose",
+      "text": [
+        "This data is only used to sign you in and to find your trips on your devices. It is never sold or used for advertising."
+      ]
+    },
+    "hosting": {
+      "title": "Hosting",
+      "text": [
+        "Data is hosted in the European Union (Ireland) by Supabase."
+      ]
+    },
+    "retention": {
+      "title": "Retention",
+      "text": [
+        "Your trips are kept as long as your account exists.",
+        "A deleted trip is erased from the server immediately; only a technical marker with no content is kept for 90 days to pass the deletion on to your other devices."
+      ]
+    },
+    "rights": {
+      "title": "Your rights",
+      "text": [
+        "You can delete your account at any time from Settings: your account and all your trips are then erased.",
+        "You can also ask to access or correct your data by writing to us."
+      ]
+    },
+    "contact": {
+      "title": "Contact",
+      "text": [
+        "For any question about your data:"
+      ]
+    }
   }
 }

@@ -91,6 +91,22 @@ export const RULES = Object.freeze({
     }
   },
 
+  /** Comptes : connexion par code reçu par e-mail. */
+  auth: {
+    /** Nombre de chiffres du code (réglage Supabase "Email OTP Length" à aligner). */
+    otpLength: 6,
+    /** Délai avant de pouvoir redemander un code, en secondes. */
+    resendDelaySec: 60
+  },
+
+  /** Synchronisation des séjours : délai après une modification avant l'envoi (ms). */
+  sync: {
+    debounceMs: 1500,
+    // Durée de conservation, sur le serveur, des marqueurs de séjours supprimés
+    // (reprise dans la tâche pg_cron monguide-purge-deleted-trips).
+    deletedRetentionDays: 90
+  },
+
   /** Carburant : consommation par défaut d'une voiture (modifiable par séjour). */
   fuel: {
     defaultConsumptionL100: 6.5

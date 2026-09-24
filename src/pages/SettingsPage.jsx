@@ -1,13 +1,24 @@
-import { ChevronRight, Stethoscope } from 'lucide-react';
+import { ChevronRight, ShieldCheck, Stethoscope, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import DeleteAccountSection from '../components/account/DeleteAccountSection.jsx';
 import Page from '../components/layout/Page.jsx';
 import Card from '../components/ui/Card.jsx';
+import { useAuth } from '../hooks/useAuth.js';
 import { setLanguage } from '../i18n/index.js';
 import { SUPPORTED_LANGUAGES } from '../i18n/language.js';
 
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
+  const { session } = useAuth();
+
+  const link = (to, Icon, label) => (
+    <Link to={to} className="flex min-h-12 items-center gap-3 rounded-xl px-3 hover:bg-subtle">
+      <Icon aria-hidden="true" className="size-6 text-secondary" />
+      <span className="flex-1">{label}</span>
+      <ChevronRight aria-hidden="true" className="size-6 text-ink-muted" />
+    </Link>
+  );
 
   return (
     <Page>
@@ -34,13 +45,13 @@ export default function SettingsPage() {
         </fieldset>
       </Card>
 
-      <Card as="section" className="p-2">
-        <Link to="/debug" className="flex min-h-12 items-center gap-3 rounded-xl px-3 hover:bg-subtle">
-          <Stethoscope aria-hidden="true" className="size-6 text-secondary" />
-          <span className="flex-1">{t('debug.title')}</span>
-          <ChevronRight aria-hidden="true" className="size-6 text-ink-muted" />
-        </Link>
+      <Card as="section" className="space-y-1 p-2">
+        {link('/account', UserRound, session ? t('auth.myAccount') : t('auth.title'))}
+        {link('/privacy', ShieldCheck, t('privacy.title'))}
+        {link('/debug', Stethoscope, t('debug.title'))}
       </Card>
+
+      <DeleteAccountSection />
     </Page>
   );
 }
