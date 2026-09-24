@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { generateTrip } from '../../services/dataApi.js';
 import { todayIn } from '@domain/dates.js';
 import { STEPS, buildTrip, firstInvalidStep, validateStep } from '@domain/tripDraft.js';
 import { useConfig } from '../../hooks/useConfig.js';
@@ -8,9 +9,11 @@ import { useTripDraft } from '../../hooks/useTripDraft.js';
 import { saveTrip } from '../../services/tripsStore.js';
 import Button from '../ui/Button.jsx';
 import Card from '../ui/Card.jsx';
+import ErrorState from '../ui/ErrorState.jsx';
 import Skeleton from '../ui/Skeleton.jsx';
 import DatesStep from './DatesStep.jsx';
 import DestinationStep from './DestinationStep.jsx';
+import GenerationProgress from './GenerationProgress.jsx';
 import LodgingStep from './LodgingStep.jsx';
 import ProfileStep from './ProfileStep.jsx';
 import StepProgress from './StepProgress.jsx';
@@ -32,11 +35,11 @@ const STEP_COMPONENTS = {
  * @param {{ onCreated: (trip: object) => void }} props
  */
 export default function TripStepper({ onCreated }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { rules } = useConfig().config;
   const { draft, update, reset } = useTripDraft(rules);
   const [showErrors, setShowErrors] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [generation, setGeneration] = useState({ status: 'idle' });
   // Incrémenté à chaque refus : le focus va au message d'erreur une fois celui-ci affiché.
   const [errorTick, setErrorTick] = useState(0);
   const headingRef = useRef(null);
@@ -85,16 +88,21 @@ export default function TripStepper({ onCreated }) {
       setErrorTick((n) => n + 1);
       return;
     }
-    setSaving(true);
+    setGeneration({ status: 'loading' });
     try {
-      const trip = buildTrip(draft, { id: crypto.randomUUID(), now: new Date().toISOString(), makeId: () => crypto.randomUUID() });
+      const request = buildTrip(draft, { id: crypto.randomUUID(), now: new Date().toISOString(), makeId: () => crypto.randomUUID() });
+      const { trip, warnings } = await generateTrip(request, i18n.resolvedLanguage);
       await saveTrip(trip);
       await reset();
-      onCreated(trip);
-    } finally {
-      setSaving(false);
+      setGeneration({ status: 'idle' });
+      onCreated({ trip, warnings });
+    } catch (error) {
+      // Le brouillon est conservé : l'utilisateur peut réessayer.
+      setGeneration({ status: 'error', error });
     }
   };
+
+  if (generation.status === 'loading') return <GenerationProgress />;
 
   const StepComponent = STEP_COMPONENTS[stepName];
   const isLast = index === STEPS.length - 1;
@@ -112,6 +120,8 @@ export default function TripStepper({ onCreated }) {
         </p>
       )}
 
+      {generation.status === 'error' && <ErrorState title={t('generation.failed')} message={t(generation.error.messageKey ?? 'errors.unknown')} onRetry={generate} />}
+
       <form
         noValidate
         onSubmit={(e) => {
@@ -128,7 +138,7 @@ export default function TripStepper({ onCreated }) {
             {t('tripForm.previous')}
           </Button>
           {isLast ? (
-            <Button type="submit" icon={Sparkles} disabled={saving} className="min-h-14">
+            <Button type="submit" icon={Sparkles} className="min-h-14">
               {t('tripForm.generate')}
             </Button>
           ) : (

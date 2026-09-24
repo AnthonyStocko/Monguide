@@ -306,11 +306,40 @@ Bulletin pétrolier et les taux BCE et remplit `fuel_prices_eu`. Sortie :
 `{ bulletinDate, exchangeRateDate, countries, rows }`. En cas d'échec,
 rien n'est modifié.
 
+### `generate` — génération d'un séjour
+
+- **Méthode** : `POST` ; limite de requêtes du type `generate` (30 par heure).
+- **Entrée** : `{ "tripRequest": Trip, "lang": "fr" | "en" }` : séjour issu du
+  formulaire (`domain/tripDraft.js`, `buildTrip`), `days` et `candidates`
+  vides. Vérifié par `domain/validateTripRequest.js` (`400 invalid_input`
+  en listant les champs invalides).
+- **Sortie** : `{ "trip": Trip, "warnings": Warning[], "sources": Source[] }`
+  - `trip.days` : une journée par date, étapes `culture` (10h00), `lunch`
+    (12h30), `outdoor` (14h30), `relax` (17h30) avec `start`/`end`
+    ("HH:mm", fuseau du séjour), `travelFromPreviousMin`, `badges`
+    (`weather_adapted`, `hours_unconfirmed`, `info_missing`,
+    `free_time`), `specialties` (appellations, pause au marché) ;
+    `departure` et `returnTravelMin` si un hébergement est connu ;
+    `weatherAvailable`, `weather` (`{ "HH": % }`), `holiday`.
+  - `trip.candidates` : les 60 meilleurs lieux non utilisés (remplacement et
+    recalcul sans réseau).
+  - `trip.carbon` : `{ totalKgCo2e, byDay, byMode, distanceKm }` ;
+    `trip.fuelCost` : `{ amount, currency }` (voiture, monnaie du pays).
+  - `warnings[].code` : `source_failed` (+ `source`), `free_time` (+ `count`),
+    `weather_later`, `no_restaurants`, `no_fuel_price`, `no_carbon_factors`.
+  - `sources` : état de chaque source (lieux par zone de collecte, météo,
+    jours fériés, CO2, carburant).
+- **Budget** : collecte limitée à `generation.collectBudgetMs` (16 s) ; au-delà,
+  génération avec les sources disponibles (les collectes lentes continuent en
+  arrière-plan et remplissent le cache). L'application attend
+  `api.generateTimeoutMs` (25 s). Limites Supabase vérifiées le 2026-09-24 :
+  150 s de durée, 2 s de temps CPU par requête, 256 Mo.
+- **Erreurs** : codes communs ; `400 unsupported_country`.
+
 ### Fonctions prévues (à documenter avant d'être codées)
 
 | Fonction | Phase | Rôle |
 |---|---|---|
-| `generate` | 4 | génération d'un séjour (délai client 25 s) |
 | `delete-account` | 5 bis | suppression du compte et des données |
 
 ## Historique
@@ -320,4 +349,5 @@ rien n'est modifié.
 | 1 | 2026-09-24 | Version initiale : cadre commun, fonction `config`. |
 | 1 | 2026-09-24 | Ajouts compatibles : fonctions `geocode`, `weather`, `places` ; code `400 unsupported_country`. |
 | 1 | 2026-09-24 | Ajout compatible : `geocode?kind=address` (adresses précises des hébergements). |
+| 1 | 2026-09-24 | Ajout compatible : fonction `generate`. |
 | 1 | 2026-09-24 | Ajouts compatibles : `geocode` renvoie tous les pays (`timezone` null hors liste) ; `places` : sources avec `durationMs`, `query`, message `fallback_osm` ; fonctions `holidays`, `fuel`, `fuel-eu-refresh` ; code `403 forbidden`. |

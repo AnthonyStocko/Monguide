@@ -452,3 +452,8 @@ entrypoint = "./functions/fuel/index.js"
 verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/fuel-eu-refresh/index.js"
+
+[functions.generate]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/generate/index.js"

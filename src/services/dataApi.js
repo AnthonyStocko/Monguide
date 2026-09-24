@@ -55,3 +55,14 @@ export function getFuel(params) {
   const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]));
   return callFunction(`fuel?${qs}`, { method: 'GET', cacheKey: `fuel:${qs}` });
 }
+
+/**
+ * Génération d'un séjour par le serveur (délai rules.api.generateTimeoutMs).
+ * @param {import('@domain/model.js').Trip} tripRequest séjour issu du formulaire
+ * @param {'fr' | 'en'} lang
+ * @returns {Promise<{ trip: object, warnings: object[], sources: object[] }>}
+ */
+export async function generateTrip(tripRequest, lang) {
+  const { data } = await callFunction('generate', { method: 'POST', body: { tripRequest, lang }, timeoutMs: getRules().api.generateTimeoutMs });
+  return data;
+}

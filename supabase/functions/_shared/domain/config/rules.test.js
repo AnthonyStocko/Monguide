@@ -8,6 +8,7 @@ const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
 describe('RULES', () => {
   it('ne contient que des nombres positifs, des heures "HH:mm", des chaînes ou des listes', () => {
     for (const [path, value] of Object.entries(flattenRules(RULES))) {
+      if (value === null) continue; // rayon de la voiture : rayon choisi
       if (typeof value === 'number') expect(value, path).toBeGreaterThan(0);
       else if (Array.isArray(value)) expect(value.length, path).toBeGreaterThan(0);
       else expect(typeof value, path).toBe('string');
@@ -41,6 +42,16 @@ describe('RULES', () => {
 
   it('reprend les valeurs du cahier des charges', () => {
     expect(RULES.travel.detourFactor).toBe(1.3);
+    expect(RULES.travel.modes).toEqual({
+      walk: { speedKmh: 5, radiusKm: 3 },
+      transit: { speedKmh: 20, radiusKm: 20 },
+      bike: { speedKmh: 15, radiusKm: 15 },
+      car: { speedKmh: 50, radiusKm: null }
+    });
+    expect(RULES.durations.museum).toEqual({ recommendedMin: 90, minimumMin: 60 });
+    expect(RULES.durations.castle).toEqual({ recommendedMin: 120, minimumMin: 75 });
+    expect(RULES.durations.restaurant).toEqual({ recommendedMin: 75, minimumMin: 60 });
+    expect(RULES.fuel.defaultConsumptionL100).toBe(6.5);
     expect(RULES.travel.maxTravelMin).toBe(45);
     expect(RULES.weather.rainThresholdPct).toBe(50);
     expect(RULES.weather.forecastDays).toBe(16);

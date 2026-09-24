@@ -97,9 +97,16 @@ export const LUNCH_OPTIONS = Object.freeze(['market', 'restaurant', 'both']);
  * @property {boolean} customTime
  * @property {boolean} locked
  * @property {number} [travelFromPreviousMin]
- * @property {string[]} badges
+ * @property {string[]} badges codes STEP_BADGES, traduits par l'application
  * @property {string[]} [conflicts]
+ * @property {string[]} [specialties] appellations locales (AOC/AOP) associées à une pause gourmande
  */
+
+/**
+ * Badges d'une étape : adaptée à la météo, horaires non confirmés, information
+ * (végétarien, fauteuil) non renseignée, temps libre (aucun lieu trouvé).
+ */
+export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed', 'info_missing', 'free_time']);
 
 /**
  * @typedef {object} Day
@@ -130,14 +137,15 @@ export const LUNCH_OPTIONS = Object.freeze(['market', 'restaurant', 'both']);
  * @property {number} travelers
  * @property {'walk' | 'transit' | 'bike' | 'car'} mode
  * @property {string} [fuelType] voir FUEL_TYPES (voiture uniquement)
- * @property {number} [fuelConsumption]
+ * @property {number} [fuelConsumption] L/100 km (défaut rules.fuel.defaultConsumptionL100)
  * @property {'certified' | 'balanced' | 'explorer'} profile
  * @property {'market' | 'restaurant' | 'both'} lunch
  * @property {{ vegetarian: boolean, wheelchair: boolean }} prefs
  * @property {Lodging[]} lodgings
  * @property {Day[]} days
  * @property {Place[]} candidates au plus rules.places.maxCandidates
- * @property {{ totalKgCo2e: number, byDay: number[] }} [carbon]
+ * @property {{ totalKgCo2e: number, byDay: number[], byMode: Record<'walk' | 'transit' | 'bike' | 'car', number>, distanceKm: number }} [carbon]
+ *   émissions estimées des déplacements (mode choisi, par jour, et comparaison des 4 modes)
  * @property {{ amount: number, currency: string }} [fuelCost]
  */
 

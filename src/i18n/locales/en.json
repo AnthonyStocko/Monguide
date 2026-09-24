@@ -179,7 +179,22 @@
     "duration": "{{value}} s",
     "fallbackOsm": "Data from OpenStreetMap: Wikidata is temporarily unavailable.",
     "noRegionalData": "No listed local specialty for this region.",
-    "query": "Show the query sent"
+    "query": "Show the query sent",
+    "places": {
+      "failed": "Place search took too long: trip generated with the places already known."
+    },
+    "weather": {
+      "failed": "Weather temporarily unavailable."
+    },
+    "holidays": {
+      "failed": "Public holidays temporarily unavailable."
+    },
+    "co2": {
+      "failed": "Emission factors unavailable."
+    },
+    "fuel": {
+      "failed": "Fuel price temporarily unavailable."
+    }
   },
   "food": {
     "cuisine": "Cuisine",
@@ -371,8 +386,50 @@
     "created": {
       "title": "Trip saved",
       "text": "Your trip to {{destination}} is saved on this phone.",
-      "next": "Day-by-day plan generation is coming in an upcoming version.",
       "another": "Create another trip"
     }
+  },
+  "generation": {
+    "title": "Preparing your trip",
+    "phases": {
+      "places": "Finding places around your destination…",
+      "weather": "Weather, public holidays and prices…",
+      "planning": "Building the day-by-day plan…",
+      "finishing": "A few more seconds…"
+    },
+    "elapsed": "{{seconds}} s elapsed",
+    "failed": "Trip generation failed",
+    "warningsTitle": "Good to know about this trip",
+    "warnings": {
+      "source_failed": "Source temporarily unavailable: {{source}}.",
+      "free_time_one": "{{count}} slot without a place found: left as free time.",
+      "free_time_other": "{{count}} slots without a place found: left as free time.",
+      "weather_later": "The weather for some days will be taken into account as your departure approaches.",
+      "no_restaurants": "No restaurants found for lunch breaks.",
+      "no_fuel_price": "Fuel price unavailable: cost not estimated.",
+      "no_carbon_factors": "Carbon footprint unavailable for this trip."
+    },
+    "weatherLater": "Weather to be reassessed",
+    "departure": "Leave your accommodation at {{time}} ({{minutes}} min estimated travel)",
+    "travel": "Estimated travel: {{minutes}} min",
+    "return": "Back to your accommodation: {{minutes}} min estimated travel",
+    "stepTypes": {
+      "culture": "Cultural visit",
+      "lunch": "Food break",
+      "outdoor": "Outdoors",
+      "relax": "Relax"
+    },
+    "freeTime": "Free time",
+    "specialties": "Local specialties: {{list}}",
+    "carbonTitle": "Travel carbon footprint",
+    "carbonTotal": "{{value}} kg CO₂e for {{km}} km of estimated travel.",
+    "kg": "{{value}} kg",
+    "fuelCost": "Estimated fuel cost: {{amount}} (consumption {{consumption}} L/100 km).",
+    "estimates": "Travel times, distances and emissions are estimates."
+  },
+  "badges": {
+    "weather_adapted": "Adapted to the weather",
+    "hours_unconfirmed": "Opening hours not confirmed",
+    "info_missing": "Information not provided"
   }
 }

@@ -27,28 +27,73 @@ export const RULES = Object.freeze({
     end: '14:00'
   },
 
-  /** Durées conseillées et minimales par type d'étape, en minutes (proposition). */
+  /**
+   * Durées par type d'activité, en minutes : conseillée (durée par défaut
+   * d'une étape) et minimale (en dessous, l'étape n'a plus de sens).
+   */
   durations: {
-    culture: { recommendedMin: 120, minimumMin: 60 },
-    lunch: { recommendedMin: 90, minimumMin: 45 },
-    outdoor: { recommendedMin: 150, minimumMin: 60 },
-    relax: { recommendedMin: 90, minimumMin: 30 },
-    personal: { recommendedMin: 60, minimumMin: 15 }
+    museum: { recommendedMin: 90, minimumMin: 60 },
+    castle: { recommendedMin: 120, minimumMin: 75 },
+    /** monument, église */
+    monument: { recommendedMin: 60, minimumMin: 30 },
+    /** petit patrimoine, point de vue */
+    smallHeritage: { recommendedMin: 30, minimumMin: 15 },
+    /** parc, espace naturel */
+    park: { recommendedMin: 90, minimumMin: 45 },
+    /** sentier, randonnée */
+    trail: { recommendedMin: 120, minimumMin: 90 },
+    /** marché, producteur */
+    market: { recommendedMin: 45, minimumMin: 30 },
+    restaurant: { recommendedMin: 75, minimumMin: 60 },
+    /** détente, temps libre */
+    relax: { recommendedMin: 60, minimumMin: 30 }
   },
 
   /** Trajets : toujours des estimations (aucun moteur d'itinéraire). */
   travel: {
     /** Distance réelle ≈ distance à vol d'oiseau × coefficient de détour. */
     detourFactor: 1.3,
-    /** Trajet maximal entre deux étapes. */
+    /** Trajet maximal entre deux étapes : au-delà, un autre lieu est choisi. */
     maxTravelMin: 45,
-    /** Vitesse moyenne (km/h) et rayon de recherche (km) par mode (proposition). */
+    /**
+     * Vitesse moyenne (km/h, attente comprise en transports en commun) et
+     * rayon effectif (km) par mode. Le rayon effectif ne dépasse jamais le
+     * rayon d'exploration choisi ; null = rayon choisi (voiture).
+     */
     modes: {
-      walk: { speedKmh: 4.5, radiusKm: 3 },
-      transit: { speedKmh: 18, radiusKm: 15 },
-      bike: { speedKmh: 15, radiusKm: 10 },
-      car: { speedKmh: 40, radiusKm: 40 }
+      walk: { speedKmh: 5, radiusKm: 3 },
+      transit: { speedKmh: 20, radiusKm: 20 },
+      bike: { speedKmh: 15, radiusKm: 15 },
+      car: { speedKmh: 50, radiusKm: null }
     }
+  },
+
+  /** Génération d'un séjour (fonction generate). */
+  generation: {
+    /** Budget de collecte des données : au-delà, génération avec les sources disponibles (ms). */
+    collectBudgetMs: 16000,
+    /**
+     * Score d'un lieu (0-100) = proximité (rapportée au rayon effectif du mode)
+     * + bonus certifié + bonus de diversité des catégories.
+     */
+    score: {
+      proximity: 60,
+      certified: 25,
+      diversity: 15
+    },
+    /** Score d'un restaurant : bonus et malus (points). */
+    restaurant: {
+      base: 40,
+      regionalCuisine: 15,
+      proximity: 45,
+      hoursUnconfirmed: 15,
+      infoMissing: 10
+    }
+  },
+
+  /** Carburant : consommation par défaut d'une voiture (modifiable par séjour). */
+  fuel: {
+    defaultConsumptionL100: 6.5
   },
 
   weather: {

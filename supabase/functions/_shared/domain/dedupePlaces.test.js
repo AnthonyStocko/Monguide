@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dedupePlaces } from './dedupePlaces.js';
+import { dedupePlaces, similarNames } from './dedupePlaces.js';
 
 const place = (id, name, lat, lon, certified = false) => ({ id, name, lat, lon, certified });
 
@@ -38,5 +38,24 @@ describe('dedupePlaces', () => {
     const a = place('osm:node/1', 'A', 45, 4);
     const b = place('osm:node/2', 'B', 46, 5);
     expect(dedupePlaces([b, a, { ...a }], 50)).toEqual([b, a]);
+  });
+});
+
+describe('similarNames', () => {
+  it('reconnaît des noms similaires', () => {
+    expect(similarNames('Église Saint-Pierre', 'eglise saint pierre')).toBe(true);
+    expect(similarNames('Musée Paul-Dini', 'Musée municipal Paul-Dini')).toBe(true);
+    expect(similarNames('Château de Montmelas', 'Château de Montmelas-Saint-Sorlin')).toBe(true);
+  });
+
+  it('distingue des noms différents', () => {
+    expect(similarNames('Église Saint-Pierre', 'Église Saint-Paul')).toBe(false);
+    expect(similarNames('Parc Vermorel', 'Musée Vermorel')).toBe(false);
+  });
+
+  it('fusionne deux lieux proches de noms similaires, en gardant le certifié', () => {
+    const osm = place('osm:node/1', 'Musée municipal Paul-Dini', 45.9880, 4.7180);
+    const mf = place('musee:M1', 'Musée Paul-Dini', 45.9881, 4.7181, true);
+    expect(dedupePlaces([osm, mf], 50)).toEqual([mf]);
   });
 });

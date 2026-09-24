@@ -179,7 +179,22 @@
     "duration": "{{value}} s",
     "fallbackOsm": "Données issues d’OpenStreetMap : Wikidata est momentanément indisponible.",
     "noRegionalData": "Pas de spécialité locale référencée pour cette région.",
-    "query": "Voir la requête envoyée"
+    "query": "Voir la requête envoyée",
+    "places": {
+      "failed": "Recherche des lieux trop longue : séjour généré avec les lieux déjà connus."
+    },
+    "weather": {
+      "failed": "Météo momentanément indisponible."
+    },
+    "holidays": {
+      "failed": "Jours fériés momentanément indisponibles."
+    },
+    "co2": {
+      "failed": "Facteurs d’émission indisponibles."
+    },
+    "fuel": {
+      "failed": "Prix du carburant momentanément indisponible."
+    }
   },
   "food": {
     "cuisine": "Cuisine",
@@ -371,8 +386,50 @@
     "created": {
       "title": "Séjour enregistré",
       "text": "Votre séjour à {{destination}} est enregistré sur ce téléphone.",
-      "next": "La génération du programme jour par jour arrive dans une prochaine version.",
       "another": "Créer un autre séjour"
     }
+  },
+  "generation": {
+    "title": "Préparation de votre séjour",
+    "phases": {
+      "places": "Recherche des lieux autour de votre destination…",
+      "weather": "Météo, jours fériés et prix…",
+      "planning": "Construction du programme jour par jour…",
+      "finishing": "Encore quelques secondes…"
+    },
+    "elapsed": "{{seconds}} s écoulées",
+    "failed": "La génération du séjour a échoué",
+    "warningsTitle": "À savoir sur ce séjour",
+    "warnings": {
+      "source_failed": "Source momentanément indisponible : {{source}}.",
+      "free_time_one": "{{count}} créneau sans lieu trouvé : il est laissé en temps libre.",
+      "free_time_other": "{{count}} créneaux sans lieu trouvé : ils sont laissés en temps libre.",
+      "weather_later": "La météo de certains jours sera prise en compte à l’approche du départ.",
+      "no_restaurants": "Aucun restaurant trouvé pour les pauses déjeuner.",
+      "no_fuel_price": "Prix du carburant indisponible : coût non estimé.",
+      "no_carbon_factors": "Bilan carbone indisponible pour ce séjour."
+    },
+    "weatherLater": "Météo à réévaluer",
+    "departure": "Départ de l’hébergement à {{time}} ({{minutes}} min de trajet estimé)",
+    "travel": "Trajet estimé : {{minutes}} min",
+    "return": "Retour à l’hébergement : {{minutes}} min de trajet estimé",
+    "stepTypes": {
+      "culture": "Visite culturelle",
+      "lunch": "Pause gourmande",
+      "outdoor": "Plein air",
+      "relax": "Détente"
+    },
+    "freeTime": "Temps libre",
+    "specialties": "Spécialités locales : {{list}}",
+    "carbonTitle": "Bilan carbone des déplacements",
+    "carbonTotal": "{{value}} kg CO₂e pour {{km}} km de trajets estimés.",
+    "kg": "{{value}} kg",
+    "fuelCost": "Coût carburant estimé : {{amount}} (consommation {{consumption}} L/100 km).",
+    "estimates": "Temps de trajet, distances et émissions sont des estimations."
+  },
+  "badges": {
+    "weather_adapted": "Adapté à la météo",
+    "hours_unconfirmed": "Horaires non confirmés",
+    "info_missing": "Information non renseignée"
   }
 }

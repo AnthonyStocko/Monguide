@@ -1,4 +1,4 @@
-import { AppError } from '../../errors.js';
+import { co2FactorsFr } from './co2.js';
 import { fuel } from './fuel.js';
 import { heritage } from './heritage.js';
 import { terroir } from './terroir.js';
@@ -12,10 +12,7 @@ const fr = {
   heritage,
   terroir,
   fuel,
-  // Facteurs carbone ADEME : ajoutés en phase 4.
-  co2Factors: async () => {
-    throw new AppError(501, 'not_implemented', 'co2Factors: phase 4');
-  },
+  co2Factors: async () => co2FactorsFr(),
   certificationLabels: () => ['monument_historique', 'musee_de_france']
 };
 

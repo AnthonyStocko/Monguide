@@ -79,14 +79,25 @@ async function toApiError(error) {
 
 async function invoke(name, { method, body, timeoutMs }) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let timer;
+  // Délai garanti par une course contre un minuteur : le signal seul ne suffit
+  // pas toujours à interrompre l'appel (constaté : attente de plus de 30 s).
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new ApiError('timeout'));
+    }, timeoutMs);
+  });
   try {
-    const { data, error } = await supabase.functions.invoke(name, {
-      method,
-      body,
-      headers: { 'x-monguide-api': String(API_VERSION), 'x-monguide-app': APP_VERSION },
-      signal: controller.signal
-    });
+    const { data, error } = await Promise.race([
+      supabase.functions.invoke(name, {
+        method,
+        body,
+        headers: { 'x-monguide-api': String(API_VERSION), 'x-monguide-app': APP_VERSION },
+        signal: controller.signal
+      }),
+      timeout
+    ]);
     if (error) throw controller.signal.aborted ? new ApiError('timeout') : await toApiError(error);
     return data;
   } catch (err) {
