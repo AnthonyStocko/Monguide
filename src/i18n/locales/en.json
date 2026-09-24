@@ -15,7 +15,9 @@
     "back": "Back",
     "retry": "Retry",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "offline": {
     "message": "You are offline. Some features are unavailable."
@@ -32,14 +34,45 @@
   },
   "planning": {
     "emptyTitle": "No schedule",
-    "emptyText": "Create a trip to see its day-by-day plan."
+    "emptyText": "Create a trip to see its day-by-day plan.",
+    "days": "Trip days",
+    "travelDuration": "{{minutes}} min {{mode}}",
+    "modeSuffix": {
+      "walk": "on foot",
+      "transit": "by public transport",
+      "bike": "by bike",
+      "car": "by car"
+    },
+    "estimateTooltip": "Estimated from straight-line distance, without transport timetables",
+    "fromPrevious": "From the previous stop:",
+    "editTime": "Change the time {{start}} – {{end}}",
+    "customTime": "Custom time",
+    "rain": "Rain {{pct}}%",
+    "directions": "Directions",
+    "replace": "Replace this stop",
+    "holiday": "Public holiday ({{name}}): opening hours may change.",
+    "weatherLater": "Weather to be reassessed: no forecast yet for this day.",
+    "goHome": "Go back",
+    "editLodging": "Change accommodation",
+    "addLodging": "Add my accommodation",
+    "departure": "Leave {{place}} at {{time}}",
+    "return": "Back to {{place}}:",
+    "lodgingTitle": "Accommodation",
+    "lodgingLater": "Changing accommodation and recalculating the affected days is coming in an upcoming version."
   },
   "map": {
-    "attribution": "OpenStreetMap contributors"
-  },
-  "favorites": {
-    "emptyTitle": "No favorites",
-    "emptyText": "Places you add to your favorites will appear here."
+    "attribution": "OpenStreetMap contributors",
+    "chooseDay": "Day shown",
+    "legendTitle": "Legend",
+    "groups": {
+      "culture": "Culture",
+      "food": "Food",
+      "nature": "Nature",
+      "heritage": "Local heritage",
+      "lodging": "Accommodation"
+    },
+    "lodging": "Accommodation",
+    "orderNotice": "Lines connect the stops in visiting order; they are not road routes."
   },
   "settings": {
     "language": "Language",
@@ -386,7 +419,8 @@
     "created": {
       "title": "Trip saved",
       "text": "Your trip to {{destination}} is saved on this phone.",
-      "another": "Create another trip"
+      "another": "Create another trip",
+      "viewPlanning": "View the schedule"
     }
   },
   "generation": {
@@ -431,5 +465,72 @@
     "weather_adapted": "Adapted to the weather",
     "hours_unconfirmed": "Opening hours not confirmed",
     "info_missing": "Information not provided"
+  },
+  "restaurant": {
+    "cuisine": "Cuisine: {{list}}",
+    "vegetarian": "Vegetarian",
+    "wheelchair": "Wheelchair access",
+    "wheelchairLimited": "Limited wheelchair access",
+    "hoursUnknown": "Opening hours not provided.",
+    "closedThatDay": "Closed on {{day}}.",
+    "hoursOfDay": "Opening hours on {{day}}: {{hours}}",
+    "call": "Call",
+    "website": "Website",
+    "osmNotice": "OpenStreetMap information, to be checked with the restaurant."
+  },
+  "timing": {
+    "title": "Time: {{name}}",
+    "start": "Start",
+    "end": "End",
+    "durationLabel": "Duration: {{duration}}",
+    "minutesOnly": "{{m}} min",
+    "hoursOnly": "{{h}} h",
+    "hoursMinutes": "{{h}} h {{m}}",
+    "belowRecommended": "A little shorter than the recommended duration.",
+    "fromPrevious": "From the previous stop (ends at {{end}}):",
+    "toNext": "To the next stop (starts at {{start}}):",
+    "save": "Save",
+    "saveAnyway": "Save anyway",
+    "shiftFollowing": "Also shift the following stops ({{minutes}} min)",
+    "forStep": "{{name}}: {{text}}",
+    "activities": {
+      "museum": "A museum visit",
+      "castle": "A castle visit",
+      "monument": "A monument visit",
+      "smallHeritage": "A local heritage visit",
+      "park": "A walk in the park",
+      "trail": "A hike",
+      "market": "A market visit",
+      "restaurant": "A restaurant meal",
+      "relax": "A relaxing break"
+    },
+    "TOO_SHORT": "{{activity}} usually takes at least {{minimum}}. You planned {{duration}}.",
+    "OVERLAP_PREVIOUS": "It takes {{travelMin}} min {{mode}} from the previous stop, which ends at {{previousEnd}}.",
+    "OVERLAP_NEXT": "It takes {{travelMin}} min {{mode}} to reach the next stop, which starts at {{nextStart}}.",
+    "CLOSED": "This place is closed for all or part of this slot (hours: {{openingHours}}).",
+    "RAIN": "Outdoor activity: {{pct}}% chance of rain during this slot.",
+    "LATE": "This stop ends after {{lateEnd}}.",
+    "INVALID": "The end time must be after the start time.",
+    "STARTS_TOO_LATE": "This stop would start after {{latest}}."
+  },
+  "replace": {
+    "title": "Replace: {{name}}",
+    "none": "No other place available in the reserve.",
+    "distance": "{{km}} km away",
+    "more": "More choices",
+    "loading": "Searching…",
+    "offline": "“More choices” needs a connection."
+  },
+  "trips": {
+    "title": "My trips",
+    "emptyTitle": "No saved trips",
+    "emptyText": "The trips you create are saved on this phone and remain available offline.",
+    "created": "Created on {{date}}",
+    "open": "Open",
+    "delete": "Delete",
+    "deleteNamed": "Delete the trip {{name}}",
+    "confirmTitle": "Delete this trip?",
+    "confirmText": "The trip to {{name}} will be deleted from this phone.",
+    "confirm": "Delete"
   }
 }

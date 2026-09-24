@@ -30,7 +30,7 @@ export default function TopBar() {
     <header className="sticky top-0 z-[1100] border-b border-line bg-surface pt-safe">
       <div className="flex min-h-14 items-center gap-1 px-2">
         {isSubPage && <Button variant="ghost" icon={ArrowLeft} aria-label={t('common.back')} onClick={goBack} />}
-        <h1 className="flex-1 px-2 text-xl font-bold">{t(TITLES[location.pathname] ?? 'app.name')}</h1>
+        <h1 className="flex-1 px-2 text-xl font-bold">{t(TITLES[location.pathname] ?? (location.pathname.startsWith('/planning/') ? 'nav.planning' : 'app.name'))}</h1>
         {!isSubPage && (
           <Button variant="ghost" icon={Settings} aria-label={t('nav.settings')} onClick={() => navigate('/settings')} />
         )}

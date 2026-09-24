@@ -1,6 +1,5 @@
-import OpeningHours from 'opening_hours';
 import { distanceKm } from './geo.js';
-import { destinationLocalDate } from './time.js';
+import { openingState } from './openingHours.js';
 
 /**
  * Choix du restaurant d'une pause déjeuner (fonction pure).
@@ -28,20 +27,9 @@ export const RESTAURANT_BADGES = { hoursUnconfirmed: 'hours_unconfirmed', infoMi
  * @returns {'open' | 'closed' | 'unknown'}
  */
 export function lunchOpeningState(openingHours, { date, lat, lon, countryCode }, rules) {
-  if (!openingHours) return 'unknown';
-  let oh;
-  try {
-    oh = new OpeningHours(openingHours, { lat, lon, address: { country_code: countryCode.toLowerCase(), state: '' } });
-  } catch {
-    return 'unknown';
-  }
-  try {
-    const from = destinationLocalDate(date, rules.lunchWindow.start);
-    const to = destinationLocalDate(date, rules.lunchWindow.end);
-    return oh.getOpenIntervals(from, to).some(([, , unknown]) => !unknown) ? 'open' : 'closed';
-  } catch {
-    return 'unknown';
-  }
+  const state = openingState(openingHours, { date, from: rules.lunchWindow.start, to: rules.lunchWindow.end, lat, lon, countryCode });
+  // Ouvert sur une partie de la plage du déjeuner : suffisant pour déjeuner.
+  return state === 'partial' ? 'open' : state;
 }
 
 /**

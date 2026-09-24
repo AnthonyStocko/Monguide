@@ -20,6 +20,7 @@ export default function App() {
         <Route index element={<HomePage />} />
         <Route path="create" element={<CreatePage />} />
         <Route path="planning" element={<PlanningPage />} />
+        <Route path="planning/:tripId" element={<PlanningPage />} />
         <Route path="map" element={<MapPage />} />
         <Route path="favorites" element={<FavoritesPage />} />
         <Route path="settings" element={<SettingsPage />} />

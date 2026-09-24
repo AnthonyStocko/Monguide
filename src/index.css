@@ -102,3 +102,37 @@
   line-height: 48px !important;
   font-size: 1.5rem !important;
 }
+
+/* Marqueurs de la carte (L.divIcon + icônes Lucide en SVG). */
+.map-marker-wrapper {
+  background: transparent;
+  border: 0;
+}
+
+.map-marker {
+  position: relative;
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  border-radius: 9999px;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.4);
+}
+
+.map-marker-number {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+}

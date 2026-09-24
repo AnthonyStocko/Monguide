@@ -15,7 +15,9 @@
     "back": "Retour",
     "retry": "Réessayer",
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "close": "Fermer",
+    "cancel": "Annuler"
   },
   "offline": {
     "message": "Vous êtes hors ligne. Certaines fonctions sont indisponibles."
@@ -32,14 +34,45 @@
   },
   "planning": {
     "emptyTitle": "Aucun planning",
-    "emptyText": "Créez un séjour pour voir son programme jour par jour."
+    "emptyText": "Créez un séjour pour voir son programme jour par jour.",
+    "days": "Jours du séjour",
+    "travelDuration": "{{minutes}} min {{mode}}",
+    "modeSuffix": {
+      "walk": "à pied",
+      "transit": "en transports en commun",
+      "bike": "à vélo",
+      "car": "en voiture"
+    },
+    "estimateTooltip": "Temps estimé à vol d’oiseau, sans horaires de transport",
+    "fromPrevious": "Depuis l’étape précédente :",
+    "editTime": "Modifier l’horaire {{start}} – {{end}}",
+    "customTime": "Horaire personnalisé",
+    "rain": "Pluie {{pct}} %",
+    "directions": "Itinéraire",
+    "replace": "Remplacer cette étape",
+    "holiday": "Jour férié ({{name}}) : horaires susceptibles de changer.",
+    "weatherLater": "Météo à réévaluer : la prévision n’est pas encore disponible pour ce jour.",
+    "goHome": "Rentrer",
+    "editLodging": "Modifier l’hébergement",
+    "addLodging": "Ajouter mon hébergement",
+    "departure": "Départ de {{place}} à {{time}}",
+    "return": "Retour à {{place}} :",
+    "lodgingTitle": "Hébergement",
+    "lodgingLater": "La modification des hébergements et le recalcul des journées concernées arrivent dans une prochaine version."
   },
   "map": {
-    "attribution": "contributeurs d'OpenStreetMap"
-  },
-  "favorites": {
-    "emptyTitle": "Aucun favori",
-    "emptyText": "Les lieux que vous ajoutez en favoris apparaîtront ici."
+    "attribution": "contributeurs d'OpenStreetMap",
+    "chooseDay": "Jour affiché",
+    "legendTitle": "Légende",
+    "groups": {
+      "culture": "Culture",
+      "food": "Gastronomie",
+      "nature": "Nature",
+      "heritage": "Petit patrimoine",
+      "lodging": "Hébergement"
+    },
+    "lodging": "Hébergement",
+    "orderNotice": "Les lignes relient les étapes dans l’ordre de visite ; ce ne sont pas des itinéraires routiers."
   },
   "settings": {
     "language": "Langue",
@@ -386,7 +419,8 @@
     "created": {
       "title": "Séjour enregistré",
       "text": "Votre séjour à {{destination}} est enregistré sur ce téléphone.",
-      "another": "Créer un autre séjour"
+      "another": "Créer un autre séjour",
+      "viewPlanning": "Voir le planning"
     }
   },
   "generation": {
@@ -431,5 +465,72 @@
     "weather_adapted": "Adapté à la météo",
     "hours_unconfirmed": "Horaires non confirmés",
     "info_missing": "Information non renseignée"
+  },
+  "restaurant": {
+    "cuisine": "Cuisine : {{list}}",
+    "vegetarian": "Végétarien",
+    "wheelchair": "Accès fauteuil",
+    "wheelchairLimited": "Accès fauteuil partiel",
+    "hoursUnknown": "Horaires non renseignés.",
+    "closedThatDay": "Fermé le {{day}}.",
+    "hoursOfDay": "Horaires du {{day}} : {{hours}}",
+    "call": "Appeler",
+    "website": "Site web",
+    "osmNotice": "Informations OpenStreetMap, à vérifier auprès du restaurant."
+  },
+  "timing": {
+    "title": "Horaire : {{name}}",
+    "start": "Début",
+    "end": "Fin",
+    "durationLabel": "Durée : {{duration}}",
+    "minutesOnly": "{{m}} min",
+    "hoursOnly": "{{h}} h",
+    "hoursMinutes": "{{h}} h {{m}}",
+    "belowRecommended": "Un peu plus court que la durée conseillée.",
+    "fromPrevious": "Depuis l’étape précédente (fin à {{end}}) :",
+    "toNext": "Vers l’étape suivante (début à {{start}}) :",
+    "save": "Enregistrer",
+    "saveAnyway": "Enregistrer quand même",
+    "shiftFollowing": "Décaler aussi les étapes suivantes ({{minutes}} min)",
+    "forStep": "{{name}} : {{text}}",
+    "activities": {
+      "museum": "Une visite de musée",
+      "castle": "Une visite de château",
+      "monument": "Une visite de monument",
+      "smallHeritage": "Une visite de petit patrimoine",
+      "park": "Une balade au parc",
+      "trail": "Une randonnée",
+      "market": "Un passage au marché",
+      "restaurant": "Un repas au restaurant",
+      "relax": "Une pause détente"
+    },
+    "TOO_SHORT": "{{activity}} dure en général au moins {{minimum}}. Vous avez prévu {{duration}}.",
+    "OVERLAP_PREVIOUS": "Il faut {{travelMin}} min {{mode}} depuis l’étape précédente, qui se termine à {{previousEnd}}.",
+    "OVERLAP_NEXT": "Il faut {{travelMin}} min {{mode}} pour rejoindre l’étape suivante, qui commence à {{nextStart}}.",
+    "CLOSED": "Ce lieu est fermé sur tout ou partie de ce créneau (horaires : {{openingHours}}).",
+    "RAIN": "Activité en extérieur : {{pct}} % de risque de pluie sur ce créneau.",
+    "LATE": "Cette étape finit après {{lateEnd}}.",
+    "INVALID": "L’heure de fin doit être après l’heure de début.",
+    "STARTS_TOO_LATE": "Cette étape commencerait après {{latest}}."
+  },
+  "replace": {
+    "title": "Remplacer : {{name}}",
+    "none": "Aucun autre lieu disponible dans la réserve.",
+    "distance": "à {{km}} km",
+    "more": "Plus de choix",
+    "loading": "Recherche…",
+    "offline": "« Plus de choix » nécessite une connexion."
+  },
+  "trips": {
+    "title": "Mes séjours",
+    "emptyTitle": "Aucun séjour enregistré",
+    "emptyText": "Les séjours que vous créez sont enregistrés sur ce téléphone et restent consultables hors ligne.",
+    "created": "Créé le {{date}}",
+    "open": "Ouvrir",
+    "delete": "Supprimer",
+    "deleteNamed": "Supprimer le séjour {{name}}",
+    "confirmTitle": "Supprimer ce séjour ?",
+    "confirmText": "Le séjour à {{name}} sera supprimé de ce téléphone.",
+    "confirm": "Supprimer"
   }
 }
