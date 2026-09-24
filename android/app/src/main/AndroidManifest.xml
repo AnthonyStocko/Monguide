@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <application
         android:allowBackup="true"
@@ -42,4 +43,18 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
+    <!-- Rappels du séjour (@capacitor/local-notifications 8.3.1, qui déclare aussi
+         ces permissions dans son propre manifeste) : affichage des notifications
+         (Android 13 et plus, demandée à l'utilisateur), alarmes exactes (Android 12
+         et plus, accordée par l'utilisateur dans les réglages ; sans elle, les rappels
+         peuvent arriver en retard), réinscription des rappels au redémarrage du
+         téléphone (LocalNotificationRestoreReceiver) et réveil de l'appareil. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Jamais USE_EXACT_ALARM : Google Play la réserve aux applications de réveil et
+         d'agenda. Retirée explicitement si une bibliothèque venait à la déclarer. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:node="remove" />
 </manifest>

@@ -809,5 +809,38 @@
         "Rouvrir Mon guide reprogramme les rappels manquants."
       ]
     }
+  },
+  "export": {
+    "button": "Exporter en PDF",
+    "title": "Exporter le séjour en PDF",
+    "intro": "Le PDF contient le planning jour par jour, le bilan carbone et les sources des données.",
+    "includeAddresses": "Inclure les adresses personnelles",
+    "includeAddressesHint": "Adresses de vos hébergements et des lieux de vos étapes personnelles. Décoché : elles sont masquées.",
+    "confirm": "Exporter",
+    "loading": "Préparation du PDF…",
+    "done": "PDF enregistré : {{fileName}}",
+    "failed": "L’export PDF a échoué. Réessayez.",
+    "shareTitle": "Partager le séjour",
+    "lodging": "Hébergement",
+    "addressesHidden": "Adresses personnelles masquées.",
+    "meta_one": "{{destination}} · {{count}} voyageur · {{mode}}",
+    "meta_other": "{{destination}} · {{count}} voyageurs · {{mode}}",
+    "sourcesTitle": "Sources des données",
+    "generated": "Document généré par Mon guide le {{date}}. Horaires, trajets et émissions sont des estimations.",
+    "footer": "Mon guide · page {{page}} / {{total}}",
+    "sourceUses": {
+      "osm": "lieux et fonds de carte",
+      "photon": "recherche d’adresses",
+      "openMeteo": "météo",
+      "nagerDate": "jours fériés",
+      "ademe": "facteurs d’émission",
+      "culture": "monuments historiques et musées",
+      "inao": "produits du terroir",
+      "fuelFr": "prix des carburants",
+      "wikidata": "patrimoine et musées",
+      "ember": "intensité carbone de l’électricité",
+      "oilBulletin": "prix des carburants",
+      "ecb": "taux de change"
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CalendarDays, CirclePlus, CloudOff } from 'lucide-react';
+import { CalendarDays, CirclePlus, CloudOff, FileDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { applyChanges } from '@domain/applyChanges.js';
@@ -14,6 +14,7 @@ import { fromMinutes, nowInZone, toMinutes } from '@domain/time.js';
 import { dayWeather } from '@domain/weatherArbitration.js';
 import Page from '../components/layout/Page.jsx';
 import DayView from '../components/planning/DayView.jsx';
+import ExportDialog from '../components/planning/ExportDialog.jsx';
 import LodgingEditor from '../components/planning/LodgingEditor.jsx';
 import PersonalStepForm from '../components/planning/PersonalStepForm.jsx';
 import ReplanPanel from '../components/planning/ReplanPanel.jsx';
@@ -228,11 +229,14 @@ export default function PlanningPage() {
 
   return (
     <Page>
-      <header className="space-y-1">
+      <header className="space-y-2">
         <h2 className="text-2xl font-bold">{trip.title}</h2>
         <p className="text-ink-muted">
           {format.date(`${trip.startDate}T12:00:00Z`, { dateStyle: 'long', timeZone: 'UTC' })} – {format.date(`${trip.endDate}T12:00:00Z`, { dateStyle: 'long', timeZone: 'UTC' })}
         </p>
+        <Button variant="secondary" icon={FileDown} onClick={() => setDialog({ kind: 'export' })}>
+          {t('export.button')}
+        </Button>
       </header>
 
       {readOnly && (
@@ -303,6 +307,7 @@ export default function PlanningPage() {
           onClose={() => setDialog(null)}
         />
       )}
+      {dialog?.kind === 'export' && <ExportDialog trip={trip} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'lodging' && <LodgingEditor trip={trip} onSave={saveLodgings} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'personal' && !proposal && (
         <PersonalStepForm
