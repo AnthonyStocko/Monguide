@@ -35,12 +35,12 @@ sans contrat, d'où la déclaration prudente « partagée » pour la position).
 | Journaux de plantage, diagnostics | Non | Non | — | — | — | — | — | Aucun outil de rapport de plantage |
 | Contacts, photos, fichiers, santé, finances, messages, audio | Non | Non | — | — | — | — | — | — |
 
-## À décider avant la soumission
+## Décisions
 
-- **Position et adresses « partagées »** : déclarer « partagées » est le choix
-  prudent tant que les coordonnées précises partent vers Photon. Alternative :
-  arrondir la position avant la recherche inverse (précision moindre de
-  l'adresse proposée) et le justifier dans le formulaire.
+- **Position et adresses : déclarées « partagées »** (décision du 24 septembre
+  2026) : la position précise (« Utiliser ma position ») et le texte des
+  adresses recherchées sont transmis à Photon (komoot) ; la position n'est
+  pas arrondie avant la recherche inverse, pour garder une adresse précise.
 - **Tuiles de carte** : chargées directement depuis tile.openstreetmap.org
   (l'adresse IP est visible par la fondation OpenStreetMap). Pas de donnée
   utilisateur transmise au sens du formulaire, mais mentionné dans la

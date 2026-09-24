@@ -14,8 +14,10 @@ de la soumission.
 - [ ] Identifiant définitif fixé : `com.monguide.app` (`capacitor.config.json`,
       `android/app/build.gradle`). Il ne pourra plus changer après la première
       publication.
-- [ ] Identité de l'éditeur (nom, adresse) à indiquer dans la fiche et, au titre
-      du RGPD, dans la politique de confidentialité (responsable du traitement).
+- [x] Identité de l'éditeur et responsable du traitement (RGPD) : Anthony Mourier,
+      indiqué dans la politique de confidentialité (pages web et application).
+- [ ] Adresse de l'éditeur, si la Play Console la demande pour un compte
+      personnel (**À VÉRIFIER** : affichage public de l'adresse selon le type de compte).
 - [ ] Adresse de contact définitive (secret Supabase `MONGUIDE_CONTACT`, affichée
       dans l'application et sur les pages web).
 
