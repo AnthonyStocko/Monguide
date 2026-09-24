@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { API_VERSION } from '@domain/version.js';
+import GeocodeDebug from '../components/debug/GeocodeDebug.jsx';
+import PlacesDebug from '../components/debug/PlacesDebug.jsx';
+import WeatherDebug from '../components/debug/WeatherDebug.jsx';
 import Page from '../components/layout/Page.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Button from '../components/ui/Button.jsx';
@@ -21,12 +24,16 @@ function Row({ label, children }) {
   );
 }
 
-/** Diagnostic : versions, origine des règles, test d'appel au serveur. */
+/**
+ * Diagnostic (page de test temporaire) : versions, origine des règles, test
+ * d'appel au serveur, puis fonctions de données (geocode, weather, places).
+ */
 export default function DebugPage() {
   const { t } = useTranslation();
   const format = useFormat();
   const { config, status, refresh } = useConfig();
   const [check, setCheck] = useState({ state: 'idle' });
+  const [destination, setDestination] = useState(null);
   const none = t('debug.notAvailable');
 
   const callServer = async () => {
@@ -79,6 +86,10 @@ export default function DebugPage() {
         </div>
         {check.state === 'error' && <ErrorState message={t(check.error.messageKey)} onRetry={callServer} />}
       </Card>
+
+      <GeocodeDebug selected={destination} onSelect={setDestination} />
+      <WeatherDebug destination={destination} />
+      <PlacesDebug destination={destination} />
 
       <Card as="section">
         <details>

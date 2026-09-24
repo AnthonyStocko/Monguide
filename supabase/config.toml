@@ -422,3 +422,18 @@ verify_jwt = true
 import_map = "./functions/deno.json"
 # Fonctions écrites en JavaScript : point d'entrée explicite (index.ts par défaut).
 entrypoint = "./functions/config/index.js"
+
+[functions.geocode]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/geocode/index.js"
+
+[functions.weather]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/weather/index.js"
+
+[functions.places]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/places/index.js"

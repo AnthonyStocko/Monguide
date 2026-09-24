@@ -68,8 +68,39 @@ export const RULES = Object.freeze({
     dedupDistanceM: 50,
     /** Taille maximale de la réserve de lieux non utilisés d'un séjour (Trip.candidates). */
     maxCandidates: 60,
-    /** Valeurs OSM "cuisine" considérées comme régionales (proposition, À VÉRIFIER en phase 2). */
-    regionalCuisines: ['regional', 'local', 'traditional']
+    /** Rayon de recherche maximal accepté par la fonction places, en km. */
+    maxRadiusKm: 50,
+    /** Valeurs OSM "cuisine" qui rendent un restaurant "régional". */
+    regionalCuisines: ['regional', 'french']
+  },
+
+  /** Recherche de destination (fonction geocode). */
+  geocode: {
+    /** Nombre minimal de caractères avant d'interroger le serveur. */
+    minChars: 3,
+    /** Délai sans frappe avant l'appel (debounce), en ms. */
+    debounceMs: 300,
+    /** Nombre maximal de résultats renvoyés. */
+    maxResults: 10
+  },
+
+  /**
+   * Requête Overpass (lieux OpenStreetMap). Exception à la règle HTTP : un
+   * seul essai, délai strict, jamais de nouvelle tentative (429 et 504
+   * aggravent le blocage si l'on réessaie).
+   */
+  osm: {
+    /** Délai côté serveur Overpass ([timeout:N]) et côté client, en secondes. */
+    timeoutSec: 8,
+    /** Les restaurants sont cherchés dans un rayon réduit (déjeuner à proximité), en km (proposition). */
+    restaurantRadiusKm: 10,
+    /** Nombre maximal de résultats par groupe (200 au total). */
+    limits: { food: 80, local: 40, nature: 40, heritage: 40 }
+  },
+
+  terroir: {
+    /** Communes voisines prises en compte autour de la destination, en km (proposition). */
+    neighborRadiusKm: 10
   },
 
   lodging: {
@@ -115,12 +146,20 @@ export const RULES = Object.freeze({
     otherPerWindow: 600
   },
 
-  /** Durées de cache côté serveur, par source, en secondes (proposition hors config). */
+  /**
+   * Durées de cache côté serveur, par source, en secondes. config (5 min) et
+   * geocode (30 jours) sont fixées par le cahier des charges ; les autres
+   * sont des propositions.
+   */
   cacheTtlSec: {
     config: 300,
     geocode: 2592000,
     weather: 3600,
-    places: 604800,
-    fuel: 86400
+    heritage: 2592000,
+    osm: 604800,
+    terroir: 2592000,
+    /** Découpage administratif (départements, communes). */
+    admin: 2592000,
+    fuel: 3600
   }
 });

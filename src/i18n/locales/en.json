@@ -13,7 +13,9 @@
   },
   "common": {
     "back": "Back",
-    "retry": "Retry"
+    "retry": "Retry",
+    "yes": "Yes",
+    "no": "No"
   },
   "offline": {
     "message": "You are offline. Some features are unavailable."
@@ -83,6 +85,94 @@
     "callServer": "Contact the server",
     "callOk": "The server responded.",
     "rules": "Effective rules",
-    "notAvailable": "Not available"
+    "notAvailable": "Not available",
+    "chooseDestination": "Choose a destination above first.",
+    "fromLocalCache": "Data saved on this device (server unreachable)",
+    "geocode": {
+      "title": "Destination search (geocode)",
+      "label": "Town or village",
+      "placeholder": "E.g. Villefranche-sur-Saône",
+      "hint": "Search starts from {{count}} characters.",
+      "none": "No town found."
+    },
+    "weather": {
+      "title": "Weather (weather)",
+      "hint": "Test trip from D+{{first}} to D+{{last}} (D = today at the destination).",
+      "run": "Get the weather",
+      "dayOffset": "D+{{n}}",
+      "available": "Forecast available",
+      "unavailable": "No forecast yet",
+      "rain": "Rain up to {{value}}%",
+      "rainUnknown": "Rain: unknown"
+    },
+    "places": {
+      "title": "Places (places)",
+      "hint": "Places within {{radius}} km of the destination.",
+      "run": "Find places",
+      "sources": "Sources",
+      "count": "Places found: {{count}}",
+      "categoryCount": "{{category}}: {{count}}",
+      "certified": "Certified places: {{count}}",
+      "restaurants": "Restaurants: {{count}}",
+      "noRestaurants": "No restaurants in this response.",
+      "appellations": "Local appellations: {{count}}",
+      "indoor": "Indoor",
+      "outdoor": "Outdoor",
+      "unknown": "Indoor or outdoor: unknown"
+    }
+  },
+  "categories": {
+    "museum": "Museum",
+    "monument": "Monument",
+    "restaurant": "Restaurant",
+    "market": "Market",
+    "farm": "Farm shop",
+    "park": "Park",
+    "nature": "Nature area",
+    "viewpoint": "Viewpoint",
+    "small_heritage": "Local heritage"
+  },
+  "certifications": {
+    "monument_historique": "Historic monument",
+    "musee_de_france": "Musée de France"
+  },
+  "sources": {
+    "status": {
+      "ok": "Up to date",
+      "cache": "Cache",
+      "failed": "Failed"
+    },
+    "failed": "Source temporarily unavailable.",
+    "stale": "Saved data: the source is temporarily unavailable.",
+    "monuments": {
+      "name": "Historic monuments",
+      "failed": "Historic monuments temporarily unavailable."
+    },
+    "museums": {
+      "name": "Musées de France",
+      "failed": "Musées de France temporarily unavailable."
+    },
+    "osm": {
+      "name": "Markets, restaurants and local heritage (OpenStreetMap)",
+      "failed": "Markets and local heritage temporarily unavailable."
+    },
+    "terroir": {
+      "name": "Local produce (PDO)",
+      "failed": "Local produce temporarily unavailable."
+    }
+  },
+  "food": {
+    "cuisine": "Cuisine",
+    "regional": "Regional cuisine",
+    "openingHours": "Opening hours",
+    "wheelchair": "Wheelchair access",
+    "wheelchairValues": {
+      "yes": "Yes",
+      "limited": "Limited",
+      "no": "No"
+    },
+    "vegetarian": "Vegetarian",
+    "phone": "Phone",
+    "website": "Website"
   }
 }

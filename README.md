@@ -31,6 +31,11 @@ npm run android    # build, synchronisation Capacitor, ouverture d'Android Studi
    npx supabase functions deploy --use-api
    ```
 
+   Secrets facultatifs, pour remplacer une instance publique sans changer le
+   code : `OVERPASS_URL` (Overpass ; l'instance overpass-api.de refuse les
+   requêtes venant de Supabase, voir `supabase/functions/_shared/services/osm.js`)
+   et `PHOTON_URL` (Photon, pour une instance dédiée en cas de diffusion large).
+
 2. Copier `.env.example` en `.env` et y mettre l'URL du projet et sa clé
    publique (Project Settings > API). Aucune autre clé dans l'application.
 

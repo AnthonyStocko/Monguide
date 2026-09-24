@@ -35,6 +35,10 @@ describe('RULES', () => {
     }
   });
 
+  it('limite la requête Overpass à 200 résultats', () => {
+    expect(Object.values(RULES.osm.limits).reduce((a, b) => a + b, 0)).toBe(200);
+  });
+
   it('reprend les valeurs du cahier des charges', () => {
     expect(RULES.travel.detourFactor).toBe(1.3);
     expect(RULES.travel.maxTravelMin).toBe(45);
@@ -48,5 +52,9 @@ describe('RULES', () => {
     expect(RULES.rateLimits.generatePerWindow).toBe(30);
     expect(RULES.rateLimits.otherPerWindow).toBe(600);
     expect(RULES.cacheTtlSec.config).toBe(300);
+    expect(RULES.cacheTtlSec.geocode).toBe(30 * 24 * 3600);
+    expect(RULES.places.regionalCuisines).toEqual(['regional', 'french']);
+    expect(RULES.osm.timeoutSec).toBe(8);
+    expect(RULES.geocode).toMatchObject({ minChars: 3, debounceMs: 300 });
   });
 });

@@ -65,6 +65,7 @@ l'en-tête `Retry-After` (secondes).
 | 400 | `invalid_input` | entrée invalide (détail dans `message`) |
 | 400 | `unsupported_api_version` | `x-monguide-api` absent, illisible ou plus récent que le serveur |
 | 400 | `invalid_app_version` | `x-monguide-app` absent ou mal formé |
+| 400 | `unsupported_country` | pays de destination non pris en charge |
 | 401 | `unauthorized` | jeton absent ou invalide |
 | 405 | `method_not_allowed` | méthode HTTP non prise en charge (en-tête `Allow`) |
 | 426 | `app_outdated` | application trop ancienne (contrat ou `minAppVersion`) |
@@ -128,13 +129,129 @@ on conflict (key) do update set value = excluded.value;
 même type JSON que la valeur par défaut, sinon la surcharge est ignorée
 (journal `app_config_ignored`).
 
+### `geocode` — recherche de destination
+
+Autocomplétion des villes et villages (source : Photon, OpenStreetMap).
+
+- **Méthode** : `GET`
+- **Entrée** (paramètres d'URL), l'une ou l'autre forme :
+
+  | Paramètre | Type | Description |
+  |---|---|---|
+  | `q` | chaîne, 3 à 100 caractères | texte saisi (recherche) |
+  | `lat`, `lon` | nombres | position (recherche inverse, « Utiliser ma position ») |
+  | `lang` | `fr` \| `en` | langue des noms (défaut `fr`) |
+
+  L'application n'appelle `geocode` qu'à partir de 3 caractères, après
+  300 ms sans frappe (`geocode.minChars`, `geocode.debounceMs`).
+
+- **Sortie** : `{ "results": GeocodeResult[] }`, 10 résultats au plus
+  (0 ou 1 en recherche inverse), limités aux pays pris en charge.
+
+  | Champ | Type | Description |
+  |---|---|---|
+  | `name` | chaîne | nom de la commune |
+  | `region` | chaîne ? | département ou région, pour distinguer les homonymes |
+  | `country` | chaîne | nom du pays, dans la langue demandée |
+  | `countryCode` | chaîne | code ISO 3166-1 alpha-2 (ex. `FR`) |
+  | `lat`, `lon` | nombres | position |
+  | `timezone` | chaîne | fuseau horaire IANA de la destination |
+
+- **Cache serveur** : 30 jours (`cacheTtlSec.geocode`), clé = texte
+  normalisé + langue, ou position arrondie à 0,01°.
+- **Erreurs** : codes communs (`400 invalid_input` si `q` trop court ou
+  position invalide, `502 external_unavailable` si Photon ne répond pas).
+
+### `weather` — prévisions par jour
+
+Source : Open-Meteo, 16 jours de prévision (aujourd'hui + 15).
+
+- **Méthode** : `GET`
+- **Entrée** (paramètres d'URL) :
+
+  | Paramètre | Type | Description |
+  |---|---|---|
+  | `lat`, `lon` | nombres | destination |
+  | `timezone` | chaîne IANA | fuseau du séjour (`trip.timezone`) |
+  | `startDate`, `endDate` | `YYYY-MM-DD` | dates du séjour (62 jours au plus) |
+
+- **Sortie** : `{ "days": WeatherDay[] }`, un élément par date du séjour.
+
+  ```json
+  { "days": [
+    { "date": "2026-10-06", "available": true, "hours": [
+      { "hour": "00:00", "precipitationProbability": 10, "temperature": 12.4, "weatherCode": 3 }
+    ] },
+    { "date": "2026-10-10", "available": false }
+  ] }
+  ```
+
+  Les heures sont des heures locales de la destination (fuseau `timezone`),
+  à comparer comme des chaînes, jamais à convertir avec `new Date()`. Un jour
+  hors de la fenêtre de prévision a `available: false` et pas de `hours`.
+  `precipitationProbability` peut être `null` pour une heure non prévue.
+
+- **Cache serveur** : 1 heure (`cacheTtlSec.weather`), clé = position
+  arrondie + fuseau (la prévision complète est partagée quelles que soient
+  les dates demandées).
+- **Erreurs** : codes communs (`502 external_unavailable` si Open-Meteo ne
+  répond pas).
+
+### `places` — lieux candidats
+
+Rassemble en parallèle les lieux autour d'une destination. Une source en
+échec n'empêche jamais la réponse : son état est indiqué dans `sources`.
+
+- **Méthode** : `POST`
+- **Entrée** (corps JSON) :
+
+  | Champ | Type | Description |
+  |---|---|---|
+  | `lat`, `lon` | nombres | destination |
+  | `radiusKm` | nombre, 1 à `places.maxRadiusKm` (50) | rayon de recherche |
+  | `countryCode` | chaîne | pays de la destination (pris en charge) |
+  | `profile` | `certified` \| `balanced` \| `explorer` | profil du séjour (utilisé par `generate`, phase 4) |
+  | `lunch` | `market` \| `restaurant` \| `both` | avec `market`, les restaurants ne sont pas recherchés |
+  | `lang` | `fr` \| `en` | langue des noms OSM (`name:<lang>` si présent) |
+
+- **Sortie** :
+
+  ```json
+  {
+    "places": [Place],
+    "appellations": [{ "name": "Beaujolais", "local": false }],
+    "sources": [
+      { "name": "monuments", "status": "ok" },
+      { "name": "museums", "status": "cache" },
+      { "name": "osm", "status": "failed", "message": "upstream 429" },
+      { "name": "terroir", "status": "ok" }
+    ]
+  }
+  ```
+
+  - `places` : format `Place` (`supabase/functions/_shared/domain/model.js`),
+    dédoublonnés (même nom à moins de `places.dedupDistanceM` mètres, le lieu
+    certifié l'emporte).
+  - `appellations` : AOC/AOP de la commune de destination (`local: true`) et
+    des communes voisines (`terroir.neighborRadiusKm`).
+  - `sources[].status` : `ok` (réponse fraîche), `cache` (cache partagé, y
+    compris une copie expirée resservie après un échec, avec
+    `message: "stale"`), `failed` (aucune donnée ; l'application affiche un
+    message propre à la source, ex. « Marchés et petit patrimoine
+    momentanément indisponibles » pour `osm`).
+  - Sources de la France : `monuments` (Mérimée), `museums` (Muséofile),
+    `osm` (Overpass, commun à tous les pays), `terroir` (INAO).
+
+- **Cache serveur** : par source, clé = position arrondie + rayon (+ langue
+  et type de déjeuner pour `osm`) ; durées `cacheTtlSec.heritage`, `.osm`,
+  `.terroir`.
+- **Erreurs** : codes communs ; `400 unsupported_country` si `countryCode`
+  n'est pas pris en charge.
+
 ### Fonctions prévues (à documenter avant d'être codées)
 
 | Fonction | Phase | Rôle |
 |---|---|---|
-| `geocode` | 2 | recherche de destination |
-| `weather` | 2 | prévisions (probabilité de pluie par heure) |
-| `places` | 2 | lieux candidats autour d'une destination |
 | `fuel-eu-refresh` | 2 bis | mise à jour des prix des carburants (pays européens hors France) |
 | `generate` | 4 | génération d'un séjour (délai client 25 s) |
 | `delete-account` | 5 bis | suppression du compte et des données |
@@ -144,3 +261,4 @@ même type JSON que la valeur par défaut, sinon la surcharge est ignorée
 | Version | Date | Changements |
 |---|---|---|
 | 1 | 2026-09-24 | Version initiale : cadre commun, fonction `config`. |
+| 1 | 2026-09-24 | Ajouts compatibles : fonctions `geocode`, `weather`, `places` ; code `400 unsupported_country`. |

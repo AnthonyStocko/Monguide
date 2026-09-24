@@ -8,21 +8,31 @@ import { getAdminClient } from './supabaseAdmin.js';
  */
 
 /**
+ * Lit une entrée, même expirée (les entrées expirées sont purgées chaque nuit).
  * @param {string} key
- * @returns {Promise<unknown | undefined>} undefined si absente ou expirée
+ * @returns {Promise<{ value: unknown, fresh: boolean } | undefined>}
  */
-export async function cacheGet(key) {
+export async function cacheLookup(key) {
   const { data, error } = await getAdminClient()
     .from('api_cache')
-    .select('value')
+    .select('value, expires_at')
     .eq('key', key)
-    .gt('expires_at', new Date().toISOString())
     .maybeSingle();
   if (error) {
     log('warn', 'cache_read_failed', { code: error.code });
     return undefined;
   }
-  return data ? data.value : undefined;
+  if (!data) return undefined;
+  return { value: data.value, fresh: Date.parse(data.expires_at) > Date.now() };
+}
+
+/**
+ * @param {string} key
+ * @returns {Promise<unknown | undefined>} undefined si absente ou expirée
+ */
+export async function cacheGet(key) {
+  const entry = await cacheLookup(key);
+  return entry?.fresh ? entry.value : undefined;
 }
 
 /**

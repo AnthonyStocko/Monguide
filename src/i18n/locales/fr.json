@@ -13,7 +13,9 @@
   },
   "common": {
     "back": "Retour",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "yes": "Oui",
+    "no": "Non"
   },
   "offline": {
     "message": "Vous êtes hors ligne. Certaines fonctions sont indisponibles."
@@ -83,6 +85,94 @@
     "callServer": "Interroger le serveur",
     "callOk": "Le serveur a répondu.",
     "rules": "Règles effectives",
-    "notAvailable": "Non disponible"
+    "notAvailable": "Non disponible",
+    "chooseDestination": "Choisissez d’abord une destination ci-dessus.",
+    "fromLocalCache": "Données enregistrées sur l’appareil (serveur injoignable)",
+    "geocode": {
+      "title": "Recherche de destination (geocode)",
+      "label": "Ville ou village",
+      "placeholder": "Ex. Villefranche-sur-Saône",
+      "hint": "La recherche démarre à partir de {{count}} caractères.",
+      "none": "Aucune commune trouvée."
+    },
+    "weather": {
+      "title": "Météo (weather)",
+      "hint": "Séjour test de J+{{first}} à J+{{last}} (J = aujourd’hui à destination).",
+      "run": "Obtenir la météo",
+      "dayOffset": "J+{{n}}",
+      "available": "Prévision disponible",
+      "unavailable": "Pas encore de prévision",
+      "rain": "Pluie jusqu’à {{value}} %",
+      "rainUnknown": "Pluie : inconnue"
+    },
+    "places": {
+      "title": "Lieux (places)",
+      "hint": "Lieux dans un rayon de {{radius}} km autour de la destination.",
+      "run": "Chercher les lieux",
+      "sources": "Sources",
+      "count": "Lieux trouvés : {{count}}",
+      "categoryCount": "{{category}} : {{count}}",
+      "certified": "Lieux labellisés : {{count}}",
+      "restaurants": "Restaurants : {{count}}",
+      "noRestaurants": "Aucun restaurant dans cette réponse.",
+      "appellations": "Appellations du terroir : {{count}}",
+      "indoor": "Intérieur",
+      "outdoor": "Extérieur",
+      "unknown": "Intérieur ou extérieur : inconnu"
+    }
+  },
+  "categories": {
+    "museum": "Musée",
+    "monument": "Monument",
+    "restaurant": "Restaurant",
+    "market": "Marché",
+    "farm": "Producteur",
+    "park": "Parc",
+    "nature": "Espace naturel",
+    "viewpoint": "Point de vue",
+    "small_heritage": "Petit patrimoine"
+  },
+  "certifications": {
+    "monument_historique": "Monument historique",
+    "musee_de_france": "Musée de France"
+  },
+  "sources": {
+    "status": {
+      "ok": "À jour",
+      "cache": "Cache",
+      "failed": "Échec"
+    },
+    "failed": "Source momentanément indisponible.",
+    "stale": "Données enregistrées : la source est momentanément indisponible.",
+    "monuments": {
+      "name": "Monuments historiques",
+      "failed": "Monuments historiques momentanément indisponibles."
+    },
+    "museums": {
+      "name": "Musées de France",
+      "failed": "Musées de France momentanément indisponibles."
+    },
+    "osm": {
+      "name": "Marchés, restaurants et petit patrimoine (OpenStreetMap)",
+      "failed": "Marchés et petit patrimoine momentanément indisponibles."
+    },
+    "terroir": {
+      "name": "Produits du terroir (AOC/AOP)",
+      "failed": "Produits du terroir momentanément indisponibles."
+    }
+  },
+  "food": {
+    "cuisine": "Cuisine",
+    "regional": "Cuisine régionale",
+    "openingHours": "Horaires",
+    "wheelchair": "Accès fauteuil",
+    "wheelchairValues": {
+      "yes": "Oui",
+      "limited": "Partiel",
+      "no": "Non"
+    },
+    "vegetarian": "Végétarien",
+    "phone": "Téléphone",
+    "website": "Site"
   }
 }
