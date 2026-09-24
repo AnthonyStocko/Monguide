@@ -51,9 +51,22 @@ export const RULES = Object.freeze({
     }
   },
 
-  /** Au-delà de cette probabilité de pluie (%), une activité en extérieur est déconseillée. */
   weather: {
-    rainThresholdPct: 50
+    /** Au-delà de cette probabilité de pluie (%), une activité en extérieur est déconseillée. */
+    rainThresholdPct: 50,
+    /** Jours de prévision disponibles (aujourd'hui compris) : au-delà, météo prise en compte plus tard. */
+    forecastDays: 16
+  },
+
+  /** Formulaire de création de séjour. */
+  trip: {
+    /** Rayons d'exploration proposés, en km. */
+    radiusOptionsKm: [5, 10, 20, 40],
+    defaultRadiusKm: 10,
+    /** Durée maximale d'un séjour, en jours (arrivée et départ compris). */
+    maxDays: 7,
+    /** Nombre maximal de voyageurs (proposition). */
+    maxTravelers: 20
   },
 
   schedule: {

@@ -30,10 +30,6 @@
     "emptyText": "Créez votre premier séjour : Mon guide vous prépare un programme jour par jour.",
     "createCta": "Créer un séjour"
   },
-  "create": {
-    "emptyTitle": "Création de séjour bientôt disponible",
-    "emptyText": "L'assistant de création sera ajouté dans une prochaine version."
-  },
   "planning": {
     "emptyTitle": "Aucun planning",
     "emptyText": "Créez un séjour pour voir son programme jour par jour."
@@ -213,5 +209,170 @@
     "e85": "Superéthanol E85",
     "diesel": "Gazole",
     "lpg": "GPL"
+  },
+  "placeSearch": {
+    "loading": "Recherche en cours…",
+    "count_one": "{{count}} résultat.",
+    "count_other": "{{count}} résultats. Flèches haut et bas pour parcourir, Entrée pour choisir.",
+    "none": "Aucun résultat."
+  },
+  "geolocation": {
+    "denied": "Accès à la position refusé. Autorisez-le dans les réglages du téléphone, ou saisissez le lieu.",
+    "unavailable": "Position indisponible pour le moment. Saisissez le lieu."
+  },
+  "modes": {
+    "walk": "À pied",
+    "transit": "Transports en commun",
+    "bike": "Vélo",
+    "car": "Voiture"
+  },
+  "lunch": {
+    "market": "Marché et producteurs",
+    "restaurant": "Restaurant",
+    "both": "Les deux"
+  },
+  "profiles": {
+    "certified": {
+      "label": "Patrimoine certifié",
+      "description": "Uniquement des monuments historiques et des Musées de France.",
+      "descriptionEu": "Uniquement des monuments protégés au niveau national et des musées référencés."
+    },
+    "balanced": {
+      "label": "Équilibré",
+      "description": "Le patrimoine certifié, plus des parcs, des espaces naturels et des marchés."
+    },
+    "explorer": {
+      "label": "Explorateur",
+      "description": "Tout ce qui précède, plus le petit patrimoine et des lieux insolites."
+    }
+  },
+  "tripForm": {
+    "steps": {
+      "destination": "Destination",
+      "dates": "Dates",
+      "lodging": "Hébergement",
+      "transport": "Déplacements",
+      "profile": "Profil",
+      "summary": "Récapitulatif"
+    },
+    "progress": "Étape {{current}} sur {{total}} : {{name}}",
+    "progressLabel": "Progression du formulaire",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "generate": "Générer mon séjour",
+    "modify": "Modifier",
+    "km": "{{km}} km",
+    "useMyPosition": "Utiliser ma position",
+    "locating": "Recherche de votre position…",
+    "destination": {
+      "selected": "Destination choisie",
+      "change": "Changer de destination",
+      "label": "Ville ou village de destination",
+      "hint": "Tapez au moins 3 lettres, puis choisissez dans la liste.",
+      "placeholder": "Ex. Annecy",
+      "notFound": "Aucune commune trouvée à votre position.",
+      "radius": "Rayon d’exploration",
+      "radiusHint": "Distance maximale autour de la destination pour les visites."
+    },
+    "dates": {
+      "hint": "Séjour de 1 à {{max}} jours.",
+      "start": "Date d’arrivée",
+      "end": "Date de départ",
+      "summary_one": "{{count}} nuit",
+      "summary_other": "{{count}} nuits",
+      "weatherLater": "La météo sera prise en compte automatiquement à l’approche du départ.",
+      "travelers": "Nombre de voyageurs"
+    },
+    "lodging": {
+      "dayTrip": "Séjour d’une journée : pas d’hébergement à indiquer.",
+      "question": "Où dormez-vous ?",
+      "optional": "Facultatif : les trajets du matin et du soir partiront de votre hébergement.",
+      "modes": {
+        "same": "Le même hébergement tout le séjour",
+        "multiple": "Plusieurs hébergements",
+        "unknown": "Je ne sais pas encore"
+      },
+      "modesHint": {
+        "same": "Une seule adresse pour toutes les nuits.",
+        "multiple": "Un hébergement par nuit, les nuits au même endroit étant regroupées.",
+        "unknown": "Vous pourrez l’ajouter plus tard depuis le planning."
+      },
+      "sameTitle_one": "Hébergement pour {{count}} nuit",
+      "sameTitle_other": "Hébergement pour les {{count}} nuits",
+      "multipleTitle": "Hébergement de chaque nuit",
+      "multipleHint": "Chaque nuit reprend l’hébergement de la veille ; modifiez les nuits où vous changez d’adresse.",
+      "night": "Nuit {{n}} : {{date}}",
+      "editNight": "Modifier l’hébergement de la nuit {{n}}",
+      "searchNight": "Adresse de la nuit {{n}}",
+      "sameAsBefore": "Même hébergement que la veille",
+      "notChosen": "Pas encore choisi",
+      "later": "Hébergement à ajouter plus tard depuis le planning.",
+      "far": "Votre hébergement est à {{km}} km de votre destination, {{destination}} : les trajets du matin et du soir seront longs.",
+      "selected": "Hébergement choisi",
+      "search": "Adresse ou nom de l’hébergement",
+      "searchHint": "Tapez au moins 3 caractères, puis choisissez dans la liste.",
+      "placeholder": "Ex. 12 rue Royale",
+      "chooseOnMap": "Choisir sur la carte",
+      "mapHint": "Touchez la carte à l’emplacement de votre hébergement.",
+      "mapLabel": "Carte : toucher pour placer l’hébergement",
+      "name": "Nom de l’hébergement (facultatif)",
+      "namePlaceholder": "Ex. Hôtel du Parc"
+    },
+    "transport": {
+      "question": "Comment vous déplacez-vous sur place ?",
+      "estimates": "Les temps de trajet affichés seront des estimations.",
+      "fuel": "Carburant de la voiture"
+    },
+    "profile": {
+      "question": "Profil d’exploration",
+      "dataVaries": "Hors de France, la richesse des données sur le patrimoine varie selon les pays.",
+      "lunch": "Pause déjeuner",
+      "prefs": "Préférences pour les restaurants",
+      "vegetarian": "Options végétariennes",
+      "wheelchair": "Accessible en fauteuil roulant",
+      "prefsSource": "Ces informations proviennent d’OpenStreetMap et ne sont pas toujours renseignées."
+    },
+    "summary": {
+      "edit": "Modifier : {{section}}",
+      "place": "Lieu",
+      "country": "Pays",
+      "timezone": "Fuseau horaire",
+      "currency": "Monnaie",
+      "radius": "Rayon",
+      "from": "Arrivée : {{date}}",
+      "to": "Départ : {{date}}",
+      "travelers_one": "{{count}} voyageur",
+      "travelers_other": "{{count}} voyageurs",
+      "nights_one": "{{count}} nuit, le {{first}}",
+      "nights_other": "{{count}} nuits à partir du {{first}}",
+      "lunch": "Déjeuner : {{value}}"
+    },
+    "errors": {
+      "summary_one": "{{count}} information à corriger avant de continuer.",
+      "summary_other": "{{count}} informations à corriger avant de continuer.",
+      "destinationRequired": "Choisissez une destination dans la liste.",
+      "destinationUnsupported": "Cette destination n’est pas encore prise en charge.",
+      "radiusRequired": "Choisissez un rayon d’exploration.",
+      "startDateRequired": "Indiquez la date d’arrivée.",
+      "startDatePast": "La date d’arrivée ne peut pas être passée.",
+      "endDateRequired": "Indiquez la date de départ.",
+      "endBeforeStart": "Le départ doit avoir lieu le jour de l’arrivée ou après.",
+      "tooLong": "Le séjour ne peut pas dépasser {{max}} jours.",
+      "travelersInvalid": "Indiquez un nombre de voyageurs entre 1 et {{maxTravelers}}.",
+      "lodgingModeRequired": "Choisissez une option d’hébergement.",
+      "lodgingRequired": "Indiquez l’adresse de l’hébergement.",
+      "nightLodgingRequired": "Indiquez l’hébergement de cette nuit.",
+      "modeRequired": "Choisissez un mode de déplacement.",
+      "fuelTypeRequired": "Choisissez le carburant de la voiture.",
+      "profileRequired": "Choisissez un profil.",
+      "lunchRequired": "Choisissez une pause déjeuner.",
+      "stepIncomplete": "Cette étape est incomplète."
+    },
+    "created": {
+      "title": "Séjour enregistré",
+      "text": "Votre séjour à {{destination}} est enregistré sur ce téléphone.",
+      "next": "La génération du programme jour par jour arrive dans une prochaine version.",
+      "another": "Créer un autre séjour"
+    }
   }
 }

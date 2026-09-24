@@ -30,10 +30,6 @@
     "emptyText": "Create your first trip: Mon guide prepares a day-by-day plan for you.",
     "createCta": "Create a trip"
   },
-  "create": {
-    "emptyTitle": "Trip creation coming soon",
-    "emptyText": "The trip creation assistant will be added in an upcoming version."
-  },
   "planning": {
     "emptyTitle": "No schedule",
     "emptyText": "Create a trip to see its day-by-day plan."
@@ -213,5 +209,170 @@
     "e85": "E85 ethanol",
     "diesel": "Diesel",
     "lpg": "LPG"
+  },
+  "placeSearch": {
+    "loading": "Searching…",
+    "count_one": "{{count}} result.",
+    "count_other": "{{count}} results. Use up and down arrows to browse, Enter to choose.",
+    "none": "No results."
+  },
+  "geolocation": {
+    "denied": "Location access denied. Allow it in your phone settings, or type the place.",
+    "unavailable": "Location unavailable right now. Type the place."
+  },
+  "modes": {
+    "walk": "On foot",
+    "transit": "Public transport",
+    "bike": "Bike",
+    "car": "Car"
+  },
+  "lunch": {
+    "market": "Market and producers",
+    "restaurant": "Restaurant",
+    "both": "Both"
+  },
+  "profiles": {
+    "certified": {
+      "label": "Certified heritage",
+      "description": "Only historic monuments and Musées de France.",
+      "descriptionEu": "Only nationally protected monuments and listed museums."
+    },
+    "balanced": {
+      "label": "Balanced",
+      "description": "Certified heritage, plus parks, nature areas and markets."
+    },
+    "explorer": {
+      "label": "Explorer",
+      "description": "All of the above, plus local heritage and unusual places."
+    }
+  },
+  "tripForm": {
+    "steps": {
+      "destination": "Destination",
+      "dates": "Dates",
+      "lodging": "Accommodation",
+      "transport": "Getting around",
+      "profile": "Profile",
+      "summary": "Summary"
+    },
+    "progress": "Step {{current}} of {{total}}: {{name}}",
+    "progressLabel": "Form progress",
+    "previous": "Previous",
+    "next": "Next",
+    "generate": "Generate my trip",
+    "modify": "Edit",
+    "km": "{{km}} km",
+    "useMyPosition": "Use my location",
+    "locating": "Finding your location…",
+    "destination": {
+      "selected": "Chosen destination",
+      "change": "Change destination",
+      "label": "Destination town or village",
+      "hint": "Type at least 3 letters, then choose from the list.",
+      "placeholder": "E.g. Annecy",
+      "notFound": "No town found at your location.",
+      "radius": "Exploration radius",
+      "radiusHint": "Maximum distance around the destination for visits."
+    },
+    "dates": {
+      "hint": "Trips last 1 to {{max}} days.",
+      "start": "Arrival date",
+      "end": "Departure date",
+      "summary_one": "{{count}} night",
+      "summary_other": "{{count}} nights",
+      "weatherLater": "The weather will be taken into account automatically as your departure approaches.",
+      "travelers": "Number of travellers"
+    },
+    "lodging": {
+      "dayTrip": "Day trip: no accommodation to enter.",
+      "question": "Where are you staying?",
+      "optional": "Optional: morning and evening trips will start from your accommodation.",
+      "modes": {
+        "same": "The same place for the whole trip",
+        "multiple": "Several places",
+        "unknown": "I don’t know yet"
+      },
+      "modesHint": {
+        "same": "One address for every night.",
+        "multiple": "One place per night; nights at the same place are grouped.",
+        "unknown": "You can add it later from the schedule."
+      },
+      "sameTitle_one": "Accommodation for {{count}} night",
+      "sameTitle_other": "Accommodation for the {{count}} nights",
+      "multipleTitle": "Accommodation for each night",
+      "multipleHint": "Each night reuses the previous night’s place; edit the nights where you move.",
+      "night": "Night {{n}}: {{date}}",
+      "editNight": "Edit accommodation for night {{n}}",
+      "searchNight": "Address for night {{n}}",
+      "sameAsBefore": "Same place as the night before",
+      "notChosen": "Not chosen yet",
+      "later": "Accommodation to be added later from the schedule.",
+      "far": "Your accommodation is {{km}} km from your destination, {{destination}}: morning and evening trips will be long.",
+      "selected": "Chosen accommodation",
+      "search": "Address or name of the accommodation",
+      "searchHint": "Type at least 3 characters, then choose from the list.",
+      "placeholder": "E.g. 12 rue Royale",
+      "chooseOnMap": "Choose on the map",
+      "mapHint": "Tap the map where your accommodation is.",
+      "mapLabel": "Map: tap to place the accommodation",
+      "name": "Accommodation name (optional)",
+      "namePlaceholder": "E.g. Hôtel du Parc"
+    },
+    "transport": {
+      "question": "How will you get around?",
+      "estimates": "Travel times will be shown as estimates.",
+      "fuel": "Car fuel"
+    },
+    "profile": {
+      "question": "Exploration profile",
+      "dataVaries": "Outside France, the richness of heritage data varies by country.",
+      "lunch": "Lunch break",
+      "prefs": "Restaurant preferences",
+      "vegetarian": "Vegetarian options",
+      "wheelchair": "Wheelchair accessible",
+      "prefsSource": "This information comes from OpenStreetMap and is not always filled in."
+    },
+    "summary": {
+      "edit": "Edit: {{section}}",
+      "place": "Place",
+      "country": "Country",
+      "timezone": "Time zone",
+      "currency": "Currency",
+      "radius": "Radius",
+      "from": "Arrival: {{date}}",
+      "to": "Departure: {{date}}",
+      "travelers_one": "{{count}} traveller",
+      "travelers_other": "{{count}} travellers",
+      "nights_one": "{{count}} night, on {{first}}",
+      "nights_other": "{{count}} nights from {{first}}",
+      "lunch": "Lunch: {{value}}"
+    },
+    "errors": {
+      "summary_one": "{{count}} item to fix before continuing.",
+      "summary_other": "{{count}} items to fix before continuing.",
+      "destinationRequired": "Choose a destination from the list.",
+      "destinationUnsupported": "This destination is not supported yet.",
+      "radiusRequired": "Choose an exploration radius.",
+      "startDateRequired": "Enter the arrival date.",
+      "startDatePast": "The arrival date cannot be in the past.",
+      "endDateRequired": "Enter the departure date.",
+      "endBeforeStart": "Departure must be on or after the arrival day.",
+      "tooLong": "A trip cannot last more than {{max}} days.",
+      "travelersInvalid": "Enter a number of travellers between 1 and {{maxTravelers}}.",
+      "lodgingModeRequired": "Choose an accommodation option.",
+      "lodgingRequired": "Enter the accommodation address.",
+      "nightLodgingRequired": "Enter the accommodation for this night.",
+      "modeRequired": "Choose how you will get around.",
+      "fuelTypeRequired": "Choose the car’s fuel.",
+      "profileRequired": "Choose a profile.",
+      "lunchRequired": "Choose a lunch option.",
+      "stepIncomplete": "This step is incomplete."
+    },
+    "created": {
+      "title": "Trip saved",
+      "text": "Your trip to {{destination}} is saved on this phone.",
+      "next": "Day-by-day plan generation is coming in an upcoming version.",
+      "another": "Create another trip"
+    }
   }
 }

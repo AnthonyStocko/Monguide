@@ -83,3 +83,84 @@ export async function reverseCity(point, lang) {
   const json = await fetchExternalJson(`${PHOTON_URL()}/reverse?${params}`, { source: 'photon' });
   return (json.features ?? []).map(photonToResult).filter(Boolean).slice(0, 1);
 }
+
+/**
+ * @typedef {object} AddressResult Adresse précise (hébergement).
+ * @property {string} [name] nom du lieu s'il en a un (ex. "Hôtel du Parc")
+ * @property {string} address adresse lisible ("12 Rue Royale, 74000 Annecy")
+ * @property {string} countryCode ISO 3166-1 alpha-2
+ * @property {number} lat
+ * @property {number} lon
+ */
+
+/**
+ * Convertit un résultat Photon en adresse ; null sans rue ni nom.
+ * @param {{ properties: Record<string, any>, geometry: { coordinates: [number, number] } }} feature
+ * @returns {AddressResult | null}
+ */
+export function photonToAddress(feature) {
+  const p = feature?.properties ?? {};
+  const [lon, lat] = feature?.geometry?.coordinates ?? [];
+  if (typeof p.countrycode !== 'string' || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const street = [p.housenumber, p.street].filter(Boolean).join(' ');
+  const place = [p.postcode?.trim(), p.city ?? p.town ?? p.village ?? p.county].filter(Boolean).join(' ');
+  const address = [street || (p.type === 'street' ? p.name : ''), place].filter(Boolean).join(', ');
+  if (!address) return null;
+  const result = { address, countryCode: p.countrycode.toUpperCase(), lat, lon };
+  return p.name && p.type !== 'street' ? { name: p.name, ...result } : result;
+}
+
+function uniqueAddresses(results) {
+  const seen = new Set();
+  return results.filter((r) => {
+    const key = `${r.name ?? ''}|${r.address}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
+ * Recherche d'adresses et de lieux nommés (hôtels, gîtes…), favorisant ceux
+ * proches de la destination.
+ * @param {string} q
+ * @param {string} lang
+ * @param {number} maxResults
+ * @param {{ lat: number, lon: number } | null} bias
+ * @returns {Promise<AddressResult[]>}
+ */
+export async function searchAddresses(q, lang, maxResults, bias) {
+  const params = new URLSearchParams([
+    ['q', q],
+    ['limit', String(maxResults * 2)],
+    ['lang', PHOTON_LANGS.includes(lang) ? lang : 'default'],
+    ['layer', 'house'],
+    ['layer', 'street']
+  ]);
+  if (bias) {
+    params.set('lat', String(bias.lat));
+    params.set('lon', String(bias.lon));
+  }
+  const json = await fetchExternalJson(`${PHOTON_URL()}/api/?${params}`, { source: 'photon' });
+  return uniqueAddresses((json.features ?? []).map(photonToAddress).filter(Boolean)).slice(0, maxResults);
+}
+
+/**
+ * Adresse la plus proche d'une position ("Utiliser ma position", "Choisir
+ * sur la carte").
+ * @param {{ lat: number, lon: number }} point
+ * @param {string} lang
+ * @returns {Promise<AddressResult[]>} 0 ou 1 résultat
+ */
+export async function reverseAddress(point, lang) {
+  const params = new URLSearchParams([
+    ['lat', String(point.lat)],
+    ['lon', String(point.lon)],
+    ['limit', '1'],
+    ['lang', PHOTON_LANGS.includes(lang) ? lang : 'default'],
+    ['layer', 'house'],
+    ['layer', 'street']
+  ]);
+  const json = await fetchExternalJson(`${PHOTON_URL()}/reverse?${params}`, { source: 'photon' });
+  return (json.features ?? []).map(photonToAddress).filter(Boolean).slice(0, 1);
+}

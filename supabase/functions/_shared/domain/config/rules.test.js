@@ -43,6 +43,9 @@ describe('RULES', () => {
     expect(RULES.travel.detourFactor).toBe(1.3);
     expect(RULES.travel.maxTravelMin).toBe(45);
     expect(RULES.weather.rainThresholdPct).toBe(50);
+    expect(RULES.weather.forecastDays).toBe(16);
+    expect(RULES.trip).toMatchObject({ radiusOptionsKm: [5, 10, 20, 40], maxDays: 7 });
+    expect(RULES.trip.radiusOptionsKm).toContain(RULES.trip.defaultRadiusKm);
     expect(RULES.schedule).toEqual({ lastStepLatestStart: '19:00', lateEnd: '21:00' });
     expect(RULES.places.dedupDistanceM).toBe(50);
     expect(RULES.lodging.farFactor).toBe(1.5);

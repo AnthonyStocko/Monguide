@@ -60,6 +60,18 @@ export const PLACE_CATEGORIES = Object.freeze([
   'small_heritage'
 ]);
 
+/** Carburants possibles d'une voiture (Trip.fuelType), codes communs aux prix et aux facteurs CO2. */
+export const FUEL_TYPES = Object.freeze(['sp95', 'sp98', 'e10', 'e85', 'diesel', 'lpg']);
+
+/** Modes de déplacement sur place (Trip.mode). */
+export const TRAVEL_MODES = Object.freeze(['walk', 'transit', 'bike', 'car']);
+
+/** Profils d'exploration (Trip.profile). */
+export const PROFILES = Object.freeze(['certified', 'balanced', 'explorer']);
+
+/** Choix de la pause déjeuner (Trip.lunch). */
+export const LUNCH_OPTIONS = Object.freeze(['market', 'restaurant', 'both']);
+
 /**
  * @typedef {object} Lodging
  * @property {string} id
@@ -117,7 +129,7 @@ export const PLACE_CATEGORIES = Object.freeze([
  * @property {string} endDate
  * @property {number} travelers
  * @property {'walk' | 'transit' | 'bike' | 'car'} mode
- * @property {string} [fuelType]
+ * @property {string} [fuelType] voir FUEL_TYPES (voiture uniquement)
  * @property {number} [fuelConsumption]
  * @property {'certified' | 'balanced' | 'explorer'} profile
  * @property {'market' | 'restaurant' | 'both'} lunch

@@ -1,3 +1,4 @@
+import { RULES } from '../domain/config/rules.js';
 import { fetchExternalJson } from '../http.js';
 
 const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
@@ -6,7 +7,7 @@ const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
  * Nombre de jours de prévision demandés. Obligatoire : la valeur par défaut
  * d'Open-Meteo n'est que de 7 jours. 16 jours = aujourd'hui + 15.
  */
-export const FORECAST_DAYS = 16;
+export const FORECAST_DAYS = RULES.weather.forecastDays;
 
 /**
  * Prévision horaire Open-Meteo dans le fuseau de la destination : les

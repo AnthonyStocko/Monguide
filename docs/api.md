@@ -139,7 +139,8 @@ Autocomplétion des villes et villages (source : Photon, OpenStreetMap).
 
   | Paramètre | Type | Description |
   |---|---|---|
-  | `q` | chaîne, 3 à 100 caractères | texte saisi (recherche) |
+  | `kind` | `city` \| `address` | commune (défaut) ou adresse précise |
+  | `q` | chaîne, 3 à 100 caractères (150 pour une adresse) | texte saisi (recherche) |
   | `lat`, `lon` | nombres | position (recherche inverse, « Utiliser ma position ») |
   | `lang` | `fr` \| `en` | langue des noms (défaut `fr`) |
 
@@ -160,8 +161,14 @@ Autocomplétion des villes et villages (source : Photon, OpenStreetMap).
   | `lat`, `lon` | nombres | position |
   | `timezone` | chaîne | null | fuseau horaire IANA, déterminé par la position (Open-Meteo, `timezone=auto`, cache 30 jours) ; `null` si pays non pris en charge |
 
+- **Adresses précises** (`kind=address`, hébergements) : mêmes paramètres
+  `q` ou `lat`/`lon`, plus `biasLat`/`biasLon` facultatifs (favorise les
+  adresses proches de la destination, arrondis à 0,1°). Sortie :
+  `{ "results": [{ "name"?, "address", "countryCode", "lat", "lon" }] }`
+  (`name` : nom du lieu, ex. un hôtel). Recherche inverse : position arrondie
+  à ~10 m, sans cache partagé.
 - **Cache serveur** : 30 jours (`cacheTtlSec.geocode`), clé = texte
-  normalisé + langue, ou position arrondie à 0,01°.
+  normalisé + langue (+ biais), ou position arrondie à 0,01° (communes).
 - **Erreurs** : codes communs (`400 invalid_input` si `q` trop court ou
   position invalide, `502 external_unavailable` si Photon ne répond pas).
 
@@ -312,4 +319,5 @@ rien n'est modifié.
 |---|---|---|
 | 1 | 2026-09-24 | Version initiale : cadre commun, fonction `config`. |
 | 1 | 2026-09-24 | Ajouts compatibles : fonctions `geocode`, `weather`, `places` ; code `400 unsupported_country`. |
+| 1 | 2026-09-24 | Ajout compatible : `geocode?kind=address` (adresses précises des hébergements). |
 | 1 | 2026-09-24 | Ajouts compatibles : `geocode` renvoie tous les pays (`timezone` null hors liste) ; `places` : sources avec `durationMs`, `query`, message `fallback_osm` ; fonctions `holidays`, `fuel`, `fuel-eu-refresh` ; code `403 forbidden`. |
