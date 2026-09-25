@@ -27,7 +27,7 @@ serveFunction({
     const provider = getProvider(countryCode);
     if (!provider) throw new AppError(400, 'unsupported_country', `Country not supported: ${countryCode}`);
 
-    const ctx = { rules, lang, countryCode: countryCode.toUpperCase(), cache: { lookup: cacheLookup, set: cacheSet } };
+    const ctx = { rules, lang, countryCode: countryCode.toUpperCase(), cache: { lookup: cacheLookup, set: cacheSet }, osmPointer: appConfig.osmPointer };
     return collectPlaces(provider, point, radiusKm, { lunch }, ctx);
   }
 });

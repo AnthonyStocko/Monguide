@@ -217,6 +217,16 @@ describe('osmPlacesSource (sélection de la source)', () => {
     expect(c.cache.set.mock.calls[0][1]).toBe('osm-tiles');
   });
 
+  it('pointeur reçu avec la configuration : current.json n’est pas relu, le cache partagé suffit', async () => {
+    const store = memoryStore({ FR });
+    const c = { ...ctx(store), osmPointer: { dataDate: '2026-09-24', manifest: '2026-09-24/manifest.json' } };
+    c.cache.lookup = vi.fn(async () => ({ value: [{ id: 'osm:node/1' }], fresh: true }));
+    const outcome = await osmPlacesSource(LYON, 10, true, c);
+    expect(outcome).toMatchObject({ status: 'cache', dataDate: '2026-09-24', data: [{ id: 'osm:node/1' }] });
+    expect(store.reads).not.toContain('current.json');
+    expect(c.cache.lookup.mock.calls[0][0]).toContain('2026-09-24');
+  });
+
   it('garde la réponse en mémoire : pas de cache partagé au deuxième appel', async () => {
     const c = ctx(memoryStore({ FR }));
     const first = await osmPlacesSource(LYON, 10, true, c);

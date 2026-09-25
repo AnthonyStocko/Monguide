@@ -17,7 +17,7 @@ import { errorResponse, jsonResponse } from './respond.js';
  *   name: string,
  *   methods?: string[],
  *   rateLimitKind?: 'generate' | 'default',
- *   handle: (ctx: { req: Request, caller: object, appConfig: { minAppVersion: string, rules: object } }) => Promise<unknown> | unknown
+ *   handle: (ctx: { req: Request, caller: object, appConfig: { minAppVersion: string, rules: object, osmPointer: { dataDate: string, manifest: string } | null } }) => Promise<unknown> | unknown
  * }} options
  */
 export function serveFunction({ name, methods = ['POST'], rateLimitKind = 'default', handle }) {

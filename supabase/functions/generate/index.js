@@ -55,7 +55,7 @@ serveFunction({
     const provider = getProvider(countryCode);
     if (!provider) throw new AppError(400, 'unsupported_country', `Country not supported: ${countryCode}`);
     const lang = ['fr', 'en'].includes(body.lang) ? body.lang : 'fr';
-    const ctx = { rules, lang, countryCode, cache: { lookup: cacheLookup, set: cacheSet }, fuelStore: fuelPricesEu };
+    const ctx = { rules, lang, countryCode, cache: { lookup: cacheLookup, set: cacheSet }, fuelStore: fuelPricesEu, osmPointer: appConfig.osmPointer };
     const deadline = Date.now() + rules.generation.collectBudgetMs;
     const left = () => deadline - Date.now();
     const point = round(trip.destination);

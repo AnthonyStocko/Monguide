@@ -108,10 +108,11 @@ export async function loadTilesPointer(rules, store) {
  * chaque pays l'ensemble de ses cases non vides.
  * @param {any} rules
  * @param {TileStore} store
+ * @param {{ manifest: string } | null} [pointer] pointeur déjà connu (lu avec la configuration)
  * @returns {Promise<{ dataDate: string, manifest: any, tileSets: Record<string, Set<string>> }>}
  */
-export async function loadTilesIndex(rules, store) {
-  const path = (await loadTilesPointer(rules, store)).manifest;
+export async function loadTilesIndex(rules, store, pointer) {
+  const path = (pointer ?? (await loadTilesPointer(rules, store))).manifest;
   if (!memory.manifests.has(path)) {
     const manifest = await once(path, async () => JSON.parse(await readText(store, path)));
     const tileSets = Object.fromEntries(Object.entries(manifest.countries).map(([code, c]) => [code, new Set(c.tiles)]));

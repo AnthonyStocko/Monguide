@@ -4,6 +4,7 @@ import { mergeRules } from './domain/config/mergeRules.js';
 import { isValidVersion } from './domain/version.js';
 import { AppError } from './errors.js';
 import { log } from './log.js';
+import { readOsmPointer } from './services/osmSource.js';
 import { getAdminClient } from './supabaseAdmin.js';
 
 /** Clé réservée de app_config : version minimale de l'application ("x.y.z"). */
@@ -14,8 +15,11 @@ const DEFAULT_MIN_APP_VERSION = '0.0.0';
  * Configuration effective : règles par défaut de rules.js + surcharges de la
  * table app_config (clé = chemin pointé). Mise en cache 5 minutes
  * (RULES.cacheTtlSec.config) dans api_cache sous la clé "config" ; un
- * déclencheur SQL vide cette entrée dès que app_config change.
- * @returns {Promise<{ minAppVersion: string, rules: typeof RULES }>}
+ * déclencheur SQL vide cette entrée dès que app_config change. Contient
+ * aussi le pointeur des tuiles OSM en service (osmPointer), relu avec la
+ * configuration : places connaît ainsi la date des données sans autre
+ * lecture.
+ * @returns {Promise<{ minAppVersion: string, rules: typeof RULES, osmPointer: { dataDate: string, manifest: string } | null }>}
  */
 export function loadAppConfig() {
   return cached('config', {}, RULES.cacheTtlSec.config, async () => {
@@ -35,6 +39,6 @@ export function loadAppConfig() {
     if (minRow && !isValidVersion(minRow.value)) log('warn', 'app_config_ignored', { keys: [MIN_APP_VERSION_KEY] });
     const minAppVersion = isValidVersion(minRow?.value) ? minRow.value : DEFAULT_MIN_APP_VERSION;
 
-    return { minAppVersion, rules };
+    return { minAppVersion, rules, osmPointer: await readOsmPointer(rules) };
   });
 }

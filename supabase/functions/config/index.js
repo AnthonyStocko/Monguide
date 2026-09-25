@@ -6,13 +6,13 @@ import { osmInfo } from '../_shared/services/osmSource.js';
 serveFunction({
   name: 'config',
   methods: ['GET'],
-  handle: async ({ appConfig }) => ({
+  handle: ({ appConfig }) => ({
     apiVersion: API_VERSION,
     minAppVersion: appConfig.minAppVersion,
     rules: appConfig.rules,
     // Contact de l'équipe (écran Confidentialité), repris du secret MONGUIDE_CONTACT.
     contact: globalThis.Deno?.env.get('MONGUIDE_CONTACT') || null,
     // Source des lieux OSM et date des données en service (écran « À propos », /debug).
-    osm: await osmInfo(appConfig.rules)
+    osm: osmInfo(appConfig.rules, appConfig.osmPointer)
   })
 });
