@@ -172,7 +172,16 @@ export const RULES = Object.freeze({
     /** Les restaurants sont cherchés dans un rayon réduit (déjeuner à proximité), en km (proposition). */
     restaurantRadiusKm: 10,
     /** Nombre maximal de résultats par groupe (200 au total). */
-    limits: { food: 80, local: 40, nature: 40, heritage: 40 }
+    limits: { food: 80, local: 40, nature: 40, heritage: 40 },
+    /** Tuiles de lieux (docs/osm-tiles.md). */
+    tiles: {
+      /**
+       * Côté des cases de la grille, en degrés, utilisé à la génération des
+       * tuiles (0,2 retenu à l'étude des volumes : ~10 tuiles lues pour 20 km).
+       * La lecture suit le cellDeg du manifeste en service, pas cette valeur.
+       */
+      cellDeg: 0.2
+    }
   },
 
   /**
