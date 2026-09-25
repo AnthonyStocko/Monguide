@@ -119,7 +119,20 @@ publish() {
   aws configure set default.s3.max_concurrent_requests 4
   # 1. Tuiles des pays générés, 2. manifeste, 3. current.json en dernier :
   # une publication interrompue laisse la version précédente en service.
-  s3 cp "$WORK/out/$VERSION" "$BUCKET/$VERSION" --recursive --exclude '*' --include '*.json.gz' --content-type application/gzip
+  # Le stockage refuse par moments quelques envois (erreur vide, jamais les
+  # mêmes fichiers) : sync renvoie seulement les fichiers manquants.
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    if s3 sync "$WORK/out/$VERSION" "$BUCKET/$VERSION" --exclude '*' --include '*.json.gz' --content-type application/gzip; then
+      break
+    fi
+    if [[ $attempt == 5 ]]; then
+      echo "::error::Envoi des tuiles incomplet après 5 essais : current.json n'est pas modifié."
+      exit 1
+    fi
+    echo "Envoi incomplet (essai $attempt), nouvel essai des fichiers manquants."
+    sleep $((attempt * 15))
+  done
   s3 cp "$WORK/out/$VERSION/manifest.json" "$BUCKET/$VERSION/manifest.json" --content-type application/json
   s3 cp "$WORK/out/current.json" "$BUCKET/current.json" --content-type application/json
   echo "Publiée : version $VERSION"
