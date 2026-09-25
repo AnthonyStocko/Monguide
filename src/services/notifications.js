@@ -27,6 +27,7 @@ import { getTrip, listTrips, onTripsChanged } from './tripsStore.js';
 const PREFS_KEY = 'notifications.prefs';
 const IDS_KEY = 'notifications.ids';
 const ASKED_KEY = 'notifications.asked';
+const EXACT_KEY = 'notifications.exact';
 const CHANNEL_ID = 'monguide-reminders';
 
 /**
@@ -150,12 +151,18 @@ async function ensureChannel() {
 async function schedule(list) {
   if (!list.length) return;
   await ensureChannel();
+  // Alarmes exactes demandées seulement si Android les autorise : sinon, le plugin
+  // (8.3.1) ouvrirait l'écran « Alarmes et rappels » à chaque programmation et
+  // attendrait le retour de l'utilisateur. Sans autorisation, rappels programmés
+  // quand même (retard possible) ; les réglages proposent d'ouvrir l'écran système.
+  const exact = (await exactAlarmState()) !== 'denied';
   await LocalNotifications.schedule({
     notifications: list.map((n) => ({
       id: n.id,
       ...render(n),
       // allowWhileIdle : déclenchement même en veille (Doze), mode avion compris.
       schedule: { at: n.at, allowWhileIdle: true },
+      isExactNotification: exact,
       extra: { url: notificationUrl(n), tripId: n.tripId },
       ...(isAndroid() ? { channelId: CHANNEL_ID } : {})
     }))
@@ -200,7 +207,17 @@ export function reconcileNotifications() {
   return serial(async () => {
     try {
       const expected = await expectedFor(await listTrips());
-      const { toSchedule, toCancel } = reconcilePlan(expected, await pendingIds());
+      const pending = await pendingIds();
+      let { toSchedule, toCancel } = reconcilePlan(expected, pending);
+      // Autorisation des alarmes exactes accordée ou retirée depuis la dernière fois :
+      // tout reprogrammer, pour que les rappels déjà en attente passent en exact (ou non).
+      const exact = await exactAlarmState();
+      const previous = await settings.get(EXACT_KEY).catch(() => null);
+      if (previous !== null && previous !== exact) {
+        toCancel = pending;
+        toSchedule = expected;
+      }
+      await settings.set(EXACT_KEY, exact).catch(() => {});
       await cancel(toCancel);
       await schedule(toSchedule);
       await saveIds(expected);
