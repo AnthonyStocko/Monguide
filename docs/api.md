@@ -104,7 +104,8 @@ Appelée au lancement de l'application.
     "apiVersion": 1,
     "minAppVersion": "0.0.0",
     "rules": { "weather": { "rainThresholdPct": 50 }, "…": "…" },
-    "contact": "contact@exemple.org"
+    "contact": "contact@exemple.org",
+    "osm": { "source": "tiles", "dataDate": "2026-09-24" }
   }
   ```
 
@@ -114,9 +115,11 @@ Appelée au lancement de l'application.
   | `minAppVersion` | chaîne `x.y.z` | version minimale de l'application (`0.0.0` si non définie) |
   | `rules` | objet | règles effectives : valeurs par défaut de `rules.js` fusionnées avec `app_config` |
   | `contact` | chaîne ? | contact de l'équipe (secret `MONGUIDE_CONTACT`), affiché dans l'écran Confidentialité ; `null` si non défini |
+  | `osm` | objet | source des lieux OSM (`tiles`, `overpass`, `off`) et `dataDate` (`YYYY-MM-DD`) de la version des tuiles en service, `null` si inconnue ; affichés dans « À propos et sources » et sur `/debug` |
 
 - **Cache serveur** : 5 minutes (`cacheTtlSec.config`), invalidé dès qu'une
-  ligne de `app_config` change.
+  ligne de `app_config` change ; contient aussi le pointeur des tuiles OSM
+  en service, dont `places` et `generate` tirent la date des données.
 - **Erreurs** : codes communs uniquement.
 
 #### Surcharger une règle (`app_config`)
@@ -268,7 +271,9 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
   - `osm` uniquement : `source` (`tiles`, `overpass` ou `off`, réglage
     `osm.source` de `app_config`) ; en mode tuiles, `dataDate` (date des
     données OpenStreetMap de la version en service) et `tilesRead` (tuiles
-    lues, 0 si la réponse vient du cache partagé).
+    lues, 0 si la réponse vient d'un cache) et `timings` (millisecondes
+    écoulées à la fin de chaque étape : `lookup` cache partagé, `index`
+    manifeste, `tiles` lecture des tuiles ; diagnostic).
   - France : `monuments` (Mérimée), `museums` (Muséofile), `terroir` (INAO).
     Autres pays : `monuments` et `museums` (Wikidata, repli OpenStreetMap),
     `terroir` (liste vide : eAmbrosia n'indique pas les régions).
@@ -410,4 +415,4 @@ pg_cron `monguide-purge-deleted-trips` efface les marqueurs de plus de
 | 1 | 2026-09-24 | Ajouts compatibles : table `trips` (RLS), fonction `delete-account`, champ `contact` de `config`. |
 | 1 | 2026-09-24 | Ajouts compatibles : `geocode` renvoie tous les pays (`timezone` null hors liste) ; `places` : sources avec `durationMs`, `query`, message `fallback_osm` ; fonctions `holidays`, `fuel`, `fuel-eu-refresh` ; code `403 forbidden`. |
 | 1 | 2026-09-24 | Ajout compatible : origine CORS `https://anthonystocko.github.io` (pages web publiques). |
-| 1 | 2026-09-25 | Ajouts compatibles : lieux OSM lus dans des tuiles statiques (réglage `osm.source`) ; source `osm` avec `source`, `dataDate`, `tilesRead`, message `not_covered` ; `Place.unnamed` ; alerte `source_failed` avec `message`. |
+| 1 | 2026-09-25 | Ajouts compatibles : lieux OSM lus dans des tuiles statiques (réglage `osm.source`) ; source `osm` avec `source`, `dataDate`, `tilesRead`, `timings`, message `not_covered` ; `Place.unnamed` ; alerte `source_failed` avec `message` ; champ `osm` de `config`. |

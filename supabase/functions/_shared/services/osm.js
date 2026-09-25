@@ -3,6 +3,10 @@ import { ExternalError } from '../errors.js';
 import { fetchExternal } from '../http.js';
 import { osmElementToPlace, osmHeritageElementToPlace } from './osmMapping.js';
 
+// Source de SECOURS des lieux OSM, désactivée par défaut : les lieux viennent
+// des tuiles mensuelles (osmTiles.js, docs/osm-tiles.md). Rétablie par
+// osm.source = "overpass" dans app_config (README, « Lieux OpenStreetMap »).
+
 /**
  * Instance Overpass (secret OVERPASS_URL pour une autre instance ou un test).
  * Constat du 2026-09-24 : overpass-api.de répond 406 à toute requête issue des

@@ -137,10 +137,10 @@ des carburants) ; les autres pays utilisent Wikidata et OpenStreetMap.
    ```
 
    `MONGUIDE_CONTACT` est aussi affiché dans l'écran Confidentialité.
-   Facultatifs : `OVERPASS_URL` (Overpass ; l'instance overpass-api.de
-   refuse les requêtes venant de Supabase, voir
-   `supabase/functions/_shared/services/osm.js`) et `PHOTON_URL` (instance
-   Photon dédiée en cas de diffusion large).
+   Facultatifs : `OVERPASS_URL` (source de secours des lieux OSM,
+   désactivée par défaut : voir « Lieux OpenStreetMap » ; l'instance
+   overpass-api.de refuse les requêtes venant de Supabase) et `PHOTON_URL`
+   (instance Photon dédiée en cas de diffusion large).
 
 4. **Déployer les fonctions**, dont `delete-account` (suppression du compte
    et, en cascade, de ses séjours ; seule fonction qui utilise la clé
@@ -199,7 +199,7 @@ fortiori commerciale.
 
 | Source | Usage | Licence et conditions |
 |---|---|---|
-| OpenStreetMap (Overpass) | lieux (parcs, restaurants, marchés, petit patrimoine) | données ODbL 1.0, « © contributeurs OpenStreetMap » ; instances Overpass publiques à usage raisonnable (instance dédiée recommandée) |
+| OpenStreetMap (extraits Geofabrik) | lieux (parcs, restaurants, marchés, petit patrimoine), importés chaque mois dans des tuiles (voir « Lieux OpenStreetMap ») | données ODbL 1.0, « © contributeurs OpenStreetMap » ; extraits Geofabrik : un téléchargement par pays et par mois, User-Agent identifié |
 | Tuiles tile.openstreetmap.org | fond de carte | ODbL ; politique d'usage de la fondation OSM : pas d'usage intensif, prévoir un fournisseur de tuiles pour une diffusion large |
 | Photon (komoot) | recherche d'adresses et de communes | données OpenStreetMap, ODbL 1.0 ; instance publique à usage raisonnable |
 | Open-Meteo | prévisions météo | données CC BY 4.0 ; API gratuite pour un usage **non commercial** (abonnement payant sinon) |
@@ -221,6 +221,83 @@ dans l'export PDF de chaque séjour
 Police de l'export PDF : DejaVu Sans (licence Bitstream Vera et domaine
 public pour les modifications DejaVu), choisie pour couvrir toutes les
 langues des pays pris en charge (latin étendu, grec, cyrillique).
+
+## Lieux OpenStreetMap (import mensuel)
+
+Les restaurants, marchés, producteurs, parcs, espaces naturels et le petit
+patrimoine viennent d'OpenStreetMap, importés une fois par mois dans des
+fichiers statiques (tuiles) du bucket privé `osm-tiles`. Détails du format
+et du workflow : `docs/osm-tiles.md`.
+
+**Fonctionnement.** Le 3 de chaque mois (02:17 UTC), le workflow
+`.github/workflows/osm-tiles.yml` télécharge l'extrait Geofabrik de chaque
+pays configuré (somme MD5 vérifiée), le filtre avec osmium, produit les
+tuiles (`scripts/osm-tiles`), les compare à la version en service, puis les
+publie : tuiles, manifeste, et `current.json` en dernier. La fonction
+`places` lit la version en service ; la date des données s'affiche dans
+« À propos et sources » et sur `/debug`. Durée pour la France : une
+vingtaine de minutes, surtout le téléchargement (5 Go) ; 261 886 lieux,
+1 811 tuiles, 7,8 Mo (version du 2026-09-24).
+
+**Relancer à la main.** GitHub > Actions > « Tuiles de lieux OSM » > Run
+workflow. Paramètres : `pays` (vide = tous), `publier` (décoché : génération
+et contrôles seulement), `verifier_determinisme`, `tronquer_extrait` (test :
+le contrôle doit échouer). Dans le mois, l'extrait déjà téléchargé est
+réutilisé (cache), conformément aux conditions de Geofabrik.
+
+**Un contrôle a échoué.** Rien n'est publié : la version précédente reste en
+service. Le résumé du lancement indique la catégorie en baisse. Une baisse
+réelle (nettoyage massif dans OSM) se règle en ajustant
+`CHECKS` dans `scripts/osm-tiles/config.js`, puis en relançant.
+
+**Revenir à la version précédente.** Le bucket garde les deux dernières
+versions. `current.json` indique la version en service et `previous` la
+précédente. Pour revenir en arrière, remplacer `current.json` par
+`{ "dataDate": "<previous>", "manifest": "<previous>/manifest.json", "previous": null }`
+(tableau de bord Supabase > Storage > osm-tiles, ou
+`aws s3 cp current.json s3://osm-tiles/current.json --endpoint-url https://<ref>.storage.supabase.co/storage/v1/s3`
+avec les clés S3 du stockage). Les fonctions relisent `current.json` en
+moins d'une heure (`osm.tiles.pointerTtlSec`), la configuration en 5
+minutes ; le cache partagé des réponses change de clé avec la date des
+données.
+
+**Ajouter un pays.** Ajouter une ligne à `COUNTRIES` dans
+`scripts/osm-tiles/config.js` : code ISO, extrait Geofabrik (ex.
+`europe/spain`), `heritageFallback: true` hors de France (monuments et
+musées pour le repli de Wikidata), et un `minRestaurants` prudent (environ
+2/3 du nombre de restaurants nommés dans taginfo). Puis lancer le workflow
+avec `pays` = ce code : les autres pays gardent leurs tuiles. Chaque pays est
+traité à part, depuis son propre extrait (disque de l'exécuteur : 14 Go ;
+Allemagne et France, les plus gros, font environ 5 Go). Tant qu'un pays n'est
+pas importé, ses séjours sont générés sans ces lieux, avec l'avertissement
+« Lieux locaux non disponibles pour ce pays ».
+
+**Source de secours : Overpass (désactivée).** Le réglage `osm.source`
+(`app_config`, clé `osm.source`) vaut `"tiles"` par défaut. `"overpass"`
+rétablit l'ancienne requête Overpass (`_shared/services/osm.js`), à condition
+de disposer d'une instance qui accepte les requêtes de Supabase (secret
+`OVERPASS_URL`) : overpass-api.de les refuse (406, User-Agent modifié par
+Supabase), et les instances publiques ne tiennent pas la charge (1 requête
+sur 8 aboutie le 2026-09-25). `"off"` coupe les lieux OSM et le repli du
+patrimoine.
+
+**Licence ODbL (À VÉRIFIER avec un juriste avant une diffusion large).**
+Les tuiles sont une base de données dérivée d'OpenStreetMap (sélection et
+transformation), et les séjours, l'export PDF et les écrans sont des
+« œuvres produites » (Produced Works) à partir de cette base. Obligations
+et réponses :
+
+| Obligation (ODbL 1.0) | Réponse dans Mon guide |
+|---|---|
+| Mentionner la source dans toute œuvre produite (§ 4.3) : « © contributeurs OpenStreetMap », licence ODbL, lien | écran « À propos et sources » (avec la date des données et un lien vers la licence), fiche des restaurants, export PDF (`dataSources.js`) |
+| Base dérivée utilisée publiquement : la proposer sous ODbL, ou proposer la méthode qui permet de la refaire (§ 4.4 et 4.6) | le dépôt est public : `scripts/osm-tiles` (filtre, conversion) et `docs/osm-tiles.md` décrivent entièrement la méthode ; à défaut d'un dépôt public, publier les tuiles ou ce script sous ODbL |
+| Ne pas restreindre l'accès par des mesures techniques sans en fournir une copie libre (§ 4.7) | le bucket est privé (coût de bande passante), mais la méthode publique permet de refaire la base ; **à vérifier** si une copie téléchargeable doit aussi être proposée |
+| Garder la licence ODbL sur la base dérivée (partage à l'identique, § 4.4) | les tuiles ne sont jamais proposées sous une autre licence |
+
+Références : texte de l'ODbL 1.0 (opendatacommons.org), page
+openstreetmap.org/copyright, et les recommandations de la fondation OSM
+(osmfoundation.org/wiki/Licence/Community_Guidelines), notamment sur les
+œuvres produites et les bases dérivées.
 
 ## Export PDF
 
