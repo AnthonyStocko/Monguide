@@ -140,7 +140,8 @@ publish() {
 
 cleanup() {
   local version
-  s3 ls "$BUCKET/" | awk '$1 == "PRE" { sub("/$", "", $2); print $2 }' | while read -r version; do
+  # (s3 ls n'accepte pas --only-show-errors)
+  aws s3 --endpoint-url "$S3_ENDPOINT" ls "$BUCKET/" | awk '$1 == "PRE" { sub("/$", "", $2); print $2 }' | while read -r version; do
     [[ "$version" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || continue
     if ! grep -qx "$version" "$WORK/out/keep.txt"; then
       echo "Suppression de l'ancienne version $version"
