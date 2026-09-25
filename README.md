@@ -173,7 +173,10 @@ des carburants) ; les autres pays utilisent Wikidata et OpenStreetMap.
      `SUPABASE_DB_PASSWORD` — chaque push sur `main` qui modifie `supabase/`
      lance les tests, applique les migrations et déploie les fonctions
      (`.github/workflows/deploy-server.yml`) ;
-   - application : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+   - application : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` ;
+   - tuiles de lieux OSM : `SUPABASE_S3_ACCESS_KEY_ID`,
+     `SUPABASE_S3_SECRET_ACCESS_KEY` (clés S3 du stockage, Project Settings >
+     Storage), pour `.github/workflows/osm-tiles.yml` (`docs/osm-tiles.md`).
 
 Toute évolution de la base passe par une migration SQL dans
 `supabase/migrations/` (jamais de modification manuelle dans le tableau de

@@ -31,10 +31,12 @@ export default defineConfig({
     }
   },
   test: {
-    // Domaine partagé et modules purs du serveur (_shared), plus l'application.
+    // Domaine partagé et modules purs du serveur (_shared), l'application et
+    // les scripts (génération des tuiles OSM).
     include: [
       'src/**/*.test.{js,jsx}',
-      'supabase/functions/_shared/**/*.test.js'
+      'supabase/functions/_shared/**/*.test.js',
+      'scripts/**/*.test.js'
     ],
     passWithNoTests: true
   }

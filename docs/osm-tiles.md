@@ -68,7 +68,7 @@ Catégories et sous-catégories (même classement que `osmCategory` dans
 | Tags OSM | `category` | `subcategory` |
 |---|---|---|
 | `tourism=museum` | `museum` | `museum` |
-| `heritage=1` ou `2` | `monument` | valeur de `historic`, sinon `monument` |
+| `heritage=1` ou `2` | `monument` | valeur de `historic`, sinon `building`, sinon `amenity`, sinon `monument` (type lu par `osmHeritageElementToPlace`) |
 | `amenity=restaurant` | `restaurant` | `restaurant` |
 | `amenity=marketplace` | `market` | `covered_market` si `covered=yes`, sinon `marketplace` |
 | `shop=farm` | `farm` | `farm` |
@@ -79,17 +79,23 @@ Catégories et sous-catégories (même classement que `osmCategory` dans
 | `amenity=lavoir` ou `man_made=lavoir` | `small_heritage` | `lavoir` |
 
 `museum` et `monument` ne servent qu'au repli du patrimoine hors de France,
-quand Wikidata échoue. En France, Mérimée et Muséofile restent les sources :
-ces deux catégories y sont ignorées à la lecture.
+quand Wikidata échoue. Ils ne sont générés que pour les pays configurés avec
+`heritageFallback: true` (`scripts/osm-tiles/config.js`) ; en France, Mérimée
+et Muséofile restent les sources et les tuiles n'en contiennent pas.
 
-Tags conservés, seulement s'ils existent : `cuisine`, `opening_hours`,
-`wheelchair`, `diet:vegetarian`, `diet:vegan`, `phone`, `website`, `wikidata`,
-`heritage`. `contact:phone` et `contact:website` sont ramenés à `phone` et
-`website` (la valeur directe l'emporte si les deux existent).
+Tags conservés, seulement s'ils existent, dans cet ordre : `cuisine`,
+`opening_hours`, `wheelchair`, `diet:vegetarian`, `diet:vegan`, `phone`,
+`website`, `wikidata`, `heritage`, `description`, puis `name:fr` et `name:en`
+quand ils diffèrent de `name`. `contact:phone` et `contact:website` sont
+ramenés à `phone` et `website` (la valeur directe l'emporte si les deux
+existent). `description`, `name:fr` et `name:en` sont lus par
+`osmElementToPlace` (description du lieu, nom dans la langue de
+l'application) : sans eux, le `Place` issu des tuiles différerait de celui
+d'Overpass. L'étude des volumes les incluait déjà.
 
 Règles de sélection :
 
-- **Objets sans nom exclus**, sauf le petit patrimoine (`wayside_cross`,
+- **Objets sans nom exclus** (ni `name`, ni `name:fr`, ni `name:en`), sauf le petit patrimoine (`wayside_cross`,
   `memorial`, `ruins`, `lavoir`) et les points de vue (`viewpoint`). Ils sont
   tous stockés ; la génération du séjour ne garde que les sous-catégories de
   `rules.osm.unnamedTypes` et leur donne un nom générique traduit à
@@ -98,7 +104,12 @@ Règles de sélection :
   et relations en général) réduites à un point situé **à l'intérieur** du
   polygone (*point on surface*), jamais au centroïde ni au centre du
   rectangle englobant, qui peuvent tomber dehors (parc en croissant, espace
-  protégé en plusieurs morceaux). La case d'un lieu est celle de ce point.
+  protégé en plusieurs morceaux). Méthode de GEOS (`point_on_surface` de
+  shapely et PostGIS), réécrite dans `scripts/osm-tiles/pointOnSurface.js` :
+  coupe horizontale à mi-hauteur, entre deux sommets, et milieu du plus long
+  segment intérieur (trous exclus). Une ligne est réduite à son point à
+  mi-longueur. La case d'un lieu est celle de ce point, après arrondi.
+- Lieux triés dans chaque tuile par type (`n`, `r`, `w`) puis identifiant.
 
 ### Exemple
 
@@ -137,8 +148,9 @@ est identique à celui issu d'Overpass.
 
 Bucket **privé** (migration `20260925100000_osm_tiles_bucket.sql`) : aucune
 règle d'accès sur `storage.objects`, donc aucune lecture ni écriture avec les
-clés publiques. La GitHub Action (écriture) et la fonction `places` (lecture)
-utilisent la clé `service_role`. Types acceptés : `application/gzip` (tuiles)
+clés publiques. La GitHub Action écrit par l'accès compatible S3 du stockage
+(clés S3 dédiées, voir plus bas) ; la fonction `places` lit avec la clé
+`service_role`, que Supabase lui fournit. Types acceptés : `application/gzip` (tuiles)
 et `application/json` (manifeste, pointeur) ; 50 Mo au plus par fichier.
 
 Chemins, dans le bucket :
@@ -166,15 +178,22 @@ dédoublonne par `id`.
   "cellDeg": 0.2,
   "countries": {
     "FR": {
+      "path": "2026-09-24/FR/0.2",
       "extract": "europe/france",
       "extractDate": "2026-09-24T20:21:20Z",
+      "total": 250000,
       "counts": { "restaurant": 89000, "market": 2900, "...": 0 },
+      "files": 1500,
+      "bytes": 9500000,
       "tiles": ["225_21", "228_24", "..."]
     }
   }
 }
 ```
 
+- `path` : dossier des tuiles du pays. Un lancement manuel pour un seul pays
+  reprend les autres pays de la version en service, qui gardent leur dossier
+  d'origine (une autre version) ; ce dossier est alors conservé.
 - `countries` : pays couverts par la version. Un pays absent n'a pas de
   tuiles : la lecture échoue tout de suite pour lui (sans attendre un délai),
   y compris pour le repli du patrimoine.
@@ -188,12 +207,67 @@ dédoublonne par `id`.
 `current.json` :
 
 ```json
-{ "dataDate": "2026-09-24", "manifest": "2026-09-24/manifest.json" }
+{ "dataDate": "2026-10-03", "manifest": "2026-10-03/manifest.json", "previous": "2026-09-24" }
 ```
 
 - La génération écrit d'abord toutes les tuiles, puis le manifeste, et
   **en dernier** `current.json`. Une génération interrompue laisse la version
   précédente en service.
-- Les **deux dernières versions** sont conservées : revenir en arrière, c'est
-  réécrire `current.json` vers la précédente. Les plus anciennes sont
+- La version est la date de l'extrait le plus récent (`YYYY-MM-DD`).
+  Regénérer le même extrait réécrit la même version à l'identique.
+- Les **deux dernières versions** sont conservées (`dataDate` et `previous`,
+  plus les dossiers que leurs manifestes utilisent) : revenir en arrière,
+  c'est réécrire `current.json` vers `previous`. Les plus anciennes sont
   supprimées après l'écriture du pointeur.
+
+## Production mensuelle
+
+Workflow `.github/workflows/osm-tiles.yml`, script `scripts/osm-tiles/`
+(configuration dans `config.js`).
+
+- **Quand** : le 3 de chaque mois à 02:17 UTC, et à la demande (Actions >
+  Tuiles de lieux OSM > Run workflow) avec les paramètres `pays` (vide = tous
+  les pays configurés), `publier`, `verifier_determinisme` et
+  `tronquer_extrait` (test du contrôle).
+- **Pays** : liste `COUNTRIES` de `config.js`, la France seule au départ.
+  Chaque pays est traité à part, depuis son propre extrait Geofabrik
+  (`https://download.geofabrik.de/<extrait>-latest.osm.pbf`, somme MD5 publiée
+  dans `….osm.pbf.md5`), supprimé dès qu'il est filtré : l'Europe peut
+  s'ajouter pays par pays sans dépasser le disque de l'exécuteur.
+- **Un téléchargement par mois** (conditions de Geofabrik) : les extraits
+  filtrés sont mis en cache pour le mois (clé `osm-filtered-<pays>-<AAAA-MM>`)
+  ; un nouveau lancement dans le mois les réutilise, sur le même extrait.
+
+Étapes :
+
+1. `osmium tags-filter` avec les tags du Bloc A (`OSMIUM_FILTERS`), après
+   vérification de la somme MD5 ; date des données lue dans l'en-tête de
+   l'extrait (`osmosis_replication_timestamp`).
+2. `osmium export` en GeoJSON séquentiel (`osmium-export.json` : tout chemin
+   fermé est une surface), identifiants `n…`, `w…`, `r…`.
+3. `cli.js build` : point intérieur, règles de ce document, répartition dans
+   les cases, fichiers `.json.gz`. Choix de Node plutôt que Python et
+   shapely : le script réutilise tel quel le code du serveur (`osmGrid.js`
+   pour les cases, `osmCategory` pour le classement), donc la génération et
+   la lecture ne peuvent pas diverger ; seul le point intérieur est réécrit
+   (une fonction testée). Sortie déterministe : lieux et cases triés, JSON
+   compact, gzip sans date.
+4. Contrôles avant publication (`cli.js finalize`), contre le manifeste en
+   service : baisse de plus de 20 % du total ou d'une catégorie (catégories
+   d'au moins 100 lieux), minimum absolu de restaurants (60 000 pour la
+   France), fichier de 50 Mo ou plus. Un contrôle en échec arrête tout : rien
+   n'est publié et `current.json` ne change pas.
+5. Publication par l'accès S3 du stockage (`aws s3 cp`) : tuiles, manifeste,
+   puis `current.json` en dernier.
+6. Suppression des versions qui ne sont plus à conserver.
+7. Résumé dans la page du lancement : date des données, lieux par catégorie
+   comparés à la version en service, nombre et taille des fichiers, durée.
+
+Secrets GitHub : `SUPABASE_S3_ACCESS_KEY_ID` et `SUPABASE_S3_SECRET_ACCESS_KEY`
+(Supabase > Project Settings > Storage > S3 access keys : clés du stockage
+seulement), et `SUPABASE_PROJECT_REF` (déjà présent) pour l'adresse
+`https://<ref>.storage.supabase.co/storage/v1/s3`, région `eu-west-1`.
+Aucune clé `service_role` dans le dépôt ni dans les secrets.
+
+GitHub désactive les workflows programmés d'un dépôt public après 60 jours
+sans activité : penser à le réactiver (onglet Actions) en cas de pause.

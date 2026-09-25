@@ -1,0 +1,133 @@
+name: Tuiles de lieux OSM
+
+# Production mensuelle des tuiles de lieux OpenStreetMap (docs/osm-tiles.md) :
+# extraits Geofabrik -> osmium -> scripts/osm-tiles -> bucket osm-tiles.
+on:
+  schedule:
+    # Le 3 de chaque mois à 02:17 UTC.
+    - cron: '17 2 3 * *'
+  workflow_dispatch:
+    inputs:
+      pays:
+        description: 'Code du pays (FR…) ; vide = tous les pays de scripts/osm-tiles/config.js'
+        required: false
+        default: ''
+      publier:
+        description: 'Publier dans le bucket (décoché : génération et contrôles seulement)'
+        type: boolean
+        default: true
+      verifier_determinisme:
+        description: 'Générer deux fois et comparer les fichiers'
+        type: boolean
+        default: false
+      tronquer_extrait:
+        description: 'Test : réduire l’extrait à un petit rectangle (le contrôle doit échouer)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: osm-tiles
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  tiles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      WORK: work
+      # Accès S3 du stockage Supabase : clés du stockage seulement, jamais la
+      # clé service_role (Project Settings > Storage > S3 access keys).
+      AWS_ACCESS_KEY_ID: ${{ secrets.SUPABASE_S3_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_S3_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: eu-west-1
+      S3_ENDPOINT: https://${{ secrets.SUPABASE_PROJECT_REF }}.storage.supabase.co/storage/v1/s3
+      # Sommes de contrôle CRC par défaut de l'AWS CLI : pas toujours acceptées
+      # par les stockages compatibles S3.
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      PUBLISH: ${{ github.event_name == 'schedule' || inputs.publier }}
+      TRUNCATE: ${{ inputs.tronquer_extrait == true }}
+      CHECK_DETERMINISM: ${{ inputs.verifier_determinisme == true }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Début
+        run: echo "STARTED=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Installation d'osmium
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q osmium-tool
+          osmium --version | head -1
+
+      - name: Pays à traiter
+        id: plan
+        env:
+          PAYS: ${{ inputs.pays }}
+        run: |
+          countries="$(node scripts/osm-tiles/cli.js countries ${PAYS:+--only "$PAYS"})"
+          codes="$(for item in $countries; do echo "${item%%:*}"; done | paste -sd-)"
+          echo "COUNTRIES=$countries" >> "$GITHUB_ENV"
+          echo "key=osm-filtered-$codes-$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+          echo "Pays : $countries"
+
+      # Extraits filtrés gardés en cache pour le mois : un seul téléchargement
+      # par pays et par mois, même en relançant le workflow.
+      - name: Extraits filtrés du mois (cache)
+        id: cache
+        uses: actions/cache/restore@v6
+        with:
+          path: work/filtered
+          key: ${{ steps.plan.outputs.key }}
+
+      - name: Téléchargement et filtrage
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: bash scripts/osm-tiles/run.sh download
+
+      - name: Mise en cache des extraits filtrés
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: work/filtered
+          key: ${{ steps.plan.outputs.key }}
+
+      - name: Génération des tuiles
+        id: generate
+        run: bash scripts/osm-tiles/run.sh generate
+
+      - name: Version en service
+        run: bash scripts/osm-tiles/run.sh current
+
+      - name: Contrôles et manifeste
+        env:
+          VERSION: ${{ steps.generate.outputs.version }}
+        run: bash scripts/osm-tiles/run.sh finalize
+
+      - name: Publication (current.json en dernier)
+        if: env.PUBLISH == 'true'
+        env:
+          VERSION: ${{ steps.generate.outputs.version }}
+        run: bash scripts/osm-tiles/run.sh publish
+
+      - name: Suppression des anciennes versions
+        if: env.PUBLISH == 'true'
+        run: bash scripts/osm-tiles/run.sh cleanup
+
+      - name: Résumé
+        if: always()
+        env:
+          OUTCOME: ${{ job.status }}
+        run: |
+          {
+            echo ""
+            echo "- Publication : $([ "$PUBLISH" = true ] && echo demandée || echo non demandée) ; résultat du job : $OUTCOME"
+            echo "- Extraits : $([ '${{ steps.cache.outputs.cache-hit }}' = true ] && echo 'cache du mois (pas de téléchargement)' || echo 'téléchargés')"
+            echo "- Durée : $(( ($(date +%s) - STARTED) / 60 )) min"
+          } >> "$GITHUB_STEP_SUMMARY"
