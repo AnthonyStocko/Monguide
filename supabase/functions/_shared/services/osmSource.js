@@ -1,6 +1,17 @@
+import { cacheKey } from '../cacheKey.js';
 import { log } from '../log.js';
 import { fetchOsmHeritage, fetchOsmPlaces } from './osm.js';
-import { fetchOsmTileHeritage, fetchOsmTilePlaces, isCovered, loadTilesIndex, osmSourceSetting, storageTileStore } from './osmTiles.js';
+import {
+  fetchOsmTileHeritage,
+  fetchOsmTilePlaces,
+  isCovered,
+  loadTilesIndex,
+  loadTilesPointer,
+  osmSourceSetting,
+  recallResponse,
+  rememberResponse,
+  storageTileStore
+} from './osmTiles.js';
 import { describeError, runSource } from './sourceRunner.js';
 
 /**
@@ -9,7 +20,8 @@ import { describeError, runSource } from './sourceRunner.js';
  * La source "osm" de la réponse places indique en plus : source utilisée
  * (source), date des données (dataDate) et nombre de tuiles lues (tilesRead)
  * en mode tuiles ; durationMs y compte aussi la lecture de la version en
- * service et du cache.
+ * service et du cache. En mode tuiles, les réponses sont aussi gardées en
+ * mémoire, et le cache partagé est écrit après la réponse.
  */
 
 /** Magasin des tuiles : ctx.tileStore dans les tests, bucket privé sinon. */
@@ -26,6 +38,26 @@ async function tilesIndex(name, ctx, started) {
     const message = describeError(err);
     log('warn', 'source_failed', { source: name, message, stale: false });
     return { failed: { name, status: 'failed', message, durationMs: Date.now() - started, source: 'tiles' } };
+  }
+}
+
+/**
+ * Source OSM active et date des données en service (fonction config, écran
+ * « À propos ») ; dataDate null hors mode tuiles ou si la version en service
+ * est illisible.
+ * @param {any} rules
+ * @param {{ tileStore?: import('./osmTiles.js').TileStore }} [ctx]
+ * @returns {Promise<{ source: 'tiles' | 'overpass' | 'off', dataDate: string | null }>}
+ */
+export async function osmInfo(rules, ctx = {}) {
+  const source = osmSourceSetting(rules);
+  if (source !== 'tiles') return { source, dataDate: null };
+  try {
+    const pointer = await loadTilesPointer(rules, storeOf(ctx));
+    return { source, dataDate: typeof pointer.dataDate === 'string' ? pointer.dataDate : null };
+  } catch (err) {
+    log('warn', 'osm_tiles_pointer_failed', { message: describeError(err) });
+    return { source, dataDate: null };
   }
 }
 
@@ -60,17 +92,38 @@ export async function osmPlacesSource(point, radiusKm, includeRestaurants, ctx) 
   if (!isCovered(index, ctx.countryCode)) {
     return { name: 'osm', status: 'failed', message: 'not_covered', durationMs: Date.now() - started, source: 'tiles', dataDate: index.dataDate };
   }
+  const meta = { source: 'tiles', dataDate: index.dataDate };
+  // Date des données dans la clé : une nouvelle version invalide le cache.
+  const key = cacheKey('osm-tiles', { ...params, data: index.dataDate });
+  const remembered = recallResponse(key);
+  if (remembered) return { name: 'osm', status: 'cache', durationMs: Date.now() - started, ...meta, tilesRead: 0, data: remembered };
+
+  // Cache partagé et tuiles en parallèle : un aller-retour vers la base coûte
+  // autant que la lecture des tuiles, souvent déjà en mémoire.
   const stats = { tilesRead: 0 };
-  const outcome = await runSource({
-    name: 'osm',
-    cacheSource: 'osm-tiles',
-    // Date des données dans la clé : une nouvelle version invalide le cache.
-    params: { ...params, data: index.dataDate },
-    ttlSec: ctx.rules.cacheTtlSec.osm,
-    cache: ctx.cache,
-    fetcher: () => fetchOsmTilePlaces(point, radiusKm, { rules: ctx.rules, lang: ctx.lang, includeRestaurants, index, store: storeOf(ctx), stats })
-  });
-  return { ...outcome, durationMs: Date.now() - started, source: 'tiles', dataDate: index.dataDate, tilesRead: stats.tilesRead };
+  const lookup = ctx.cache.lookup(key).catch(() => undefined);
+  const read = fetchOsmTilePlaces(point, radiusKm, { rules: ctx.rules, lang: ctx.lang, includeRestaurants, index, store: storeOf(ctx), stats }).then(
+    (data) => ({ data }),
+    (error) => ({ error })
+  );
+  const entry = await lookup;
+  if (entry?.fresh) {
+    rememberResponse(key, entry.value);
+    return { name: 'osm', status: 'cache', durationMs: Date.now() - started, ...meta, tilesRead: 0, data: entry.value };
+  }
+  const { data, error } = await read;
+  if (error) {
+    const message = describeError(error);
+    log('warn', 'source_failed', { source: 'osm', message, stale: Boolean(entry) });
+    if (entry) return { name: 'osm', status: 'cache', message: 'stale', durationMs: Date.now() - started, ...meta, tilesRead: 0, data: entry.value };
+    return { name: 'osm', status: 'failed', message, durationMs: Date.now() - started, ...meta };
+  }
+  rememberResponse(key, data);
+  // Écriture du cache partagé après la réponse (sinon attendue : tests, Node).
+  const write = ctx.cache.set(key, 'osm-tiles', data, ctx.rules.cacheTtlSec.osm).catch(() => {});
+  if (globalThis.EdgeRuntime?.waitUntil) globalThis.EdgeRuntime.waitUntil(write);
+  else await write;
+  return { name: 'osm', status: 'ok', durationMs: Date.now() - started, ...meta, tilesRead: stats.tilesRead, data };
 }
 
 /**

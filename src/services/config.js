@@ -12,6 +12,7 @@ import { setRules } from './rules.js';
  * @property {string | null} minAppVersion
  * @property {typeof RULES} rules règles effectives
  * @property {string | null} contact contact de l'équipe (écran Confidentialité)
+ * @property {{ source: string, dataDate: string | null } | null} osm source des lieux OSM et date des données (écran À propos)
  * @property {string | null} fetchedAt date de réception par le serveur (ISO)
  * @property {boolean} updateRequired l'application est trop ancienne
  * @property {import('./api.js').ApiError} [error] raison du repli éventuel
@@ -25,10 +26,17 @@ export function defaultConfig(error) {
     minAppVersion: null,
     rules: RULES,
     contact: null,
+    osm: null,
     fetchedAt: null,
     updateRequired: error?.code === 'app_outdated',
     error
   };
+}
+
+/** Source des lieux OSM reçue du serveur ; dataDate "YYYY-MM-DD" ou null. */
+function readOsm(osm) {
+  if (!osm || typeof osm.source !== 'string') return null;
+  return { source: osm.source, dataDate: /^\d{4}-\d{2}-\d{2}$/.test(osm.dataDate ?? '') ? osm.dataDate : null };
 }
 
 function fromServer(data, source, fetchedAt, error) {
@@ -43,6 +51,7 @@ function fromServer(data, source, fetchedAt, error) {
     minAppVersion,
     rules,
     contact: typeof data?.contact === 'string' && data.contact ? data.contact : null,
+    osm: readOsm(data?.osm),
     fetchedAt,
     updateRequired: tooOld || error?.code === 'app_outdated',
     error

@@ -112,6 +112,8 @@
       "defaults": "Built-in defaults"
     },
     "fetchedAt": "Received on",
+    "osmSource": "OSM places source",
+    "osmDataDate": "OSM data date",
     "rainThreshold": "Rain threshold",
     "callServer": "Contact the server",
     "callOk": "The server responded.",
@@ -863,6 +865,8 @@
     "mapTiles": "Base map: OpenStreetMap tiles (© OpenStreetMap contributors, ODbL), loaded directly by the app.",
     "creditsTitle": "Components used",
     "privacyOnline": "Privacy policy (online)",
-    "deleteOnline": "Delete my account from a browser"
+    "deleteOnline": "Delete my account from a browser",
+    "osmDataDate": "OpenStreetMap places, data as of {{date}}.",
+    "odbl": "ODbL 1.0 licence (Open Database License)"
   }
 }

@@ -112,6 +112,8 @@
       "defaults": "Valeurs par défaut embarquées"
     },
     "fetchedAt": "Reçues le",
+    "osmSource": "Source des lieux OSM",
+    "osmDataDate": "Date des données OSM",
     "rainThreshold": "Seuil de pluie",
     "callServer": "Interroger le serveur",
     "callOk": "Le serveur a répondu.",
@@ -863,6 +865,8 @@
     "mapTiles": "Fond de carte : tuiles OpenStreetMap (© contributeurs OpenStreetMap, ODbL), chargées directement par l’application.",
     "creditsTitle": "Composants utilisés",
     "privacyOnline": "Politique de confidentialité (en ligne)",
-    "deleteOnline": "Supprimer mon compte depuis un navigateur"
+    "deleteOnline": "Supprimer mon compte depuis un navigateur",
+    "osmDataDate": "Lieux OpenStreetMap, données du {{date}}.",
+    "odbl": "Licence ODbL 1.0 (Open Database License)"
   }
 }

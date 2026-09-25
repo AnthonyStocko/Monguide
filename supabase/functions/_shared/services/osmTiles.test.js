@@ -217,6 +217,38 @@ describe('osmPlacesSource (sélection de la source)', () => {
     expect(c.cache.set.mock.calls[0][1]).toBe('osm-tiles');
   });
 
+  it('garde la réponse en mémoire : pas de cache partagé au deuxième appel', async () => {
+    const c = ctx(memoryStore({ FR }));
+    const first = await osmPlacesSource(LYON, 10, true, c);
+    const second = await osmPlacesSource(LYON, 10, true, c);
+    expect(second).toMatchObject({ status: 'cache', tilesRead: 0, dataDate: '2026-09-24' });
+    expect(second.data).toEqual(first.data);
+    expect(c.cache.lookup).toHaveBeenCalledTimes(1);
+  });
+
+  it('écrit le cache partagé après la réponse avec EdgeRuntime.waitUntil', async () => {
+    const waitUntil = vi.fn();
+    vi.stubGlobal('EdgeRuntime', { waitUntil });
+    const c = ctx(memoryStore({ FR }));
+    let release;
+    c.cache.set = vi.fn(() => new Promise((resolve) => (release = resolve)));
+    const outcome = await osmPlacesSource(LYON, 10, true, c); // n'attend pas l'écriture
+    expect(outcome.status).toBe('ok');
+    expect(waitUntil).toHaveBeenCalledTimes(1);
+    release();
+  });
+
+  it('tuiles illisibles : copie expirée du cache partagé, sinon "failed"', async () => {
+    const store = memoryStore({ FR });
+    await loadTilesIndex(RULES, store);
+    for (const path of [...store.files.keys()]) if (path.endsWith('.gz')) store.files.delete(path);
+    const c = ctx(store);
+    c.cache.lookup = vi.fn(async () => ({ value: [{ id: 'osm:node/1' }], fresh: false }));
+    expect(await osmPlacesSource(LYON, 10, true, c)).toMatchObject({ status: 'cache', message: 'stale', data: [{ id: 'osm:node/1' }] });
+    c.cache.lookup = vi.fn(async () => undefined);
+    expect(await osmPlacesSource(LYON, 9, true, c)).toMatchObject({ status: 'failed', message: 'upstream 404', source: 'tiles' });
+  });
+
   it('pays non importé : "failed" avec le message not_covered, sans lire de tuile', async () => {
     const store = memoryStore({ FR });
     const outcome = await osmPlacesSource({ lat: 38.72, lon: -9.14 }, 10, true, ctx(store, RULES, 'PT'));

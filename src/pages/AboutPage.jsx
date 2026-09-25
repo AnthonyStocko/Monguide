@@ -5,6 +5,8 @@ import Page from '../components/layout/Page.jsx';
 import Card from '../components/ui/Card.jsx';
 import { APP_VERSION } from '../config/app.js';
 import { sitePage } from '../config/links.js';
+import { useConfig } from '../hooks/useConfig.js';
+import { useFormat } from '../i18n/useFormat.js';
 
 /** Autres éléments intégrés à l'application (noms propres, licences). */
 const CREDITS = [
@@ -28,6 +30,8 @@ function Link({ href, children }) {
 /** À propos et sources des données : version, crédits et licences, caractère indicatif des informations. */
 export default function AboutPage() {
   const { t, i18n } = useTranslation();
+  const format = useFormat();
+  const osmDataDate = useConfig().config.osm?.dataDate;
   return (
     <Page>
       <Card as="section" className="space-y-2">
@@ -51,6 +55,10 @@ export default function AboutPage() {
               <p>
                 {s.holder} · {t('about.license', { license: s.license })}
               </p>
+              {s.id === 'osm' && osmDataDate && (
+                <p>{t('about.osmDataDate', { date: format.date(`${osmDataDate}T12:00:00Z`, { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }) })}</p>
+              )}
+              {s.id === 'osm' && <Link href="https://opendatacommons.org/licenses/odbl/1-0/">{t('about.odbl')}</Link>}
               <Link href={s.url}>{t('about.visit', { name: s.name })}</Link>
             </li>
           ))}

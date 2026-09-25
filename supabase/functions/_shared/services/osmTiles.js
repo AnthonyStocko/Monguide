@@ -10,9 +10,9 @@ import { osmElementToPlace, osmHeritageElementToPlace } from './osmMapping.js';
  * objets Place (conversion par osmElementToPlace), mêmes plafonds par groupe.
  *
  * Caches par instance de fonction : pointeur current.json (relu toutes les
- * rules.osm.tiles.pointerTtlSec), manifestes (fichiers jamais modifiés), et
+ * rules.osm.tiles.pointerTtlSec), manifestes (fichiers jamais modifiés),
  * tuiles décompressées (au plus rules.osm.tiles.memoryCacheMb Mo, les moins
- * récemment lues supprimées d'abord).
+ * récemment lues supprimées d'abord) et dernières réponses calculées.
  */
 
 const BUCKET = 'osm-tiles';
@@ -33,7 +33,10 @@ export function storageTileStore() {
   };
 }
 
-const memory = { pointer: null, pointerExpires: 0, manifests: new Map(), tiles: new Map(), tileBytes: 0, inflight: new Map() };
+const memory = { pointer: null, pointerExpires: 0, manifests: new Map(), tiles: new Map(), tileBytes: 0, inflight: new Map(), responses: new Map() };
+
+/** Réponses (listes de Place) gardées en mémoire, par clé de cache. */
+const MAX_RESPONSES = 200;
 
 /** Vide les caches en mémoire (tests). */
 export function resetOsmTilesMemory() {
@@ -43,6 +46,30 @@ export function resetOsmTilesMemory() {
   memory.tiles.clear();
   memory.tileBytes = 0;
   memory.inflight.clear();
+  memory.responses.clear();
+}
+
+/**
+ * Réponse déjà calculée par cette instance (clé de cache avec la date des
+ * données) : évite l'aller-retour vers le cache partagé.
+ * @param {string} key
+ */
+export function recallResponse(key) {
+  const hit = memory.responses.get(key);
+  if (!hit) return undefined;
+  memory.responses.delete(key);
+  memory.responses.set(key, hit);
+  return hit;
+}
+
+/**
+ * @param {string} key
+ * @param {unknown} value
+ */
+export function rememberResponse(key, value) {
+  memory.responses.delete(key);
+  memory.responses.set(key, value);
+  if (memory.responses.size > MAX_RESPONSES) memory.responses.delete(memory.responses.keys().next().value);
 }
 
 /** Une seule lecture à la fois pour un même fichier (zones du séjour lues en parallèle). */
@@ -63,6 +90,20 @@ async function readText(store, path) {
 }
 
 /**
+ * Pointeur current.json de la version en service ({ dataDate, manifest,
+ * previous }), relu toutes les rules.osm.tiles.pointerTtlSec.
+ * @param {any} rules
+ * @param {TileStore} store
+ */
+export async function loadTilesPointer(rules, store) {
+  if (!memory.pointer || Date.now() >= memory.pointerExpires) {
+    memory.pointer = await once('current.json', async () => JSON.parse(await readText(store, 'current.json')));
+    memory.pointerExpires = Date.now() + rules.osm.tiles.pointerTtlSec * 1000;
+  }
+  return memory.pointer;
+}
+
+/**
  * Version en service : pointeur current.json et son manifeste, avec pour
  * chaque pays l'ensemble de ses cases non vides.
  * @param {any} rules
@@ -70,11 +111,7 @@ async function readText(store, path) {
  * @returns {Promise<{ dataDate: string, manifest: any, tileSets: Record<string, Set<string>> }>}
  */
 export async function loadTilesIndex(rules, store) {
-  if (!memory.pointer || Date.now() >= memory.pointerExpires) {
-    memory.pointer = await once('current.json', async () => JSON.parse(await readText(store, 'current.json')));
-    memory.pointerExpires = Date.now() + rules.osm.tiles.pointerTtlSec * 1000;
-  }
-  const path = memory.pointer.manifest;
+  const path = (await loadTilesPointer(rules, store)).manifest;
   if (!memory.manifests.has(path)) {
     const manifest = await once(path, async () => JSON.parse(await readText(store, path)));
     const tileSets = Object.fromEntries(Object.entries(manifest.countries).map(([code, c]) => [code, new Set(c.tiles)]));
