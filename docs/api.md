@@ -238,7 +238,7 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
     "sources": [
       { "name": "monuments", "status": "ok", "durationMs": 2100, "query": "SELECT …" },
       { "name": "museums", "status": "ok", "message": "fallback_osm" },
-      { "name": "osm", "status": "failed", "message": "upstream 429" },
+      { "name": "osm", "status": "ok", "durationMs": 180, "source": "tiles", "dataDate": "2026-09-24", "tilesRead": 4 },
       { "name": "terroir", "status": "ok" }
     ]
   }
@@ -257,19 +257,36 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
     momentanément indisponibles » pour `osm`).
   - `sources[].message` : `stale`, `fallback_osm` (Wikidata en échec, lieux
     issus d'OpenStreetMap : à signaler), `no_regional_data` (aucune
-    appellation régionale disponible), ou la cause d'un échec.
+    appellation régionale disponible), `not_covered` (`osm` : pays dont les
+    lieux OSM ne sont pas encore importés ; l'application affiche « Lieux
+    locaux non disponibles pour ce pays »), `disabled` (`osm` avec
+    `osm.source = "off"`), ou la cause d'un échec.
   - `sources[].durationMs` : durée de l'appel (absente si servi par le
-    cache) ; `sources[].query` : requête SPARQL envoyée (Wikidata).
+    cache, sauf `osm` en mode tuiles, où elle compte aussi la lecture du
+    cache et de la version en service) ; `sources[].query` : requête SPARQL
+    envoyée (Wikidata).
+  - `osm` uniquement : `source` (`tiles`, `overpass` ou `off`, réglage
+    `osm.source` de `app_config`) ; en mode tuiles, `dataDate` (date des
+    données OpenStreetMap de la version en service) et `tilesRead` (tuiles
+    lues, 0 si la réponse vient du cache partagé).
   - France : `monuments` (Mérimée), `museums` (Muséofile), `terroir` (INAO).
     Autres pays : `monuments` et `museums` (Wikidata, repli OpenStreetMap),
     `terroir` (liste vide : eAmbrosia n'indique pas les régions).
-    Tous les pays : `osm` (Overpass).
+    Tous les pays : `osm`, tuiles statiques par défaut (`docs/osm-tiles.md`),
+    Overpass avec `osm.source = "overpass"` ; le repli OpenStreetMap du
+    patrimoine suit le même réglage (aucun repli avec `"off"`).
+  - Lieux OSM sans nom : gardés seulement pour `osm.unnamedTypes` (points
+    de vue, lavoirs, ruines), avec un nom générique traduit (« Point de
+    vue ») et `unnamed: true` (score plus bas à la génération).
   - L'application attend jusqu'à `api.placesTimeoutMs` (20 s) : Wikidata a
     un délai de 15 s côté serveur.
 
 - **Cache serveur** : par source, clé = position arrondie + rayon (+ langue
-  et type de déjeuner pour `osm`) ; durées `cacheTtlSec.heritage`, `.osm`,
-  `.terroir`.
+  et type de déjeuner pour `osm`, + date des données en mode tuiles : un
+  nouvel import invalide le cache) ; durées `cacheTtlSec.heritage`, `.osm`,
+  `.terroir`. En mode tuiles, chaque instance de fonction garde aussi en
+  mémoire la version en service (relue toutes les heures) et les tuiles
+  lues (`osm.tiles.memoryCacheMb`).
 - **Erreurs** : codes communs ; `400 unsupported_country` si `countryCode`
   n'est pas pris en charge.
 
@@ -330,7 +347,9 @@ rien n'est modifié.
     recalcul sans réseau).
   - `trip.carbon` : `{ totalKgCo2e, byDay, byMode, distanceKm }` ;
     `trip.fuelCost` : `{ amount, currency }` (voiture, monnaie du pays).
-  - `warnings[].code` : `source_failed` (+ `source`), `free_time` (+ `count`),
+  - `warnings[].code` : `source_failed` (+ `source`, une fois par source ;
+    + `message: "not_covered"` pour `osm` dans un pays pas encore importé),
+    `free_time` (+ `count`),
     `weather_later`, `no_restaurants`, `no_fuel_price`, `no_carbon_factors`.
   - `sources` : état de chaque source (lieux par zone de collecte, météo,
     jours fériés, CO2, carburant).
@@ -391,3 +410,4 @@ pg_cron `monguide-purge-deleted-trips` efface les marqueurs de plus de
 | 1 | 2026-09-24 | Ajouts compatibles : table `trips` (RLS), fonction `delete-account`, champ `contact` de `config`. |
 | 1 | 2026-09-24 | Ajouts compatibles : `geocode` renvoie tous les pays (`timezone` null hors liste) ; `places` : sources avec `durationMs`, `query`, message `fallback_osm` ; fonctions `holidays`, `fuel`, `fuel-eu-refresh` ; code `403 forbidden`. |
 | 1 | 2026-09-24 | Ajout compatible : origine CORS `https://anthonystocko.github.io` (pages web publiques). |
+| 1 | 2026-09-25 | Ajouts compatibles : lieux OSM lus dans des tuiles statiques (réglage `osm.source`) ; source `osm` avec `source`, `dataDate`, `tilesRead`, message `not_covered` ; `Place.unnamed` ; alerte `source_failed` avec `message`. |

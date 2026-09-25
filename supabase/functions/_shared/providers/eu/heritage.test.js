@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RULES } from '../../domain/config/rules.js';
 import { heritage } from './heritage.js';
 
+// Ces tests portent sur le mode Overpass (rules.osm.source), les tuiles sur osmTiles.test.js.
+const OVERPASS_RULES = { ...RULES, osm: { ...RULES.osm, source: 'overpass' } };
+
 const LISBON = { lat: 38.72, lon: -9.14 };
 const sparql = (rows) => new Response(JSON.stringify({ results: { bindings: rows } }));
 const row = (qid, label, lon, lat) => ({
@@ -13,7 +16,7 @@ const overpass = (elements) => new Response(JSON.stringify({ elements }));
 
 describe('heritage (eu)', () => {
   let fetchMock;
-  const ctx = () => ({ rules: RULES, lang: 'fr', countryCode: 'PT', cache: { lookup: vi.fn(async () => undefined), set: vi.fn(async () => {}) } });
+  const ctx = () => ({ rules: OVERPASS_RULES, lang: 'fr', countryCode: 'PT', cache: { lookup: vi.fn(async () => undefined), set: vi.fn(async () => {}) } });
   beforeEach(() => {
     fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);

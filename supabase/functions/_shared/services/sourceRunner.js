@@ -12,7 +12,7 @@ import { log } from '../log.js';
  * @property {T} [data] absent si status = "failed"
  */
 
-function describeError(err) {
+export function describeError(err) {
   if (err?.upstreamStatus) return `upstream ${err.upstreamStatus}`;
   if (err?.code) return err.code;
   return 'error';

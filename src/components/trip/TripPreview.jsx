@@ -29,7 +29,11 @@ export default function TripPreview({ trip, warnings }) {
           </h3>
           <ul className="list-disc space-y-1 pl-5 text-warning-on-soft">
             {sourceWarnings.map((w) => (
-              <li key={w.source}>{t(`sources.${w.source}.failed`, { defaultValue: t('generation.warnings.source_failed', { source: w.source }) })}</li>
+              <li key={w.source}>
+                {w.message === 'not_covered'
+                  ? t('sources.notCovered')
+                  : t(`sources.${w.source}.failed`, { defaultValue: t('generation.warnings.source_failed', { source: w.source }) })}
+              </li>
             ))}
             {otherWarnings.map((w) => (
               <li key={w.code}>{t(`generation.warnings.${w.code}`, { count: w.count ?? 0 })}</li>

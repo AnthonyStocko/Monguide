@@ -213,6 +213,12 @@
       "failed": "Produits du terroir momentanément indisponibles."
     },
     "duration": "{{value}} s",
+    "durationMs": "{{value}} ms",
+    "via": "Source : {{source}}",
+    "dataDate": "Données du {{date}}",
+    "tilesRead_one": "{{count}} tuile lue",
+    "tilesRead_other": "{{count}} tuiles lues",
+    "notCovered": "Lieux locaux non disponibles pour ce pays.",
     "fallbackOsm": "Données issues d’OpenStreetMap : Wikidata est momentanément indisponible.",
     "noRegionalData": "Pas de spécialité locale référencée pour cette région.",
     "query": "Voir la requête envoyée",

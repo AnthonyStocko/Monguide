@@ -82,7 +82,9 @@ export const RULES = Object.freeze({
     score: {
       proximity: 60,
       certified: 25,
-      diversity: 15
+      diversity: 15,
+      /** Malus d'un lieu sans nom (nom générique : « Point de vue »…), qui ne sert qu'à combler un créneau. */
+      unnamedPenalty: 20
     },
     /** Score d'un restaurant : bonus et malus (points). */
     restaurant: {
@@ -173,8 +175,25 @@ export const RULES = Object.freeze({
     restaurantRadiusKm: 10,
     /** Nombre maximal de résultats par groupe (200 au total). */
     limits: { food: 80, local: 40, nature: 40, heritage: 40 },
+    /**
+     * Source des lieux OSM : "tiles" (tuiles statiques du bucket osm-tiles),
+     * "overpass" (requête Overpass, secret OVERPASS_URL) ou "off" (aucun lieu
+     * OSM, ni repli du patrimoine). Toute autre valeur vaut "tiles".
+     */
+    source: 'tiles',
+    /**
+     * Petit patrimoine et points de vue SANS NOM gardés (sous-catégories des
+     * tuiles), avec un nom générique traduit et un score plus bas
+     * (generation.score.unnamedPenalty). Calvaires et monuments aux morts
+     * anonymes exclus : trop nombreux et peu intéressants.
+     */
+    unnamedTypes: ['viewpoint', 'lavoir', 'ruins'],
     /** Tuiles de lieux (docs/osm-tiles.md). */
     tiles: {
+      /** Relecture de current.json (version en service), en secondes. */
+      pointerTtlSec: 3600,
+      /** Tuiles décompressées gardées en mémoire par instance de fonction, en Mo de JSON. */
+      memoryCacheMb: 40,
       /**
        * Côté des cases de la grille, en degrés, utilisé à la génération des
        * tuiles (0,2 retenu à l'étude des volumes : ~10 tuiles lues pour 20 km).

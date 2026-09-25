@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RULES } from '../domain/config/rules.js';
 import { collectPlaces } from './collectPlaces.js';
 
+// Ces tests portent sur le mode Overpass (rules.osm.source), les tuiles sur osmTiles.test.js.
+const OVERPASS_RULES = { ...RULES, osm: { ...RULES.osm, source: 'overpass' } };
+
 const POINT = { lat: 45.99, lon: 4.73 };
 const monument = { id: 'merimee:PA1', name: 'Église Notre-Dame', category: 'monument', lat: 45.988, lon: 4.718, source: 'monuments', certified: true, indoor: true };
 const osmDuplicate = { type: 'way', id: 9, center: { lat: 45.98801, lon: 4.71801 }, tags: { historic: 'ruins', name: 'Eglise Notre-Dame' } };
@@ -33,7 +36,7 @@ describe('collectPlaces', () => {
     vi.restoreAllMocks();
   });
 
-  const ctx = () => ({ rules: RULES, lang: 'fr', cache: memoryCache() });
+  const ctx = () => ({ rules: OVERPASS_RULES, lang: 'fr', cache: memoryCache() });
 
   it('fusionne les sources, dédoublonne et indique l\'état de chacune', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ elements: [osmDuplicate, restaurant] })));
@@ -43,7 +46,7 @@ describe('collectPlaces', () => {
     expect(result.sources).toEqual([
       { name: 'monuments', status: 'ok' },
       { name: 'museums', status: 'cache' },
-      { name: 'osm', status: 'ok', durationMs: expect.any(Number) },
+      { name: 'osm', status: 'ok', durationMs: expect.any(Number), source: 'overpass' },
       { name: 'terroir', status: 'ok' }
     ]);
   });
@@ -52,7 +55,7 @@ describe('collectPlaces', () => {
     fetchMock.mockResolvedValue(new Response('Too Many Requests', { status: 429 }));
     const result = await collectPlaces(provider(), POINT, 20, { lunch: 'both' }, ctx());
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(result.sources).toContainEqual({ name: 'osm', status: 'failed', message: 'upstream 429', durationMs: expect.any(Number) });
+    expect(result.sources).toContainEqual({ name: 'osm', status: 'failed', message: 'upstream 429', durationMs: expect.any(Number), source: 'overpass' });
     expect(result.places.map((p) => p.id)).toEqual(['merimee:PA1']);
     expect(result.appellations).toHaveLength(1);
   });

@@ -1,5 +1,5 @@
 import { countryInfo } from '../../domain/config/countries.js';
-import { fetchOsmHeritage } from '../../services/osm.js';
+import { osmHeritageFallback } from '../../services/osmSource.js';
 import { runSource } from '../../services/sourceRunner.js';
 import { bindingsToPlaces, buildMonumentsQuery, buildMuseumsQuery, labelLanguages, runSparql } from '../../services/wikidata.js';
 
@@ -7,7 +7,8 @@ import { bindingsToPlaces, buildMonumentsQuery, buildMuseumsQuery, labelLanguage
  * Patrimoine hors de France : Wikidata (monuments protégés, musées
  * référencés), deux requêtes séparées mises en cache 7 jours. Si une requête
  * échoue (sans copie en cache), repli sur OpenStreetMap (heritage=1|2,
- * tourism=museum) : la source porte alors le message "fallback_osm", que
+ * tourism=museum ; tuiles ou Overpass selon rules.osm.source, aucun repli
+ * avec "off") : la source porte alors le message "fallback_osm", que
  * l'application signale à l'utilisateur. La requête Wikidata n'est jamais
  * relancée.
  *
@@ -46,15 +47,9 @@ export async function heritage(point, radiusKm, ctx) {
   ]);
   if (monuments.status !== 'failed' && museums.status !== 'failed') return [monuments, museums];
 
-  // Repli OpenStreetMap : une seule requête Overpass pour les deux sources.
-  const fallback = await runSource({
-    name: 'heritage-osm',
-    cacheSource: 'osm-heritage',
-    params,
-    ttlSec: rules.cacheTtlSec.osm,
-    cache,
-    fetcher: () => fetchOsmHeritage(point, radiusKm, { rules, lang })
-  });
+  // Repli OpenStreetMap : une seule lecture pour les deux sources.
+  const fallback = await osmHeritageFallback(point, radiusKm, params, ctx);
+  if (!fallback) return [monuments, museums];
   const replace = (outcome, key) => {
     if (outcome.status !== 'failed') return outcome;
     if (fallback.status === 'failed') return { ...outcome, message: `${outcome.message}; fallback_osm_failed` };

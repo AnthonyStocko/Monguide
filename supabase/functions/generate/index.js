@@ -111,7 +111,11 @@ serveFunction({
       },
       rules
     );
-    for (const s of sources) if (s.status === 'failed') warnings.unshift({ code: 'source_failed', source: s.name });
+    // Une alerte par source en échec (plusieurs zones peuvent échouer pareil) ;
+    // not_covered : pays sans lieux OSM importés, message dédié.
+    const failed = new Map();
+    for (const s of sources) if (s.status === 'failed' && !failed.has(s.name)) failed.set(s.name, s.message === 'not_covered' ? { message: s.message } : {});
+    for (const [name, extra] of [...failed].reverse()) warnings.unshift({ code: 'source_failed', source: name, ...extra });
     return { trip: { ...generated, updatedAt: new Date().toISOString() }, warnings, sources: sources.map(({ query, ...s }) => s) };
   }
 });

@@ -213,6 +213,12 @@
       "failed": "Local produce temporarily unavailable."
     },
     "duration": "{{value}} s",
+    "durationMs": "{{value}} ms",
+    "via": "Source: {{source}}",
+    "dataDate": "Data from {{date}}",
+    "tilesRead_one": "{{count}} tile read",
+    "tilesRead_other": "{{count}} tiles read",
+    "notCovered": "Local places are not available for this country yet.",
     "fallbackOsm": "Data from OpenStreetMap: Wikidata is temporarily unavailable.",
     "noRegionalData": "No listed local specialty for this region.",
     "query": "Show the query sent",

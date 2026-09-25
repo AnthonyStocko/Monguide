@@ -33,6 +33,7 @@ export const SCHEMA_VERSION = 1;
  * @property {string} [description]
  * @property {string} [url]
  * @property {PlaceFood} [food]
+ * @property {boolean} [unnamed] lieu OSM sans nom, affiché sous un nom générique (« Point de vue »)
  */
 
 /**
