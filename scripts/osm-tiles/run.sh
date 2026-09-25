@@ -116,6 +116,7 @@ finalize() {
 }
 
 publish() {
+  aws configure set default.s3.max_concurrent_requests 4
   # 1. Tuiles des pays générés, 2. manifeste, 3. current.json en dernier :
   # une publication interrompue laisse la version précédente en service.
   s3 cp "$WORK/out/$VERSION" "$BUCKET/$VERSION" --recursive --exclude '*' --include '*.json.gz' --content-type application/gzip

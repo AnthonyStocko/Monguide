@@ -48,6 +48,11 @@ jobs:
       # par les stockages compatibles S3.
       AWS_REQUEST_CHECKSUM_CALCULATION: when_required
       AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      # Le stockage Supabase refuse une partie des envois trop rapprochés
+      # (129 échecs sur 1 811 à 10 envois simultanés, le 2026-09-25) :
+      # nouvelles tentatives adaptatives, et 4 envois simultanés (run.sh).
+      AWS_MAX_ATTEMPTS: 10
+      AWS_RETRY_MODE: adaptive
       PUBLISH: ${{ github.event_name == 'schedule' || inputs.publier }}
       TRUNCATE: ${{ inputs.tronquer_extrait == true }}
       CHECK_DETERMINISM: ${{ inputs.verifier_determinisme == true }}
