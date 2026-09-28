@@ -116,6 +116,9 @@ serveFunction({
     const failed = new Map();
     for (const s of sources) if (s.status === 'failed' && !failed.has(s.name)) failed.set(s.name, s.message === 'not_covered' ? { message: s.message } : {});
     for (const [name, extra] of [...failed].reverse()) warnings.unshift({ code: 'source_failed', source: name, ...extra });
+    // Lieux OSM partiels : pays voisins pris en charge mais pas encore importés, toutes zones confondues.
+    const missing = [...new Set(sources.flatMap((s) => s.missingCountries ?? []))].sort();
+    if (missing.length) warnings.splice(failed.size, 0, { code: 'places_partial', countries: missing });
     return { trip: { ...generated, updatedAt: new Date().toISOString() }, warnings, sources: sources.map(({ query, ...s }) => s) };
   }
 });

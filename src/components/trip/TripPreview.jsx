@@ -1,6 +1,8 @@
 import { CloudSun, Leaf, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '../../i18n/useFormat.js';
+import { usePartialCoverage } from '../../i18n/usePartialCoverage.js';
+import { usePlaceName } from '../../i18n/usePlaceName.js';
 import Badge from '../ui/Badge.jsx';
 import Card from '../ui/Card.jsx';
 
@@ -15,9 +17,12 @@ const BADGE_TONES = { weather_adapted: 'secondary', hours_unconfirmed: 'warning'
 export default function TripPreview({ trip, warnings }) {
   const { t } = useTranslation();
   const format = useFormat();
+  const { placeName } = usePlaceName();
+  const partialCoverage = usePartialCoverage();
   const dayLabel = (date) => format.date(`${date}T12:00:00Z`, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   const sourceWarnings = warnings.filter((w) => w.code === 'source_failed');
-  const otherWarnings = warnings.filter((w) => w.code !== 'source_failed');
+  const partialWarnings = warnings.filter((w) => w.code === 'places_partial');
+  const otherWarnings = warnings.filter((w) => w.code !== 'source_failed' && w.code !== 'places_partial');
 
   return (
     <div className="space-y-4">
@@ -34,6 +39,9 @@ export default function TripPreview({ trip, warnings }) {
                   ? t('sources.notCovered')
                   : t(`sources.${w.source}.failed`, { defaultValue: t('generation.warnings.source_failed', { source: w.source }) })}
               </li>
+            ))}
+            {partialWarnings.map((w) => (
+              <li key={w.code}>{partialCoverage(w.countries)}</li>
             ))}
             {otherWarnings.map((w) => (
               <li key={w.code}>{t(`generation.warnings.${w.code}`, { count: w.count ?? 0 })}</li>
@@ -70,7 +78,7 @@ export default function TripPreview({ trip, warnings }) {
                   </span>
                   <span className="text-ink-muted">{t(`generation.stepTypes.${step.type}`)}</span>
                 </p>
-                <p className="font-medium">{step.place ? step.place.name : t('generation.freeTime')}</p>
+                <p className="font-medium">{step.place ? placeName(step.place) : t('generation.freeTime')}</p>
                 {step.specialties?.length > 0 && <p className="text-ink-muted">{t('generation.specialties', { list: step.specialties.join(', ') })}</p>}
                 {step.badges.filter((b) => b !== 'free_time').length > 0 && (
                   <span className="mt-1 flex flex-wrap gap-2">

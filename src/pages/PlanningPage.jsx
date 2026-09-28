@@ -28,6 +28,7 @@ import Skeleton from '../components/ui/Skeleton.jsx';
 import { useConfig } from '../hooks/useConfig.js';
 import { useCurrentTrip } from '../hooks/useCurrentTrip.js';
 import { useFormat } from '../i18n/useFormat.js';
+import { usePlaceName } from '../i18n/usePlaceName.js';
 import { getWeather } from '../services/dataApi.js';
 
 /** En développement : invariants vérifiés après chaque recalcul, sur les journées recalculées (console). */
@@ -42,6 +43,7 @@ function devCheck(before, after, mode, rules) {
 
 export default function PlanningPage() {
   const { t } = useTranslation();
+  const { placeName } = usePlaceName();
   const { tripId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -177,7 +179,7 @@ export default function PlanningPage() {
     const result = replanDay(trip, day, step, rules, { today: here.date });
     if (result.error) {
       const other = current.steps.find((s) => s.id === result.error.stepId);
-      setDialog((d) => ({ ...d, error: { code: result.error.code, name: other ? (other.title ?? other.place?.name) : '' } }));
+      setDialog((d) => ({ ...d, error: { code: result.error.code, name: other ? (other.title ?? (other.place ? placeName(other.place) : '')) : '' } }));
       return;
     }
     if (!result.changes.length && !result.warnings.length) {
@@ -327,6 +329,7 @@ export default function PlanningPage() {
       {proposal && panel && (
         <ReplanPanel
           proposal={{ ...proposal.result, weatherChecked: proposal.kind === 'tracking' ? proposal.result.weatherChecked : undefined }}
+          trip={trip}
           intro={panel.intro}
           dismissLabel={panel.dismissLabel}
           onDismiss={panel.onDismiss}

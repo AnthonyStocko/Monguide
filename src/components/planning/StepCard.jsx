@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import { BadgeCheck, CircleCheck, Clock, CloudRain, Navigation, Pencil, Replace, SkipForward, TriangleAlert, UserPen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { averageRain } from '@domain/weatherArbitration.js';
+import { usePlaceName } from '../../i18n/usePlaceName.js';
 import { geoUrl } from '../../utils/navigation.js';
 import Badge from '../ui/Badge.jsx';
 import Button from '../ui/Button.jsx';
@@ -23,13 +24,14 @@ const STATUS_TONES = { planned: 'neutral', done: 'primary', skipped: 'warning' }
  */
 const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTime, onReplace, onEditPersonal, onTrack, showTravel, isToday, highlighted, readOnly }, ref) {
   const { t } = useTranslation();
+  const { placeName } = usePlaceName();
   const place = step.place;
   const personal = step.type === 'personal';
   const Icon = personal ? CATEGORY_ICONS.personal : place ? CATEGORY_ICONS[place.category] : Clock;
   const rain = day.weatherAvailable && day.weather ? averageRain(day.weather, step.start, step.end) : null;
   const outdoor = place ? place.indoor !== true : personal && step.indoor === false;
   const status = step.status ?? 'planned';
-  const title = personal ? step.title : place ? place.name : t('generation.freeTime');
+  const title = personal ? step.title : place ? placeName(place) : t('generation.freeTime');
 
   return (
     <li
@@ -107,7 +109,7 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
       <div className="flex flex-wrap gap-2">
         {place && (
           <a
-            href={geoUrl(place, personal ? title : place.name)}
+            href={geoUrl(place, title)}
             className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-secondary-strong px-4 font-semibold text-secondary-strong hover:bg-secondary-soft"
           >
             <Navigation aria-hidden="true" className="size-5" />

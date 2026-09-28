@@ -234,21 +234,53 @@ et du workflow : `docs/osm-tiles.md`.
 pays configuré (somme MD5 vérifiée), le filtre avec osmium, produit les
 tuiles (`scripts/osm-tiles`), les compare à la version en service, puis les
 publie : tuiles, manifeste, et `current.json` en dernier. La fonction
-`places` lit la version en service ; la date des données s'affiche dans
+`places` lit la version en service, avec les tuiles de tous les pays
+importés qui touchent la zone de recherche (un seul exemplaire par lieu
+aux frontières) ; la date des données de chaque pays s'affiche dans
 « À propos et sources » et sur `/debug`. Durée pour la France : une
 vingtaine de minutes, surtout le téléchargement (5 Go) ; 261 886 lieux,
 1 811 tuiles, 7,8 Mo (version du 2026-09-24).
 
 **Relancer à la main.** GitHub > Actions > « Tuiles de lieux OSM » > Run
-workflow. Paramètres : `pays` (vide = tous), `publier` (décoché : génération
-et contrôles seulement), `verifier_determinisme`, `tronquer_extrait` (test :
-le contrôle doit échouer). Dans le mois, l'extrait déjà téléchargé est
-réutilisé (cache), conformément aux conditions de Geofabrik.
+workflow. Paramètres : `pays` (`BE`, `BE,LU` ou `all` ; les pays non
+demandés gardent leurs tuiles), `publier` (décoché : génération et
+contrôles seulement), `verifier_determinisme`, et deux tests :
+`tronquer_pays` (ex. `BE` : son contrôle doit échouer, les autres pays
+sont publiés) et `plafond_mo` (ex. `1` : la publication doit être
+bloquée). Dans le mois, l'extrait déjà téléchargé est réutilisé (cache),
+conformément aux conditions de Geofabrik.
 
-**Un contrôle a échoué.** Rien n'est publié : la version précédente reste en
-service. Le résumé du lancement indique la catégorie en baisse. Une baisse
-réelle (nettoyage massif dans OSM) se règle en ajustant
-`CHECKS` dans `scripts/osm-tiles/config.js`, puis en relançant.
+**Un pays a échoué : le relancer.** Les autres pays sont publiés ; lui
+garde ses tuiles précédentes (ou reste non couvert s'il n'en avait pas), et
+le lancement se termine en échec pour alerter. Le résumé donne, pour chaque
+pays, son statut, sa date des données et sa taille, puis la raison de
+l'échec. Selon la raison :
+- téléchargement ou MD5 (Geofabrik indisponible, extrait en cours de
+  mise à jour) : relancer le workflow avec `pays` = ce code seul, quelques
+  heures plus tard ;
+- génération (osmium, disque) : lire le journal de l'étape du pays, corriger,
+  relancer ce pays seul ;
+- catégorie ou total en baisse de plus de 20 % : vérifier sur taginfo
+  Geofabrik si la baisse est réelle (nettoyage massif dans OSM) ; si oui,
+  ajuster `CHECKS` dans `scripts/osm-tiles/config.js`, puis relancer ce pays
+  seul ;
+- seuil d'un premier import (`minRestaurants`) : vérifier le nombre de
+  restaurants sur taginfo et corriger `minRestaurants`, puis relancer.
+
+Dans le mois, la relance réutilise l'extrait filtré mis en cache (si le
+téléchargement avait réussi).
+
+**Suivre l'espace de stockage.** Chaque résumé d'import donne l'espace du
+bucket après publication, à comparer au plafond : « Stockage après
+publication : 23.4 Mo (plafond 200.0 Mo) » (valeurs d'exemple), et la taille de chaque pays.
+L'espace compte la version en service et les dossiers gardés pour un retour
+arrière (version précédente de chaque pays). Vue d'ensemble : tableau de
+bord Supabase > Storage (ou la page Usage pour tout le projet, 1 Go
+gratuit, À VÉRIFIER sur supabase.com/pricing). Si le plafond est dépassé,
+rien n'est publié ; le message donne l'espace total après publication et
+les pays les plus volumineux. Le plafond (`maxStorageMb` de
+`scripts/osm-tiles/countries.json`, 200 Mo, soit 20 % du Go gratuit) se
+relève en connaissance de cause, ou l'on retire un pays.
 
 **Revenir à la version précédente.** Le bucket garde les deux dernières
 versions. `current.json` indique la version en service et `previous` la
@@ -261,16 +293,50 @@ moins d'une heure (`osm.tiles.pointerTtlSec`), la configuration en 5
 minutes ; le cache partagé des réponses change de clé avec la date des
 données.
 
-**Ajouter un pays.** Ajouter une ligne à `COUNTRIES` dans
-`scripts/osm-tiles/config.js` : code ISO, extrait Geofabrik (ex.
-`europe/spain`), `heritageFallback: true` hors de France (monuments et
-musées pour le repli de Wikidata), et un `minRestaurants` prudent (environ
-2/3 du nombre de restaurants nommés dans taginfo). Puis lancer le workflow
-avec `pays` = ce code : les autres pays gardent leurs tuiles. Chaque pays est
-traité à part, depuis son propre extrait (disque de l'exécuteur : 14 Go ;
-Allemagne et France, les plus gros, font environ 5 Go). Tant qu'un pays n'est
-pas importé, ses séjours sont générés sans ces lieux, avec l'avertissement
-« Lieux locaux non disponibles pour ce pays ».
+**Ajouter un pays.**
+1. Configuration : ajouter une entrée à `scripts/osm-tiles/countries.json` :
+   code ISO (le pays doit déjà être pris en charge par l'application,
+   `config/countries.js`), extrait Geofabrik (ex. `europe/spain`, à vérifier
+   dans `https://download.geofabrik.de/index-v1-nogeom.json`), langues
+   locales à garder dans les noms, `heritageFallback: true` hors de France
+   (monuments et musées pour le repli de Wikidata), et un `minRestaurants`
+   prudent (environ 2/3 du nombre de restaurants dans taginfo), contrôlé au
+   premier import seulement. Commiter et pousser.
+2. Lancement manuel : GitHub > Actions > « Tuiles de lieux OSM » > Run
+   workflow, `pays` = ce code ; les autres pays gardent leurs tuiles. Chaque
+   pays est traité à part, depuis son propre extrait (disque de l'exécuteur :
+   14 Go ; Allemagne et France, les plus gros, font environ 5 Go). Au-delà
+   d'une dizaine de Go d'extraits, prévoir un job par pays (durée maximale
+   du job : 180 min).
+3. Contrôles : dans le résumé du lancement, le pays est « mis à jour »,
+   avec un nombre de lieux par catégorie plausible, et l'espace de stockage
+   reste sous le plafond. Puis dans l'application : « À propos et sources »
+   liste le pays avec sa date des données (après le délai de la
+   configuration, 5 minutes, et du pointeur, `osm.tiles.pointerTtlSec`) ;
+   sur `/debug`, les lieux d'une ville du pays montrent la source `osm` avec
+   ce pays, sa date et ses tuiles lues ; une ville frontalière montre les
+   deux pays, sans doublon.
+
+Tant qu'un pays n'est pas importé, ses séjours sont générés sans ces
+lieux, avec l'avertissement « Lieux locaux non disponibles pour ce pays » ;
+une zone de recherche qui déborde sur lui (ville frontalière d'un pays
+importé) donne « Les lieux situés en Allemagne ne sont pas encore
+disponibles », avec les lieux des pays importés.
+
+**Retirer un pays.** Retirer son entrée de `scripts/osm-tiles/countries.json`,
+pousser, puis lancer le workflow (`pays` = un pays restant, ou `all`) : le
+nouveau manifeste ne le contient plus (statut « retiré » dans le résumé),
+ses lieux ne sont plus servis, et ses fichiers sont supprimés au lancement
+suivant (ils restent un mois pour un retour arrière). Le pays reste pris en
+charge par l'application, sans lieux OSM.
+
+**Format des tuiles : v2, lecture du v1 à retirer.** Les tuiles sont
+générées au format v2 (variantes de noms `names`, code pays `cc` :
+`docs/osm-tiles.md`). La fonction `places` lit encore le v1, le temps que
+tous les pays importés soient regénérés. **Tâche :** quand le manifeste en
+service n'a plus aucun pays sans `"format": 2`, retirer la branche v1 de
+`normalizeTile` (`supabase/functions/_shared/services/osmTiles.js`), ses
+tests et la section « Format v1 » de `docs/osm-tiles.md`.
 
 **Source de secours : Overpass (désactivée).** Le réglage `osm.source`
 (`app_config`, clé `osm.source`) vaut `"tiles"` par défaut. `"overpass"`

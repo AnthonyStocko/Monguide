@@ -40,17 +40,19 @@ partagées par la lecture et par la génération).
 Fichier JSON compressé gzip :
 
 ```json
-{ "v": 1, "dataDate": "YYYY-MM-DD", "tile": "iy_ix", "places": [ ... ] }
+{ "v": 2, "dataDate": "YYYY-MM-DD", "tile": "iy_ix", "places": [ ... ] }
 ```
 
-- `v` : version du format (1).
+- `v` : version du format : **2** pour les tuiles générées depuis le
+  Prompt 3.0, 1 pour les plus anciennes (voir « Format v1 » plus bas). La
+  lecture accepte les deux, fichier par fichier.
 - `dataDate` : date des données OpenStreetMap (horodatage de l'extrait
   Geofabrik).
 - `tile` : identifiant de la case.
-- `places` : lieux de la case, chacun sous forme compacte :
+- `places` : lieux de la case, chacun sous forme compacte (v2) :
 
 ```
-[id, category, subcategory, name, lat, lon, tags]
+[id, category, subcategory, name, lat, lon, tags, names, cc]
 ```
 
 | Champ | Contenu |
@@ -61,6 +63,21 @@ Fichier JSON compressé gzip :
 | `name` | `name` OSM, ou `null` pour le petit patrimoine sans nom |
 | `lat`, `lon` | arrondies à 5 décimales (environ 1 m) |
 | `tags` | objet des seuls tags utiles présents (`{}` si aucun) |
+| `names` | variantes `name:<langue>` présentes dans OSM qui diffèrent de `name`, pour les langues utiles seulement : `{ "fr": "Grand-Place", "nl": "Grote Markt" }` ; `null` si aucune (une position de tableau ne peut pas être absente) |
+| `cc` | code ISO du pays de l'extrait d'origine (`"BE"`), le même que celui du dossier |
+
+Langues utiles (`configuredNameLanguages`, `scripts/osm-tiles/config.js`) : `fr`,
+`en`, `nl`, `de`, `it`, `es`, `ca`, `eu`, `pt`, plus les langues locales
+(champ `languages`) de **tous** les pays de
+`scripts/osm-tiles/countries.json` : la tuile belge garde aussi, par exemple,
+un nom en luxembourgeois si le Luxembourg est importé. Un pays qui apporte
+une langue nouvelle ne l'ajoute aux autres pays qu'à leur prochaine
+génération. Mesure sur un échantillon de Bruxelles (2 624 lieux,
+2026-09-28) : +2,5 % de taille avec fr, en, nl, de ; +3,8 % avec toutes
+les variantes.
+
+La grille est la même dans tous les pays : une case frontalière a un
+fichier par pays, sous le même identifiant de case.
 
 Catégories et sous-catégories (même classement que `osmCategory` dans
 `services/osmMapping.js`, dans cet ordre de priorité) :
@@ -80,22 +97,20 @@ Catégories et sous-catégories (même classement que `osmCategory` dans
 
 `museum` et `monument` ne servent qu'au repli du patrimoine hors de France,
 quand Wikidata échoue. Ils ne sont générés que pour les pays configurés avec
-`heritageFallback: true` (`scripts/osm-tiles/config.js`) ; en France, Mérimée
+`heritageFallback: true` (`scripts/osm-tiles/countries.json`) ; en France, Mérimée
 et Muséofile restent les sources et les tuiles n'en contiennent pas.
 
 Tags conservés, seulement s'ils existent, dans cet ordre : `cuisine`,
 `opening_hours`, `wheelchair`, `diet:vegetarian`, `diet:vegan`, `phone`,
-`website`, `wikidata`, `heritage`, `description`, puis `name:fr` et `name:en`
-quand ils diffèrent de `name`. `contact:phone` et `contact:website` sont
-ramenés à `phone` et `website` (la valeur directe l'emporte si les deux
-existent). `description`, `name:fr` et `name:en` sont lus par
-`osmElementToPlace` (description du lieu, nom dans la langue de
-l'application) : sans eux, le `Place` issu des tuiles différerait de celui
-d'Overpass. L'étude des volumes les incluait déjà.
+`website`, `wikidata`, `heritage`, `description`. `contact:phone` et
+`contact:website` sont ramenés à `phone` et `website` (la valeur directe
+l'emporte si les deux existent). `description` est lue par
+`osmElementToPlace` : sans elle, le `Place` issu des tuiles différerait de
+celui d'Overpass. Les variantes de nom sont dans `names`, plus dans `tags`.
 
 Règles de sélection :
 
-- **Objets sans nom exclus** (ni `name`, ni `name:fr`, ni `name:en`), sauf le petit patrimoine (`wayside_cross`,
+- **Objets sans nom exclus** (ni `name`, ni variante dans une langue utile), sauf le petit patrimoine (`wayside_cross`,
   `memorial`, `ruins`, `lavoir`) et les points de vue (`viewpoint`). Ils sont
   tous stockés ; la génération du séjour ne garde que les sous-catégories de
   `rules.osm.unnamedTypes` et leur donne un nom générique traduit à
@@ -118,18 +133,18 @@ Extrait réel de la case `225_21` (Ardèche, autour de Saint-Agrève et Mars ;
 
 ```json
 {
-  "v": 1,
+  "v": 2,
   "dataDate": "2026-09-24",
   "tile": "225_21",
   "places": [
-    ["n1507972772", "restaurant", "restaurant", "Le Cabistou", 45.06816, 4.38768, {}],
-    ["n4960151502", "restaurant", "restaurant", "Le Verdun", 45.01023, 4.39509, { "cuisine": "french" }],
+    ["n1507972772", "restaurant", "restaurant", "Le Cabistou", 45.06816, 4.38768, {}, null, "FR"],
+    ["n4960151502", "restaurant", "restaurant", "Le Verdun", 45.01023, 4.39509, { "cuisine": "french" }, null, "FR"],
     ["n13629585801", "farm", "farm", "Ma cabane sur Mars", 45.01615, 4.33134,
-      { "phone": "+33 6 62 74 86 24", "website": "http://macabanesurmars.gindofree.fr" }],
-    ["n4324029702", "small_heritage", "wayside_cross", "Calvaire", 45.06805, 4.3902, {}],
-    ["n1806595287", "small_heritage", "memorial", null, 45.01189, 4.39223, { "wikidata": "Q136071863" }],
-    ["n7668773952", "small_heritage", "lavoir", null, 45.00117, 4.30063, {}],
-    ["n1867579076", "viewpoint", "viewpoint", null, 45.01267, 4.39478, {}]
+      { "phone": "+33 6 62 74 86 24", "website": "http://macabanesurmars.gindofree.fr" }, null, "FR"],
+    ["n4324029702", "small_heritage", "wayside_cross", "Calvaire", 45.06805, 4.3902, {}, null, "FR"],
+    ["n1806595287", "small_heritage", "memorial", null, 45.01189, 4.39223, { "wikidata": "Q136071863" }, null, "FR"],
+    ["n7668773952", "small_heritage", "lavoir", null, 45.00117, 4.30063, {}, null, "FR"],
+    ["n1867579076", "viewpoint", "viewpoint", null, 45.01267, 4.39478, {}, null, "FR"]
   ]
 }
 ```
@@ -137,12 +152,37 @@ Extrait réel de la case `225_21` (Ardèche, autour de Saint-Agrève et Mars ;
 Le fichier réel est écrit sans espaces ni retours à la ligne, puis compressé.
 Un lieu nommé y occupe 40 à 50 octets compressés.
 
+Lieu bruxellois au nom bilingue (exemple construit, pas une vraie génération) :
+
+```json
+["w123", "park", "park", "Parc de Bruxelles - Warandepark", 50.8445, 4.3643, {}, { "fr": "Parc de Bruxelles", "nl": "Warandepark" }, "BE"]
+```
+
+### Format v1 (lu pendant la transition)
+
+`{ "v": 1, … }`, lieux `[id, category, subcategory, name, lat, lon, tags]` :
+ni `names` ni `cc` ; `name:fr` et `name:en` étaient dans `tags` quand ils
+différaient de `name`, et un objet nommé seulement dans une autre langue
+était exclu. À la lecture (`normalizeTile`, `services/osmTiles.js`), un
+lieu v1 a `names` absent (`null`) et `cc` = code du dossier du pays ; ses
+`name:fr` et `name:en` restent dans `tags`, d'où `osmElementToPlace` tire
+les mêmes variantes. Un manifeste peut mélanger les deux formats (pays non
+regénéré ; champ `format` absent = 1). **Le support du v1 sera retiré quand
+tous les pays du manifeste en service seront en v2** (tâche notée dans le
+README).
+
 ### Conversion en Place
 
 La lecture reconstruit un élément au format Overpass (`type`, `id`, `lat`,
-`lon`, `tags` dont `name`) et le passe à `osmElementToPlace` (ou
-`osmHeritageElementToPlace` pour `museum` et `monument`) : le `Place` produit
-est identique à celui issu d'Overpass.
+`lon`, `tags` dont `name` et les `name:<langue>` de `names`) et le passe à
+`osmElementToPlace` (ou `osmHeritageElementToPlace` pour `museum` et
+`monument`) : le `Place` produit est identique à celui issu d'Overpass.
+
+Nom du `Place` : `name` OSM tel quel (un nom bilingue reste bilingue),
+sinon la variante de la langue demandée ; `Place.names` reçoit les
+variantes qui en diffèrent. L'application affiche `displayName(place,
+langue)` (`domain/displayName.js`) : variante de la langue de l'interface,
+sinon `name` ; nom générique traduit pour le petit patrimoine sans nom.
 
 ## Organisation du bucket `osm-tiles`
 
@@ -173,30 +213,39 @@ dédoublonne par `id`.
 
 ```json
 {
-  "v": 1,
+  "v": 2,
   "dataDate": "2026-09-24",
   "cellDeg": 0.2,
   "countries": {
     "FR": {
       "path": "2026-09-24/FR/0.2",
+      "format": 2,
+      "dataDate": "2026-09-24",
       "extract": "europe/france",
       "extractDate": "2026-09-24T20:21:20Z",
       "total": 250000,
       "counts": { "restaurant": 89000, "market": 2900, "...": 0 },
       "files": 1500,
       "bytes": 9500000,
-      "tiles": ["225_21", "228_24", "..."]
+      "tiles": ["225_21", "228_24", "..."],
+      "previousPath": "2026-08-03/FR/0.2"
     }
   }
 }
 ```
 
-- `path` : dossier des tuiles du pays. Un lancement manuel pour un seul pays
-  reprend les autres pays de la version en service, qui gardent leur dossier
-  d'origine (une autre version) ; ce dossier est alors conservé.
+- `format` : version du format des tuiles du pays (absent : 1).
+- `path` : dossier des tuiles du pays. Un pays non retraité (lancement
+  manuel pour d'autres pays) ou en échec garde son entrée de la version en
+  service, donc son dossier d'origine (une autre version).
+- `dataDate` : date des données du pays (absente des entrées écrites avant
+  le Bloc C du Prompt 3.0 : tirée alors de `extractDate`).
+- `previousPath` : dossier de la version précédente du pays (`null` pour un
+  premier import), conservé pour un retour arrière.
 - `countries` : pays couverts par la version. Un pays absent n'a pas de
-  tuiles : la lecture échoue tout de suite pour lui (sans attendre un délai),
-  y compris pour le repli du patrimoine.
+  tuiles : ses lieux manquent (source `osm` en `partial` si la zone touche
+  aussi un pays importé, `not_covered` sinon, sans attendre de délai). Un
+  pays retiré de `countries.json` sort du manifeste au lancement suivant.
 - `counts` : nombre de lieux par catégorie, pour le contrôle de la génération
   (valeurs de l'exemple : ordres de grandeur taginfo, pas une vraie génération).
 - `tiles` : cases non vides du pays ; une case absente de la liste n'est pas
@@ -213,30 +262,53 @@ dédoublonne par `id`.
 - La génération écrit d'abord toutes les tuiles, puis le manifeste, et
   **en dernier** `current.json`. Une génération interrompue laisse la version
   précédente en service.
-- La version est la date de l'extrait le plus récent (`YYYY-MM-DD`).
-  Regénérer le même extrait réécrit la même version à l'identique.
-- Les **deux dernières versions** sont conservées (`dataDate` et `previous`,
-  plus les dossiers que leurs manifestes utilisent) : revenir en arrière,
-  c'est réécrire `current.json` vers `previous`. Les plus anciennes sont
-  supprimées après l'écriture du pointeur.
+- La version est la date de l'extrait le plus récent parmi les pays
+  téléchargés (`YYYY-MM-DD`). Regénérer le même extrait réécrit la même
+  version à l'identique.
+- **Rétention, pays par pays** : sont conservés les manifestes de la
+  version en service et de la précédente (`previous`), et pour chaque pays
+  son dossier en service (`path`) et celui de sa version précédente
+  (`previousPath`), plus tous les dossiers du manifeste précédent. Un
+  dossier plus ancien n'est supprimé que si aucun de ces manifestes ne le
+  référence (`storagePlan`, `scripts/osm-tiles/manifest.js`), après
+  l'écriture du pointeur. Revenir en arrière, c'est réécrire
+  `current.json` vers `previous`.
 
 ## Production mensuelle
 
 Workflow `.github/workflows/osm-tiles.yml`, script `scripts/osm-tiles/`
-(configuration dans `config.js`).
+(pays et plafond dans `countries.json`, le reste dans `config.js`).
 
-- **Quand** : le 3 de chaque mois à 02:17 UTC, et à la demande (Actions >
-  Tuiles de lieux OSM > Run workflow) avec les paramètres `pays` (vide = tous
-  les pays configurés), `publier`, `verifier_determinisme` et
-  `tronquer_extrait` (test du contrôle).
-- **Pays** : liste `COUNTRIES` de `config.js`, la France seule au départ.
-  Chaque pays est traité à part, depuis son propre extrait Geofabrik
-  (`https://download.geofabrik.de/<extrait>-latest.osm.pbf`, somme MD5 publiée
-  dans `….osm.pbf.md5`), supprimé dès qu'il est filtré : l'Europe peut
-  s'ajouter pays par pays sans dépasser le disque de l'exécuteur.
+- **Quand** : le 3 de chaque mois à 02:17 UTC (tous les pays), et à la
+  demande (Actions > Tuiles de lieux OSM > Run workflow) avec les
+  paramètres :
+  - `pays` : un code (`BE`), une liste (`BE,LU`) ou `all`. Seuls ces pays
+    sont retraités ; les autres gardent leur dossier actuel via le manifeste ;
+  - `publier` (décoché : génération et contrôles seulement) ;
+  - `verifier_determinisme` : deuxième génération comparée à la première ;
+  - `tronquer_pays` (test) : pays dont l'extrait est réduit à quelques rues,
+    leur contrôle doit échouer et les autres être publiés ;
+  - `plafond_mo` (test) : plafond de stockage forcé, par exemple `1` pour
+    vérifier que la publication est bloquée.
+- **Pays** : `countries.json`, une entrée par pays : code ISO, extrait
+  Geofabrik (`https://download.geofabrik.de/<extrait>-latest.osm.pbf`, somme
+  MD5 dans `….osm.pbf.md5`), langues gardées dans `names`, repli du
+  patrimoine, seuil de restaurants d'un premier import. Au départ : France,
+  Belgique, Luxembourg.
+- **Pays par pays, séquentiellement** : chaque extrait est téléchargé,
+  vérifié, filtré, puis supprimé avant le pays suivant (disque de
+  l'exécuteur : 14 Go, extrait le plus gros : 5 Go) ; chaque pays est
+  ensuite exporté et découpé, ses fichiers intermédiaires supprimés.
+- **Un pays en échec ne bloque pas les autres** : téléchargement, MD5,
+  filtrage, génération ou contrôle en échec -> le pays garde ses tuiles
+  précédentes (le nouveau manifeste pointe vers son dernier dossier valide),
+  ou reste non couvert s'il n'en a pas. Les autres pays sont publiés, puis
+  le lancement **se termine en échec** (étape « Pays en échec ») pour
+  alerter.
 - **Un téléchargement par mois** (conditions de Geofabrik) : les extraits
   filtrés sont mis en cache pour le mois (clé `osm-filtered-<pays>-<AAAA-MM>`)
-  ; un nouveau lancement dans le mois les réutilise, sur le même extrait.
+  ; un nouveau lancement dans le mois les réutilise, sur le même extrait. Un
+  pays absent du cache (échec précédent) est téléchargé.
 
 Étapes :
 
@@ -252,16 +324,24 @@ Workflow `.github/workflows/osm-tiles.yml`, script `scripts/osm-tiles/`
    la lecture ne peuvent pas diverger ; seul le point intérieur est réécrit
    (une fonction testée). Sortie déterministe : lieux et cases triés, JSON
    compact, gzip sans date.
-4. Contrôles avant publication (`cli.js finalize`), contre le manifeste en
-   service : baisse de plus de 20 % du total ou d'une catégorie (catégories
-   d'au moins 100 lieux), minimum absolu de restaurants (60 000 pour la
-   France), fichier de 50 Mo ou plus. Un contrôle en échec arrête tout : rien
-   n'est publié et `current.json` ne change pas.
-5. Publication par l'accès S3 du stockage (`aws s3 cp`) : tuiles, manifeste,
-   puis `current.json` en dernier.
-6. Suppression des versions qui ne sont plus à conserver.
-7. Résumé dans la page du lancement : date des données, lieux par catégorie
-   comparés à la version en service, nombre et taille des fichiers, durée.
+4. Contrôles par pays (`cli.js finalize`, `checkCountry`) : fichier de 50 Mo
+   ou plus ; pour un pays déjà publié, baisse de plus de 20 % du total ou
+   d'une catégorie (d'au moins 100 lieux) par rapport à sa version
+   précédente ; pour un premier import, seuil minimum de restaurants
+   (`minRestaurants`). Un pays en échec est retiré de la publication.
+5. **Plafond de stockage** (`maxStorageMb` de `countries.json`, 200 Mo) :
+   espace du bucket après publication et nettoyage (nouvelle version plus
+   dossiers conservés), calculé depuis le contenu réel du bucket. Au-delà,
+   arrêt sans rien publier, avec le total et les pays les plus volumineux.
+6. Publication par l'accès S3 du stockage (`aws s3 sync`) : tuiles des pays
+   à jour, manifeste, puis `current.json` en dernier.
+7. Suppression des dossiers qui ne sont plus à conserver (voir
+   « Rétention »).
+8. Résumé dans la page du lancement : chaque pays avec son statut (mis à
+   jour, conservé, en échec avec version précédente conservée, en échec
+   non couvert, retiré), sa date des données, son nombre de lieux et sa taille ;
+   les erreurs ; l'espace occupé et le plafond ; le détail par catégorie
+   des pays générés ; la durée.
 
 Secrets GitHub : `SUPABASE_S3_ACCESS_KEY_ID` et `SUPABASE_S3_SECRET_ACCESS_KEY`
 (Supabase > Project Settings > Storage > S3 access keys : clés du stockage

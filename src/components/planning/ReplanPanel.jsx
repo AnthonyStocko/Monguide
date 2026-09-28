@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CloudOff, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '../../i18n/useFormat.js';
+import { usePlaceName } from '../../i18n/usePlaceName.js';
 import Button from '../ui/Button.jsx';
 import Dialog from '../ui/Dialog.jsx';
 
@@ -10,9 +11,11 @@ import Dialog from '../ui/Dialog.jsx';
  * type (décalée, raccourcie, remplacée, reportée, supprimée, départ), un
  * horaire personnalisé touché est mentionné explicitement, et pour chaque
  * étape reportée ou supprimée l'utilisateur choisit entre les deux. Rien
- * n'est appliqué sans "Appliquer".
+ * n'est appliqué sans "Appliquer". Noms des lieux dans la langue de
+ * l'interface : lieux des changements, sinon étapes du séjour (trip).
  * @param {{
  *   proposal: { changes: object[], warnings?: object[], weatherChecked?: boolean },
+ *   trip?: object,
  *   onApply: (choices: Record<string, 'postponed' | 'removed'>) => void,
  *   onDismiss: () => void,
  *   dismissLabel: string,
@@ -20,12 +23,18 @@ import Dialog from '../ui/Dialog.jsx';
  *   intro?: string
  * }} props
  */
-export default function ReplanPanel({ proposal, onApply, onDismiss, dismissLabel, onClose, intro }) {
+export default function ReplanPanel({ proposal, trip, onApply, onDismiss, dismissLabel, onClose, intro }) {
   const { t } = useTranslation();
   const format = useFormat();
+  const { placeName, stepName } = usePlaceName();
+  const steps = new Map((trip?.days ?? []).flatMap((d) => d.steps).map((s) => [s.id, s]));
   const [choices, setChoices] = useState(() => Object.fromEntries(proposal.changes.filter((c) => c.target).map((c) => [c.stepId, c.kind])));
   const dayName = (date) => format.date(`${date}T12:00:00Z`, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
-  const name = (c) => c.name ?? t('generation.freeTime');
+  // Étape du changement (c.step), sinon celle du séjour ; à défaut, le nom calculé par le domaine.
+  const name = (c) => {
+    const step = c.step ?? steps.get(c.stepId);
+    return (step ? stepName(step) : c.name) ?? t('generation.freeTime');
+  };
 
   const describe = (c) => {
     switch (c.kind) {
@@ -33,8 +42,11 @@ export default function ReplanPanel({ proposal, onApply, onDismiss, dismissLabel
         return t('replan.shifted', { name: name(c), start: c.to.start, end: c.to.end });
       case 'shortened':
         return t('replan.shortened', { name: name(c), start: c.to.start, end: c.to.end });
-      case 'replaced':
-        return t(`replan.replaced.${c.reason}`, { previous: c.previousName, name: c.name, start: c.to?.start, defaultValue: t('replan.replaced.default', { previous: c.previousName, name: c.name }) });
+      case 'replaced': {
+        const previous = c.fromPlace ? placeName(c.fromPlace) : c.previousName;
+        const next = c.toPlace ? placeName(c.toPlace) : c.name;
+        return t(`replan.replaced.${c.reason}`, { previous, name: next, start: c.to?.start, defaultValue: t('replan.replaced.default', { previous, name: next }) });
+      }
       case 'departure':
         if (!c.to) return t('replan.departureRemoved', { date: dayName(c.date) });
         return t('replan.departure', { date: dayName(c.date), time: c.to, place: c.lodgingName });

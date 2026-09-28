@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { classify, compareEntries, featureToEntry, osmId, pickTags } from './features.js';
 
-const FR = { heritageFallback: false };
-const EU = { heritageFallback: true };
+const LANGUAGES = ['de', 'en', 'fr', 'nl'];
+const FR = { heritageFallback: false, country: 'FR', nameLanguages: LANGUAGES };
+const EU = { heritageFallback: true, country: 'BE', nameLanguages: LANGUAGES };
 const point = (lon, lat) => ({ type: 'Point', coordinates: [lon, lat] });
 
 describe('osmId', () => {
@@ -55,15 +56,28 @@ describe('pickTags', () => {
     expect(pickTags({ phone: '+33 2', 'contact:phone': '+33 1' })).toEqual({ phone: '+33 2' });
   });
 
-  it('garde name:fr et name:en seulement s’ils diffèrent de name', () => {
-    expect(pickTags({ name: 'Köln Dom', 'name:fr': 'Cathédrale de Cologne', 'name:en': 'Köln Dom' })).toEqual({ 'name:fr': 'Cathédrale de Cologne' });
+  it('ne garde aucune variante name:<langue> (champ names à part)', () => {
+    expect(pickTags({ name: 'Köln Dom', 'name:fr': 'Cathédrale de Cologne', cuisine: 'german' })).toEqual({ cuisine: 'german' });
   });
 });
 
 describe('featureToEntry', () => {
-  it('produit [id, category, subcategory, name, lat, lon, tags], coordonnées à 5 décimales', () => {
+  it('produit [id, category, subcategory, name, lat, lon, tags, names, cc], coordonnées à 5 décimales', () => {
     const f = { id: 'n4960151502', geometry: point(4.395094, 45.0102349), properties: { amenity: 'restaurant', name: 'Le Verdun', cuisine: 'french' } };
-    expect(featureToEntry(f, FR)).toEqual(['n4960151502', 'restaurant', 'restaurant', 'Le Verdun', 45.01023, 4.39509, { cuisine: 'french' }]);
+    expect(featureToEntry(f, FR)).toEqual(['n4960151502', 'restaurant', 'restaurant', 'Le Verdun', 45.01023, 4.39509, { cuisine: 'french' }, null, 'FR']);
+  });
+
+  it('names : variantes des langues utiles qui diffèrent de name ; cc : pays de l’extrait', () => {
+    const f = {
+      id: 'w1',
+      geometry: point(4.3524, 50.8467),
+      properties: { leisure: 'park', name: 'Parc de Bruxelles - Warandepark', 'name:fr': 'Parc de Bruxelles', 'name:nl': 'Warandepark', 'name:ja': 'ブリュッセル公園', 'name:en': 'Parc de Bruxelles - Warandepark' }
+    };
+    const e = featureToEntry(f, EU);
+    expect(e[3]).toBe('Parc de Bruxelles - Warandepark');
+    expect(e[6]).toEqual({});
+    expect(e[7]).toEqual({ fr: 'Parc de Bruxelles', nl: 'Warandepark' });
+    expect(e[8]).toBe('BE');
   });
 
   it('exclut les objets sans nom, sauf petit patrimoine et points de vue', () => {
@@ -76,15 +90,19 @@ describe('featureToEntry', () => {
       null,
       45,
       4,
-      {}
+      {},
+      null,
+      'FR'
     ]);
     expect(featureToEntry({ id: 'n4', geometry: point(4, 45), properties: { tourism: 'viewpoint' } }, FR)[1]).toBe('viewpoint');
   });
 
-  it('accepte un objet nommé seulement en français', () => {
-    const e = featureToEntry({ id: 'n5', geometry: point(4, 45), properties: { amenity: 'restaurant', 'name:fr': 'Chez A' } }, FR);
+  it('accepte un objet nommé seulement dans une langue utile', () => {
+    const e = featureToEntry({ id: 'n5', geometry: point(4, 45), properties: { amenity: 'restaurant', 'name:nl': 'Bij A' } }, FR);
     expect(e[3]).toBeNull();
-    expect(e[6]).toEqual({ 'name:fr': 'Chez A' });
+    expect(e[6]).toEqual({});
+    expect(e[7]).toEqual({ nl: 'Bij A' });
+    expect(featureToEntry({ id: 'n6', geometry: point(4, 45), properties: { amenity: 'restaurant', 'name:ja': 'A' } }, FR)).toBeNull();
   });
 
   it('réduit une surface à un point intérieur', () => {

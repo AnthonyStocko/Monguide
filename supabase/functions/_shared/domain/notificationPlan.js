@@ -1,4 +1,5 @@
 import { addDays } from './dates.js';
+import { stepDisplayName } from './displayName.js';
 import { slotToInstant } from './time.js';
 
 /**
@@ -45,11 +46,13 @@ export function notificationId(tripId, date, slot, kind) {
 
 /**
  * @param {import('./model.js').Trip} trip
- * @param {{ now: number, summaries: boolean, reminders: boolean, summaryTime?: string }} options now : instant (ms)
+ * @param {{ now: number, summaries: boolean, reminders: boolean, summaryTime?: string, lang?: string }} options now : instant (ms) ;
+ *   lang : langue de l'interface, pour les noms de lieux (displayName) ; sans elle, le nom enregistré
  * @returns {PlannedNotification[]} triées par instant
  */
-export function planTripNotifications(trip, { now, summaries, reminders, summaryTime }, rules) {
+export function planTripNotifications(trip, { now, summaries, reminders, summaryTime, lang }, rules) {
   if (!trip || trip.deleted || !trip.timezone) return [];
+  const nameOf = (s) => (lang ? stepDisplayName(s, lang) : (s.place?.name ?? s.title ?? null));
   const out = [];
   const lead = rules.notifications.reminderLeadMin * 60000;
   const lodging = (id) => trip.lodgings?.find((l) => l.id === id) ?? null;
@@ -69,7 +72,7 @@ export function planTripNotifications(trip, { now, summaries, reminders, summary
           data: {
             tripTitle: trip.title,
             date: day.date,
-            steps: planned.map((s) => ({ id: s.id, start: s.start, name: s.place?.name ?? s.title ?? null, type: s.type })),
+            steps: planned.map((s) => ({ id: s.id, start: s.start, name: nameOf(s), type: s.type })),
             departure: start && day.departure ? { time: day.departure.time, lodgingName: start.name ?? start.address } : null
           }
         });
@@ -87,7 +90,7 @@ export function planTripNotifications(trip, { now, summaries, reminders, summary
         tripId: trip.id,
         date: day.date,
         stepId: s.id,
-        data: { tripTitle: trip.title, date: day.date, start: s.start, end: s.end, name: s.place?.name ?? s.title ?? null, type: s.type }
+        data: { tripTitle: trip.title, date: day.date, start: s.start, end: s.end, name: nameOf(s), type: s.type }
       });
     }
   }

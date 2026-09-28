@@ -55,6 +55,26 @@ export const EU_MEMBERS = Object.freeze(
 );
 
 /**
+ * Langues des variantes de noms de lieux conservées (Place.names, tuiles
+ * OSM v2) quel que soit le pays : langues de l'interface et grandes langues
+ * de voyage. S'y ajoutent les langues des pays concernés (nameLanguages).
+ */
+export const BASE_NAME_LANGUAGES = Object.freeze(['fr', 'en', 'nl', 'de', 'it', 'es', 'ca', 'eu', 'pt']);
+
+/**
+ * Langues de noms utiles pour une liste de pays : BASE_NAME_LANGUAGES plus
+ * leurs langues locales (champ languages), triées, sans doublon. Un code
+ * inconnu est ignoré.
+ * @param {readonly string[]} countryCodes
+ * @returns {string[]}
+ */
+export function nameLanguages(countryCodes) {
+  const all = new Set(BASE_NAME_LANGUAGES);
+  for (const code of countryCodes) for (const lang of countryInfo(code)?.languages ?? []) all.add(lang);
+  return [...all].sort();
+}
+
+/**
  * @param {string} countryCode code ISO 3166-1 alpha-2, casse indifférente
  * @returns {{ code: string, currency: string, provider: string, languages: string[] } | null}
  */

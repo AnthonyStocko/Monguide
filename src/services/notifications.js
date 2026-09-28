@@ -177,7 +177,8 @@ async function cancel(ids) {
 async function expectedFor(trips) {
   const prefs = await getNotificationPrefs();
   if (!prefs.device || (await permissionState()) !== 'granted') return [];
-  const options = { now: Date.now(), summaries: prefs.summaries, reminders: prefs.reminders, summaryTime: prefs.summaryTime ?? undefined };
+  // Noms des lieux dans la langue de l'interface : un changement de langue reprogramme tout (rescheduleAll).
+  const options = { now: Date.now(), summaries: prefs.summaries, reminders: prefs.reminders, summaryTime: prefs.summaryTime ?? undefined, lang: i18n.resolvedLanguage };
   return trips.flatMap((trip) => planTripNotifications(trip, options, getRules()));
 }
 

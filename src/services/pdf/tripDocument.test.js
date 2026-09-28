@@ -63,6 +63,14 @@ describe('buildTripDocument', () => {
     expect(all).toContain('Data sources');
   });
 
+  it('noms de lieux dans la langue de l’interface, nom enregistré à défaut', () => {
+    const trip = sampleTrip();
+    trip.days[0].steps[0].place = { ...trip.days[0].steps[0].place, name: 'Grand-Place - Grote Markt', names: { fr: 'Grand-Place' } };
+    const titles = (doc) => doc.blocks.filter((b) => b.kind === 'step').map((b) => b.title);
+    expect(titles(buildTripDocument(trip, { t, locale: 'fr', includeAddresses: false, generatedAt }))[0]).toBe('Grand-Place');
+    expect(titles(buildTripDocument(trip, { t: tEn, locale: 'en', includeAddresses: false, generatedAt }))[0]).toBe('Grand-Place - Grote Markt');
+  });
+
   it('nom de fichier sans accents ni espaces', () => {
     expect(exportFileName({ title: 'Villefranche-sur-Saône (été)', startDate: '2026-10-06' })).toBe('mon-guide-villefranche-sur-saone-ete-2026-10-06.pdf');
     expect(exportFileName({ title: 'Αθήνα', startDate: '2026-10-06' })).toBe('mon-guide-sejour-2026-10-06.pdf');

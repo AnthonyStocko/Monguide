@@ -21,7 +21,11 @@ export const SCHEMA_VERSION = 1;
 /**
  * @typedef {object} Place Lieu normalisé, quelle que soit sa source.
  * @property {string} id identifiant stable préfixé par la source (ex. "merimee:PA00118092", "osm:node/123")
- * @property {string} name
+ * @property {string} name nom enregistré (lieu OSM : name tel quel, éventuellement bilingue) ; à l'écran,
+ *   toujours passer par displayName (displayName.js)
+ * @property {Record<string, string>} [names] variantes du nom par langue, seulement celles qui diffèrent de name
+ *   (ex. { fr: "Grand-Place", nl: "Grote Markt" }). Champ facultatif, rétrocompatible, sans changement de
+ *   schemaVersion : un séjour enregistré avant ce champ s'affiche avec name, sans migration.
  * @property {PlaceCategory} category
  * @property {number} lat
  * @property {number} lon
@@ -177,6 +181,10 @@ export function isPlace(place) {
   if (!(p.indoor === null || typeof p.indoor === 'boolean')) return false;
   if (p.certification !== undefined && !CERTIFICATIONS.includes(p.certification)) return false;
   if (p.wikidata !== undefined && !/^Q\d+$/.test(p.wikidata)) return false;
+  if (p.names !== undefined) {
+    if (!p.names || typeof p.names !== 'object' || Array.isArray(p.names)) return false;
+    if (!Object.values(p.names).every((v) => typeof v === 'string' && v.trim())) return false;
+  }
   if (p.food !== undefined) {
     if (!p.food || typeof p.food.regional !== 'boolean') return false;
     if (p.food.wheelchair !== undefined && !WHEELCHAIR.includes(p.food.wheelchair)) return false;

@@ -1,4 +1,27 @@
 import { classifyIndoor } from '../domain/classifyIndoor.js';
+import { SUPPORTED_COUNTRIES, nameLanguages } from '../domain/config/countries.js';
+import { nameVariants } from '../domain/displayName.js';
+
+/** Langues des variantes de noms gardées dans Place.names : celles de tous les pays pris en charge. */
+export const PLACE_NAME_LANGUAGES = Object.freeze(nameLanguages(Object.keys(SUPPORTED_COUNTRIES)));
+
+/**
+ * Nom d'un élément OSM : name tel quel (éventuellement bilingue), sinon la
+ * variante de la langue demandée ; plus les variantes par langue qui en
+ * diffèrent (Place.names, affichées par displayName). null sans nom dans la
+ * langue demandée ni name.
+ * localized, le nom dans la langue demandée, sert au classement intérieur/extérieur.
+ * @param {Record<string, string>} tags
+ * @param {string} lang
+ * @returns {{ name: string, localized: string, names?: Record<string, string> } | null}
+ */
+export function osmNames(tags, lang) {
+  const localized = (tags[`name:${lang}`] ?? tags.name ?? '').trim();
+  if (!localized) return null;
+  const name = tags.name?.trim() || localized;
+  const names = nameVariants({ ...tags, name }, PLACE_NAME_LANGUAGES);
+  return names ? { name, localized, names } : { name, localized };
+}
 
 /** Valeurs "historic" retenues comme petit patrimoine. */
 export const SMALL_HERITAGE_HISTORIC = ['wayside_cross', 'memorial', 'ruins'];
@@ -61,22 +84,23 @@ export function osmFood(tags, regionalCuisines) {
  */
 export function osmElementToPlace(element, { lang, regionalCuisines }) {
   const tags = element.tags ?? {};
-  const name = (tags[`name:${lang}`] ?? tags.name ?? '').trim();
+  const naming = osmNames(tags, lang);
   const lat = element.lat ?? element.center?.lat;
   const lon = element.lon ?? element.center?.lon;
   const kind = osmCategory(tags);
-  if (!name || !kind || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (!naming || !kind || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
 
   /** @type {import('../domain/model.js').Place} */
   const place = {
     id: `osm:${element.type}/${element.id}`,
-    name,
+    name: naming.name,
+    ...(naming.names ? { names: naming.names } : {}),
     category: kind.category,
     lat,
     lon,
     source: 'osm',
     certified: false,
-    indoor: classifyIndoor({ category: kind.category, name, type: kind.type })
+    indoor: classifyIndoor({ category: kind.category, name: naming.localized, type: kind.type })
   };
   return withCommonTags(place, tags, kind.category === 'restaurant' ? osmFood(tags, regionalCuisines) : undefined);
 }
@@ -100,12 +124,13 @@ function withCommonTags(place, tags, food) {
  */
 export function osmHeritageElementToPlace(element, { lang }) {
   const tags = element.tags ?? {};
-  const name = (tags[`name:${lang}`] ?? tags.name ?? '').trim();
+  const naming = osmNames(tags, lang);
   const lat = element.lat ?? element.center?.lat;
   const lon = element.lon ?? element.center?.lon;
-  if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (!naming || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
 
-  const base = { id: `osm:${element.type}/${element.id}`, name, lat, lon, source: 'osm' };
+  const name = naming.localized;
+  const base = { id: `osm:${element.type}/${element.id}`, name: naming.name, ...(naming.names ? { names: naming.names } : {}), lat, lon, source: 'osm' };
   const type = tags.historic ?? tags.building ?? tags.amenity ?? '';
   if (tags.tourism === 'museum') {
     return withCommonTags({ ...base, category: 'museum', certified: false, indoor: classifyIndoor({ category: 'museum', name, type }) }, tags);

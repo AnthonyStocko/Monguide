@@ -31,7 +31,10 @@ function Link({ href, children }) {
 export default function AboutPage() {
   const { t, i18n } = useTranslation();
   const format = useFormat();
-  const osmDataDate = useConfig().config.osm?.dataDate;
+  const osm = useConfig().config.osm;
+  const day = (date) => format.date(`${date}T12:00:00Z`, { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+  // Date des données par pays importé ; sinon (serveur plus ancien) celle de la version en service.
+  const osmCountries = Object.entries(osm?.countries ?? {}).sort(([a], [b]) => format.country(a).localeCompare(format.country(b)));
   return (
     <Page>
       <Card as="section" className="space-y-2">
@@ -55,9 +58,17 @@ export default function AboutPage() {
               <p>
                 {s.holder} · {t('about.license', { license: s.license })}
               </p>
-              {s.id === 'osm' && osmDataDate && (
-                <p>{t('about.osmDataDate', { date: format.date(`${osmDataDate}T12:00:00Z`, { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }) })}</p>
+              {s.id === 'osm' && osmCountries.length > 0 && (
+                <>
+                  <p>{t('about.osmCountriesTitle')}</p>
+                  <ul className="list-disc pl-5">
+                    {osmCountries.map(([code, date]) => (
+                      <li key={code}>{t('about.osmCountryDate', { country: format.country(code), date: day(date) })}</li>
+                    ))}
+                  </ul>
+                </>
               )}
+              {s.id === 'osm' && osmCountries.length === 0 && osm?.dataDate && <p>{t('about.osmDataDate', { date: day(osm.dataDate) })}</p>}
               {s.id === 'osm' && <Link href="https://opendatacommons.org/licenses/odbl/1-0/">{t('about.odbl')}</Link>}
               <Link href={s.url}>{t('about.visit', { name: s.name })}</Link>
             </li>

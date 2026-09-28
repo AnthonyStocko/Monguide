@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { displayName } from '../domain/displayName.js';
 import { isPlace } from '../domain/model.js';
 import { osmCategory, osmElementToPlace, osmFood } from './osmMapping.js';
 
@@ -85,13 +86,43 @@ describe('osmElementToPlace', () => {
     expect(isPlace(place)).toBe(true);
   });
 
-  it('utilise le centre d\'un chemin ou d\'une relation, et le nom dans la langue demandée', () => {
+  it('utilise le centre d\'un chemin ou d\'une relation ; name tel quel et ses variantes dans names', () => {
     const place = osmElementToPlace(
       { type: 'way', id: 7, center: { lat: 46, lon: 4.7 }, tags: { leisure: 'park', name: 'Parc Vermorel', 'name:en': 'Vermorel Park' } },
       { ...opts, lang: 'en' }
     );
-    expect(place).toMatchObject({ id: 'osm:way/7', name: 'Vermorel Park', lat: 46, lon: 4.7, indoor: false });
+    expect(place).toMatchObject({ id: 'osm:way/7', name: 'Parc Vermorel', names: { en: 'Vermorel Park' }, lat: 46, lon: 4.7, indoor: false });
+    expect(displayName(place, 'en')).toBe('Vermorel Park');
+    expect(displayName(place, 'fr')).toBe('Parc Vermorel');
     expect(place).not.toHaveProperty('food');
+    expect(isPlace(place)).toBe(true);
+  });
+
+  it('nom bilingue : name gardé tel quel, variantes des langues utiles seulement, différentes de name', () => {
+    const place = osmElementToPlace(
+      {
+        type: 'way',
+        id: 8,
+        center: { lat: 50.8467, lon: 4.3525 },
+        tags: { leisure: 'park', name: 'Parc de Bruxelles - Warandepark', 'name:fr': 'Parc de Bruxelles', 'name:nl': 'Warandepark', 'name:ja': 'ブリュッセル公園', 'name:de': 'Parc de Bruxelles - Warandepark' }
+      },
+      opts
+    );
+    expect(place.name).toBe('Parc de Bruxelles - Warandepark');
+    expect(place.names).toEqual({ fr: 'Parc de Bruxelles', nl: 'Warandepark' });
+    expect(displayName(place, 'fr')).toBe('Parc de Bruxelles');
+    expect(displayName(place, 'en')).toBe('Parc de Bruxelles - Warandepark');
+  });
+
+  it('sans name : la variante de la langue demandée devient name, sans être répétée dans names', () => {
+    const place = osmElementToPlace({ type: 'node', id: 9, lat: 45, lon: 4, tags: { amenity: 'restaurant', 'name:fr': 'Chez A', 'name:en': 'At A' } }, opts);
+    expect(place.name).toBe('Chez A');
+    expect(place.names).toEqual({ en: 'At A' });
+    expect(osmElementToPlace({ type: 'node', id: 9, lat: 45, lon: 4, tags: { amenity: 'restaurant', 'name:en': 'At A' } }, opts)).toBeNull();
+  });
+
+  it('lieu sans variante : pas de champ names', () => {
+    expect(osmElementToPlace({ type: 'node', id: 10, lat: 45, lon: 4, tags: { amenity: 'restaurant', name: 'Le Bouchon', 'name:fr': 'Le Bouchon' } }, opts)).not.toHaveProperty('names');
   });
 
   it('ignore les éléments sans nom (restaurants compris), sans position ou non retenus', () => {

@@ -1,19 +1,22 @@
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '../../i18n/useFormat.js';
+import { usePartialCoverage } from '../../i18n/usePartialCoverage.js';
 import Badge from '../ui/Badge.jsx';
 
-const TONES = { ok: 'primary', cache: 'secondary', failed: 'danger' };
+const TONES = { ok: 'primary', cache: 'secondary', partial: 'warning', failed: 'danger' };
 
 /**
  * État de chaque source d'une réponse places : message prévu pour
  * l'utilisateur (échec, copie expirée, repli OpenStreetMap, pays sans lieux
- * OSM), durée de l'appel, requête envoyée (SPARQL Wikidata) et, pour OSM,
- * source utilisée, date des données et tuiles lues.
- * @param {{ sources: { name: string, status: 'ok' | 'cache' | 'failed', message?: string, durationMs?: number, query?: string, source?: string, dataDate?: string, tilesRead?: number }[] }} props
+ * OSM, pays voisins pas encore importés), durée de l'appel, requête envoyée (SPARQL Wikidata) et, pour OSM,
+ * source utilisée, date des données et tuiles lues, puis pour chaque pays
+ * lu : date de ses données et nombre de ses tuiles lues.
+ * @param {{ sources: { name: string, status: 'ok' | 'cache' | 'partial' | 'failed', message?: string, missingCountries?: string[], dataDates?: Record<string, string>, tilesByCountry?: Record<string, number>, durationMs?: number, query?: string, source?: string, dataDate?: string, tilesRead?: number }[] }} props
  */
 export default function SourceStatusList({ sources }) {
   const { t } = useTranslation();
   const format = useFormat();
+  const partialCoverage = usePartialCoverage();
   return (
     <ul className="space-y-2">
       {sources.map((s) => (
@@ -35,6 +38,18 @@ export default function SourceStatusList({ sources }) {
           </div>
           {s.status === 'failed' && s.message === 'not_covered' && <p className="mt-1 text-warning-on-soft">{t('sources.notCovered')}</p>}
           {s.status === 'failed' && s.message !== 'not_covered' && <p className="mt-1 text-danger-on-soft">{t(`sources.${s.name}.failed`, { defaultValue: t('sources.failed') })}</p>}
+          {s.dataDates && Object.keys(s.dataDates).length > 0 && (
+            <ul className="mt-1 space-y-1">
+              {Object.entries(s.dataDates).map(([code, date]) => (
+                <li key={code} className="flex flex-wrap gap-2">
+                  <Badge>{format.country(code)}</Badge>
+                  <Badge>{t('sources.dataDate', { date: format.date(`${date}T12:00:00Z`, { dateStyle: 'medium', timeZone: 'UTC' }) })}</Badge>
+                  {s.tilesByCountry && <Badge>{t('sources.tilesRead', { count: s.tilesByCountry[code] ?? 0 })}</Badge>}
+                </li>
+              ))}
+            </ul>
+          )}
+          {s.missingCountries?.length > 0 && <p className="mt-1 text-warning-on-soft">{partialCoverage(s.missingCountries)}</p>}
           {s.message === 'stale' && <p className="mt-1 text-ink-muted">{t('sources.stale')}</p>}
           {s.message === 'fallback_osm' && <p className="mt-1 text-warning-on-soft">{t('sources.fallbackOsm')}</p>}
           {s.message === 'no_regional_data' && <p className="mt-1 text-ink-muted">{t('sources.noRegionalData')}</p>}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatNumber } from './format.js';
+import { formatCountry, formatDate, formatNumber } from './format.js';
 
 // Intl utilise des espaces insécables : on les normalise pour comparer.
 const plain = (s) => s.replace(/\s/g, ' ');
@@ -30,5 +30,13 @@ describe('formatNumber', () => {
 
   it('transmet les options Intl', () => {
     expect(plain(formatNumber(12.5, 'fr', { style: 'currency', currency: 'EUR' }))).toBe('12,50 €');
+  });
+});
+
+describe('formatCountry', () => {
+  it('nomme le pays selon la langue, garde un code invalide tel quel', () => {
+    expect(formatCountry('BE', 'fr')).toBe('Belgique');
+    expect(formatCountry('DE', 'en')).toBe('Germany');
+    expect(formatCountry('??', 'fr')).toBe('??');
   });
 });

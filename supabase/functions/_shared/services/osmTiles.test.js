@@ -1,14 +1,30 @@
 import { gzipSync } from 'node:zlib';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { featureToEntry } from '../../../../scripts/osm-tiles/features.js';
+import { nameLanguages } from '../domain/config/countries.js';
 import { RULES } from '../domain/config/rules.js';
+import { displayName } from '../domain/displayName.js';
 import { distanceKm } from '../domain/geo.js';
 import { tileIdForPoint } from '../domain/osmGrid.js';
 import { osmElementToPlace, osmHeritageElementToPlace } from './osmMapping.js';
-import { osmHeritageFallback, osmPlacesSource } from './osmSource.js';
-import { entryToElement, fetchOsmTilePlaces, loadTilesIndex, resetOsmTilesMemory } from './osmTiles.js';
+import { osmHeritageFallback, osmInfo, osmPlacesSource, readOsmPointer } from './osmSource.js';
+import { entryToElement, fetchOsmTilePlaces, loadTilesIndex, normalizeTile, resetOsmTilesMemory } from './osmTiles.js';
 
 const LYON = { lat: 45.76, lon: 4.84 };
+const LANGUAGES = nameLanguages(['FR', 'BE']);
+/** Options de génération (scripts/osm-tiles) : France, et pays avec repli du patrimoine. */
+const GEN_FR = { heritageFallback: false, country: 'FR', nameLanguages: LANGUAGES };
+const GEN_EU = { heritageFallback: true, country: 'PT', nameLanguages: LANGUAGES };
+
+/**
+ * Lieu v2 ramené au format v1 tel que l'ancienne génération l'écrivait :
+ * name:fr et name:en dans tags quand ils diffèrent de name, pas de names ni cc.
+ */
+function toV1([id, category, subcategory, name, lat, lon, tags, names]) {
+  const v1tags = { ...tags };
+  for (const lang of ['fr', 'en']) if (names?.[lang]) v1tags[`name:${lang}`] = names[lang];
+  return [id, category, subcategory, name, lat, lon, v1tags];
+}
 const CELL = 0.2;
 
 /** Éléments au format Overpass ("out center tags"), comme osm.js les reçoit. */
@@ -33,22 +49,28 @@ const toFeature = (el) => ({
   properties: el.tags
 });
 
-/** Magasin en mémoire : tuiles gzip + manifeste + pointeur, lectures comptées. */
-function memoryStore(entriesByCountry, { dataDate = '2026-09-24', extra = {} } = {}) {
+/**
+ * Magasin en mémoire : tuiles gzip + manifeste + pointeur, lectures comptées.
+ * formats : version du format par pays (2 par défaut ; 1 = ancienne génération).
+ */
+function memoryStore(entriesByCountry, { dataDate = '2026-09-24', extra = {}, formats = {}, dates = {} } = {}) {
   const files = new Map();
   const countries = {};
   for (const [code, entries] of Object.entries(entriesByCountry)) {
-    const path = `${dataDate}/${code}/${CELL}`;
+    // Date des données du pays (dossier de sa dernière version valide), sinon celle de la version.
+    const countryDate = dates[code] ?? dataDate;
+    const path = `${countryDate}/${code}/${CELL}`;
     const tiles = new Map();
     for (const e of entries) {
       const id = tileIdForPoint(e[4], e[5], CELL);
       if (!tiles.has(id)) tiles.set(id, []);
       tiles.get(id).push(e);
     }
-    for (const [tile, places] of tiles) files.set(`${path}/${tile}.json.gz`, gzipSync(JSON.stringify({ v: 1, dataDate, tile, places })));
-    countries[code] = { path, tiles: [...tiles.keys()], counts: {}, total: entries.length };
+    const v = formats[code] ?? 2;
+    for (const [tile, places] of tiles) files.set(`${path}/${tile}.json.gz`, gzipSync(JSON.stringify({ v, dataDate: countryDate, tile, places: v === 1 ? places.map(toV1) : places })));
+    countries[code] = { path, ...(v === 1 ? {} : { format: v, dataDate: countryDate }), tiles: [...tiles.keys()], counts: {}, total: entries.length };
   }
-  files.set(`${dataDate}/manifest.json`, JSON.stringify({ v: 1, dataDate, cellDeg: CELL, countries }));
+  files.set(`${dataDate}/manifest.json`, JSON.stringify({ v: 2, dataDate, cellDeg: CELL, countries }));
   files.set('current.json', JSON.stringify({ dataDate, manifest: `${dataDate}/manifest.json`, previous: null }));
   for (const [k, v] of Object.entries(extra)) files.set(k, v);
   const reads = [];
@@ -63,7 +85,7 @@ function memoryStore(entriesByCountry, { dataDate = '2026-09-24', extra = {} } =
   };
 }
 
-const FR = ELEMENTS.map((el) => featureToEntry(toFeature(el), { heritageFallback: false }));
+const FR = ELEMENTS.map((el) => featureToEntry(toFeature(el), GEN_FR));
 const memoryCache = () => ({ lookup: vi.fn(async () => undefined), set: vi.fn(async () => {}) });
 
 beforeEach(() => {
@@ -85,9 +107,14 @@ async function places(store, point = LYON, radiusKm = 10, options = {}) {
 }
 
 describe('comparaison avec Overpass', () => {
-  it.each(['fr', 'en'])('donne les mêmes Place qu’osmElementToPlace sur les éléments Overpass (%s)', async (lang) => {
+  it.each([
+    ['fr', 2],
+    ['en', 2],
+    ['fr', 1],
+    ['en', 1]
+  ])('donne les mêmes Place qu’osmElementToPlace sur les éléments Overpass (%s, tuiles v%i)', async (lang, format) => {
     const expected = ELEMENTS.map((el) => osmElementToPlace(el, { lang, regionalCuisines: RULES.places.regionalCuisines }));
-    const { result } = await places(memoryStore({ FR }), LYON, 30, { lang });
+    const { result } = await places(memoryStore({ FR }, { formats: { FR: format } }), LYON, 30, { lang });
     const byId = new Map(result.map((p) => [p.id, p]));
     for (const place of expected) expect(byId.get(place.id), place.id).toEqual(place);
     expect(result).toHaveLength(expected.length);
@@ -99,7 +126,7 @@ describe('comparaison avec Overpass', () => {
       { type: 'node', id: 21, lat: 38.71, lon: -9.14, tags: { tourism: 'museum', name: 'Museu', building: 'yes' } }
     ];
     for (const el of els) {
-      const entry = featureToEntry(toFeature(el), { heritageFallback: true });
+      const entry = featureToEntry(toFeature(el), GEN_EU);
       expect(osmHeritageElementToPlace(entryToElement(entry), { lang: 'fr' })).toEqual(osmHeritageElementToPlace(el, { lang: 'fr' }));
     }
   });
@@ -118,7 +145,7 @@ describe('fetchOsmTilePlaces', () => {
   });
 
   it('limite les restaurants à leur rayon réduit, et les omet pour un déjeuner au marché', async () => {
-    const far = featureToEntry(toFeature({ type: 'node', id: 30, lat: 45.86, lon: 4.84, tags: { amenity: 'restaurant', name: 'Loin' } }), { heritageFallback: false });
+    const far = featureToEntry(toFeature({ type: 'node', id: 30, lat: 45.86, lon: 4.84, tags: { amenity: 'restaurant', name: 'Loin' } }), GEN_FR);
     const { result } = await places(memoryStore({ FR: [...FR, far] }), LYON, 20);
     expect(result.map((p) => p.id)).not.toContain('osm:node/30'); // 11 km > restaurantRadiusKm (10)
     const noFood = await places(memoryStore({ FR }), LYON, 20, { includeRestaurants: false });
@@ -127,7 +154,7 @@ describe('fetchOsmTilePlaces', () => {
 
   it('applique les plafonds par groupe en gardant les plus proches', async () => {
     const many = Array.from({ length: 100 }, (_, i) =>
-      featureToEntry(toFeature({ type: 'node', id: 1000 + i, lat: 45.76 + i * 0.0005, lon: 4.84, tags: { amenity: 'restaurant', name: `R${i}` } }), { heritageFallback: false })
+      featureToEntry(toFeature({ type: 'node', id: 1000 + i, lat: 45.76 + i * 0.0005, lon: 4.84, tags: { amenity: 'restaurant', name: `R${i}` } }), GEN_FR)
     );
     const { result } = await places(memoryStore({ FR: many }), LYON, 10);
     expect(result).toHaveLength(RULES.osm.limits.food);
@@ -136,9 +163,9 @@ describe('fetchOsmTilePlaces', () => {
 
   it('garde les lieux sans nom de rules.osm.unnamedTypes sous un nom générique traduit', async () => {
     const unnamed = [
-      featureToEntry(toFeature({ type: 'node', id: 40, lat: 45.761, lon: 4.841, tags: { tourism: 'viewpoint' } }), { heritageFallback: false }),
-      featureToEntry(toFeature({ type: 'node', id: 41, lat: 45.761, lon: 4.842, tags: { historic: 'wayside_cross' } }), { heritageFallback: false }),
-      featureToEntry(toFeature({ type: 'node', id: 42, lat: 45.761, lon: 4.843, tags: { amenity: 'lavoir' } }), { heritageFallback: false })
+      featureToEntry(toFeature({ type: 'node', id: 40, lat: 45.761, lon: 4.841, tags: { tourism: 'viewpoint' } }), GEN_FR),
+      featureToEntry(toFeature({ type: 'node', id: 41, lat: 45.761, lon: 4.842, tags: { historic: 'wayside_cross' } }), GEN_FR),
+      featureToEntry(toFeature({ type: 'node', id: 42, lat: 45.761, lon: 4.843, tags: { amenity: 'lavoir' } }), GEN_FR)
     ];
     const fr = (await places(memoryStore({ FR: unnamed }))).result;
     expect(fr.map((p) => [p.id, p.name, p.unnamed])).toEqual([
@@ -190,7 +217,7 @@ describe('caches en mémoire', () => {
   it('supprime les tuiles les moins récemment lues au-delà du plafond', async () => {
     const rules = { ...RULES, osm: { ...RULES.osm, tiles: { ...RULES.osm.tiles, memoryCacheMb: 0.0001 } } };
     const PARIS = { lat: 48.857, lon: 2.352 };
-    const paris = featureToEntry(toFeature({ type: 'node', id: 50, lat: PARIS.lat, lon: PARIS.lon, tags: { amenity: 'restaurant', name: 'P' } }), { heritageFallback: false });
+    const paris = featureToEntry(toFeature({ type: 'node', id: 50, lat: PARIS.lat, lon: PARIS.lon, tags: { amenity: 'restaurant', name: 'P' } }), GEN_FR);
     const store = memoryStore({ FR: [FR[0], paris] });
     const lyonTile = `2026-09-24/FR/${CELL}/${tileIdForPoint(FR[0][4], FR[0][5], CELL)}.json.gz`;
     await places(store, LYON, 1, { rules });
@@ -284,8 +311,8 @@ describe('osmPlacesSource (sélection de la source)', () => {
 
   it('repli du patrimoine par les tuiles, échec immédiat hors couverture', async () => {
     const pt = [
-      featureToEntry(toFeature({ type: 'way', id: 20, center: { lat: 38.72, lon: -9.14 }, tags: { heritage: '2', historic: 'castle', name: 'Castelo' } }), { heritageFallback: true }),
-      featureToEntry(toFeature({ type: 'node', id: 21, lat: 38.721, lon: -9.141, tags: { tourism: 'museum', name: 'Museu' } }), { heritageFallback: true })
+      featureToEntry(toFeature({ type: 'way', id: 20, center: { lat: 38.72, lon: -9.14 }, tags: { heritage: '2', historic: 'castle', name: 'Castelo' } }), GEN_EU),
+      featureToEntry(toFeature({ type: 'node', id: 21, lat: 38.721, lon: -9.141, tags: { tourism: 'museum', name: 'Museu' } }), GEN_EU)
     ];
     const params = { lat: 38.72, lon: -9.14, radius: 10, lang: 'fr' };
     const ok = await osmHeritageFallback({ lat: 38.72, lon: -9.14 }, 10, params, ctx(memoryStore({ PT: pt }), RULES, 'PT'));
@@ -297,5 +324,142 @@ describe('osmPlacesSource (sélection de la source)', () => {
     expect(missing).toEqual({ name: 'heritage-osm', status: 'failed', message: 'not_covered' });
     const off = await osmHeritageFallback({ lat: 38.72, lon: -9.14 }, 10, params, ctx(memoryStore({ PT: pt }), { ...RULES, osm: { ...RULES.osm, source: 'off' } }, 'PT'));
     expect(off).toBeNull();
+  });
+});
+
+describe('formats de tuile v1 et v2 (transition)', () => {
+  const BXL = { lat: 50.8467, lon: 4.3525 };
+  const grandPlace = featureToEntry(
+    toFeature({ type: 'way', id: 60, center: { lat: 50.8467, lon: 4.3524 }, tags: { leisure: 'park', name: 'Grand-Place - Grote Markt', 'name:fr': 'Grand-Place', 'name:nl': 'Grote Markt' } }),
+    { ...GEN_FR, country: 'BE' }
+  );
+
+  it('normalizeTile : un lieu v1 n’a pas de names et prend le pays du dossier ; v2 tel quel', () => {
+    const v1 = ['n1', 'restaurant', 'restaurant', 'Chez A', 45, 4, { 'name:en': 'At A' }];
+    expect(normalizeTile({ v: 1, places: [v1] }, 'FR')).toEqual([[...v1, null, 'FR']]);
+    expect(normalizeTile({ v: 2, places: [grandPlace] }, 'FR')).toEqual([grandPlace]);
+    expect(() => normalizeTile({ v: 3, places: [] }, 'FR')).toThrow(/format de tuile inconnu/);
+  });
+
+  it('lit dans le même manifeste un pays en v1 et un pays en v2', async () => {
+    const lille = featureToEntry(toFeature({ type: 'node', id: 61, lat: 50.8, lon: 4.3, tags: { amenity: 'restaurant', name: 'Estaminet', 'name:en': 'Tavern' } }), GEN_FR);
+    const store = memoryStore({ FR: [lille], BE: [grandPlace] }, { formats: { FR: 1 } });
+    const { result } = await places(store, BXL, 10);
+    expect(result.map((p) => p.id).sort()).toEqual(['osm:node/61', 'osm:way/60']);
+    expect(result.find((p) => p.id === 'osm:node/61')).toMatchObject({ name: 'Estaminet', names: { en: 'Tavern' } });
+  });
+
+  it('nom bilingue bruxellois : name tel quel, names, et affichage selon la langue', async () => {
+    const { result } = await places(memoryStore({ BE: [grandPlace] }), BXL, 10);
+    const place = result.find((p) => p.id === 'osm:way/60');
+    expect(place).toMatchObject({ name: 'Grand-Place - Grote Markt', names: { fr: 'Grand-Place', nl: 'Grote Markt' } });
+    expect(displayName(place, 'fr')).toBe('Grand-Place');
+    expect(displayName(place, 'en')).toBe('Grand-Place - Grote Markt');
+  });
+
+  it('même lieu dans deux pays (v1 et v2) : un seul exemplaire', async () => {
+    const shared = featureToEntry(toFeature(ELEMENTS[0]), GEN_FR);
+    const { result } = await places(memoryStore({ FR: [shared], CH: [[...shared]] }, { formats: { FR: 1 } }), LYON, 10);
+    expect(result.filter((p) => p.id === 'osm:node/1')).toHaveLength(1);
+  });
+});
+
+describe('plusieurs pays (Bloc D)', () => {
+  const LILLE = { lat: 50.63, lon: 3.06 };
+  const STRASBOURG = { lat: 48.58, lon: 7.75 };
+  const VILLEFRANCHE = { lat: 45.99, lon: 4.72 };
+  const entry = (el, country) => featureToEntry(toFeature(el), { ...GEN_FR, heritageFallback: false, country });
+  const restaurant = (id, lat, lon, name) => ({ type: 'node', id, lat, lon, tags: { amenity: 'restaurant', name } });
+  // Parcs : rayon complet (les restaurants sont limités à rules.osm.restaurantRadiusKm).
+  const park = (id, lat, lon, name) => ({ type: 'way', id, center: { lat, lon }, tags: { leisure: 'park', name } });
+  const ctx = (store, countryCode = 'FR') => ({ rules: RULES, lang: 'fr', countryCode, cache: memoryCache(), tileStore: store });
+
+  it('lieu présent dans deux extraits : un seul résultat, la copie aux données les plus récentes', async () => {
+    const border = restaurant(70, 50.68, 3.12, 'Estaminet de la frontière');
+    const fr = entry(border, 'FR');
+    const be = entry({ ...border, tags: { ...border.tags, name: 'Estaminet (renommé)' } }, 'BE');
+    const store = memoryStore({ FR: [fr], BE: [be] }, { dates: { FR: '2026-09-24', BE: '2026-09-28' }, dataDate: '2026-09-28' });
+    const { result } = await places(store, LILLE, 20);
+    const found = result.filter((p) => p.id === 'osm:node/70');
+    expect(found).toHaveLength(1);
+    expect(found[0].name).toBe('Estaminet (renommé)');
+  });
+
+  it('lieux des deux côtés de la frontière (Lille, Mouscron, Estaimpuis), sans doublon d’identifiant', async () => {
+    const fr = [entry(restaurant(80, 50.637, 3.063, 'Lille centre'), 'FR'), entry(park(81, 50.69, 3.17, 'Parc de Roubaix'), 'FR')];
+    const be = [entry(park(90, 50.744, 3.214, 'Parc de Mouscron'), 'BE'), entry(park(91, 50.705, 3.268, 'Parc d’Estaimpuis'), 'BE'), fr[1]];
+    const { result, stats } = await places(memoryStore({ FR: fr, BE: be }), LILLE, 20);
+    expect(result.map((p) => p.id).sort()).toEqual(['osm:node/80', 'osm:way/81', 'osm:way/90', 'osm:way/91']);
+    expect(new Set(result.map((p) => p.id)).size).toBe(result.length);
+    expect(stats.tilesRead).toBeGreaterThan(1);
+  });
+
+  it('pays pris en charge mais non importé dans le rayon (Strasbourg, Allemagne) : lieux français, statut partial', async () => {
+    const fr = [entry(restaurant(100, 48.582, 7.75, 'Winstub'), 'FR')];
+    const outcome = await osmPlacesSource(STRASBOURG, 20, true, ctx(memoryStore({ FR: fr, BE: [] })));
+    expect(outcome).toMatchObject({ name: 'osm', status: 'partial', message: 'partial', missingCountries: ['DE'], source: 'tiles' });
+    expect(outcome.data.map((p) => p.id)).toEqual(['osm:node/100']);
+  });
+
+  it('partial aussi depuis les caches (mémoire et partagé)', async () => {
+    const c = ctx(memoryStore({ FR: [entry(restaurant(100, 48.582, 7.75, 'Winstub'), 'FR')] }));
+    await osmPlacesSource(STRASBOURG, 20, true, c);
+    expect(await osmPlacesSource(STRASBOURG, 20, true, c)).toMatchObject({ status: 'partial', missingCountries: ['DE'], tilesRead: 0 });
+  });
+
+  it('destination non importée, voisin importé dans le rayon (Kehl) : lieux français, partial', async () => {
+    const fr = [entry(restaurant(100, 48.582, 7.75, 'Winstub'), 'FR')];
+    const outcome = await osmPlacesSource({ lat: 48.57, lon: 7.81 }, 10, true, ctx(memoryStore({ FR: fr }), 'DE'));
+    expect(outcome).toMatchObject({ status: 'partial', missingCountries: ['DE'] });
+    expect(outcome.data).toHaveLength(1);
+  });
+
+  it('repli du patrimoine : destination non importée, voisin importé dans le rayon (Kehl) : monuments français', async () => {
+    const monument = featureToEntry(toFeature({ type: 'way', id: 120, center: { lat: 48.5818, lon: 7.7509 }, tags: { heritage: '2', historic: 'church', name: 'Cathédrale' } }), { ...GEN_EU, country: 'FR' });
+    const kehl = { lat: 48.57, lon: 7.81 };
+    const outcome = await osmHeritageFallback(kehl, 10, { lat: kehl.lat, lon: kehl.lon, radius: 10, lang: 'fr' }, ctx(memoryStore({ FR: [monument] }), 'DE'));
+    expect(outcome.status).toBe('ok');
+    expect(outcome.data.monuments.map((p) => p.id)).toEqual(['osm:way/120']);
+  });
+
+  it('loin des frontières (Villefranche-sur-Saône) : statut ok, sans pays manquant, mêmes lieux qu’avec un seul pays', async () => {
+    const fr = [entry(restaurant(110, 45.99, 4.72, 'Le Beaujolais'), 'FR'), entry({ type: 'node', id: 111, lat: 46.0, lon: 4.7, tags: { leisure: 'park', name: 'Parc Vermorel' } }, 'FR')];
+    const alone = await osmPlacesSource(VILLEFRANCHE, 20, true, ctx(memoryStore({ FR: fr })));
+    resetOsmTilesMemory();
+    const withBe = await osmPlacesSource(VILLEFRANCHE, 20, true, ctx(memoryStore({ FR: fr, BE: [entry(restaurant(90, 50.744, 3.214, 'Mouscron'), 'BE')] })));
+    expect(alone.status).toBe('ok');
+    expect(alone).not.toHaveProperty('missingCountries');
+    expect(withBe.data).toEqual(alone.data);
+  });
+
+  it('tuiles lues par pays dans la source osm (/debug)', async () => {
+    const fr = [entry(restaurant(80, 50.637, 3.063, 'Lille centre'), 'FR')];
+    const be = [entry(park(90, 50.744, 3.214, 'Parc de Mouscron'), 'BE')];
+    const outcome = await osmPlacesSource(LILLE, 20, true, ctx(memoryStore({ FR: fr, BE: be })));
+    expect(Object.keys(outcome.tilesByCountry).sort()).toEqual(['BE', 'FR']);
+    expect(outcome.tilesByCountry.BE + outcome.tilesByCountry.FR).toBe(outcome.tilesRead);
+  });
+
+  it('configuration : date des données de chaque pays importé', async () => {
+    const store = memoryStore({ FR: [], BE: [] }, { dates: { FR: '2026-09-24', BE: '2026-09-28' }, dataDate: '2026-09-28' });
+    const pointer = await readOsmPointer(RULES, { tileStore: store });
+    expect(pointer).toEqual({ dataDate: '2026-09-28', manifest: '2026-09-28/manifest.json', countries: { BE: '2026-09-28', FR: '2026-09-24' } });
+    expect(osmInfo(RULES, pointer)).toEqual({ source: 'tiles', dataDate: '2026-09-28', countries: { BE: '2026-09-28', FR: '2026-09-24' } });
+    expect(osmInfo({ ...RULES, osm: { ...RULES.osm, source: 'off' } }, pointer)).toEqual({ source: 'off', dataDate: null, countries: null });
+  });
+
+  it('configuration : manifeste illisible, pointeur sans dates par pays', async () => {
+    const store = memoryStore({ FR: [] });
+    store.files.delete('2026-09-24/manifest.json');
+    expect(await readOsmPointer(RULES, { tileStore: store })).toEqual({ dataDate: '2026-09-24', manifest: '2026-09-24/manifest.json', countries: null });
+  });
+
+  it('clé du cache : date des données de chaque pays lu', async () => {
+    const fr = [entry(restaurant(80, 50.637, 3.063, 'Lille centre'), 'FR')];
+    const be = [entry(restaurant(90, 50.744, 3.214, 'Mouscron'), 'BE')];
+    const c = ctx(memoryStore({ FR: fr, BE: be }, { dates: { FR: '2026-09-24', BE: '2026-09-28' }, dataDate: '2026-09-28' }));
+    const outcome = await osmPlacesSource(LILLE, 20, true, c);
+    expect(outcome.dataDates).toEqual({ BE: '2026-09-28', FR: '2026-09-24' });
+    expect(decodeURIComponent(c.cache.set.mock.calls[0][0])).toContain('data=be:2026-09-28,fr:2026-09-24');
   });
 });

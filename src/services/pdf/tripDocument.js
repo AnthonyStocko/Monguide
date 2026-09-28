@@ -1,5 +1,6 @@
 import { EU_MEMBERS } from '@domain/config/countries.js';
 import { sourcesFor } from '@domain/config/dataSources.js';
+import { displayName } from '@domain/displayName.js';
 import { formatDate, formatNumber } from '../../i18n/format.js';
 
 /**
@@ -7,7 +8,8 @@ import { formatDate, formatNumber } from '../../i18n/format.js';
  * dates, planning jour par jour (étapes personnelles et hébergements
  * compris), bilan carbone, sources des données. Les adresses personnelles
  * (hébergements, lieux des étapes personnelles) sont masquées sauf si
- * includeAddresses est vrai. Textes dans la langue de l'interface.
+ * includeAddresses est vrai. Textes et noms de lieux (displayName) dans la
+ * langue de l'interface (locale).
  *
  * Blocs : { kind: 'title' | 'subtitle' | 'heading' | 'text' | 'muted', text }
  * et { kind: 'step', time, title, details: string[] }.
@@ -52,7 +54,7 @@ export function buildTripDocument(trip, { t, locale, includeAddresses, generated
       if (s.customTime && !personal) details.push(t('planning.customTime'));
       if (s.specialties?.length) details.push(t('generation.specialties', { list: s.specialties.join(', ') }));
       if (s.note) details.push(s.note);
-      blocks.push({ kind: 'step', time: `${s.start} – ${s.end}`, title: personal ? s.title : (s.place?.name ?? t('generation.freeTime')), details });
+      blocks.push({ kind: 'step', time: `${s.start} – ${s.end}`, title: personal ? s.title : s.place ? displayName(s.place, locale) : t('generation.freeTime'), details });
     });
     if (end && d.returnTravelMin !== undefined) push('text', `${t('planning.return', { place: lodgingLabel(end) })} ${travel(d.returnTravelMin)}`);
   }

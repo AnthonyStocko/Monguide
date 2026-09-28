@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EU_MEMBERS, SUPPORTED_COUNTRIES, countryInfo, isSupportedCountry } from './countries.js';
+import { BASE_NAME_LANGUAGES, EU_MEMBERS, SUPPORTED_COUNTRIES, countryInfo, isSupportedCountry, nameLanguages } from './countries.js';
 
 describe('countries', () => {
   it('couvre les 27 pays de l\'UE et 5 pays hors UE', () => {
@@ -37,5 +37,17 @@ describe('countries', () => {
 
   it('ne fixe aucun fuseau horaire', () => {
     for (const c of Object.values(SUPPORTED_COUNTRIES)) expect(c).not.toHaveProperty('timezone');
+  });
+});
+
+describe('nameLanguages', () => {
+  it('langues de base, plus les langues locales des pays, triées sans doublon', () => {
+    expect(nameLanguages([])).toEqual([...BASE_NAME_LANGUAGES].sort());
+    expect(nameLanguages(['FR', 'BE'])).toEqual([...BASE_NAME_LANGUAGES].sort());
+    expect(nameLanguages(['be', 'LU', 'PL'])).toEqual(['ca', 'de', 'en', 'es', 'eu', 'fr', 'it', 'lb', 'nl', 'pl', 'pt']);
+  });
+
+  it('ignore un code inconnu', () => {
+    expect(nameLanguages(['XX'])).toEqual(nameLanguages([]));
   });
 });

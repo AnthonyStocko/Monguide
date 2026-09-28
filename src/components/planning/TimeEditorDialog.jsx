@@ -5,6 +5,7 @@ import { checkSlotTiming } from '@domain/checkSlotTiming.js';
 import { applyTiming, checkDay } from '@domain/dayEdits.js';
 import { fromMinutes, toMinutes } from '@domain/time.js';
 import { travelMinutes } from '@domain/travel.js';
+import { usePlaceName } from '../../i18n/usePlaceName.js';
 import Button from '../ui/Button.jsx';
 import Dialog from '../ui/Dialog.jsx';
 import TravelTime from './TravelTime.jsx';
@@ -63,6 +64,7 @@ export function useWarningText() {
  */
 export default function TimeEditorDialog({ trip, dayIndex, stepIndex, rules, onSave, onClose }) {
   const { t } = useTranslation();
+  const { placeName } = usePlaceName();
   const warningText = useWarningText();
   const day = trip.days[dayIndex];
   const step = day.steps[stepIndex];
@@ -92,7 +94,7 @@ export default function TimeEditorDialog({ trip, dayIndex, stepIndex, rules, onS
 
   return (
     <Dialog
-      title={t('timing.title', { name: step.place?.name ?? t('generation.freeTime') })}
+      title={t('timing.title', { name: step.place ? placeName(step.place) : t('generation.freeTime') })}
       onClose={onClose}
       footer={
         <>
@@ -137,7 +139,7 @@ export default function TimeEditorDialog({ trip, dayIndex, stepIndex, rules, onS
         {shiftedWarnings.map((w) => (
           <p key={`${w.step.id}-${w.code}`} className="flex items-start gap-2 rounded-xl bg-warning-soft px-3 py-2 font-medium text-warning-on-soft">
             <TriangleAlert aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
-            {t('timing.forStep', { name: w.step.place?.name ?? t('generation.freeTime'), text: warningText(w) })}
+            {t('timing.forStep', { name: w.step.place ? placeName(w.step.place) : t('generation.freeTime'), text: warningText(w) })}
           </p>
         ))}
       </div>

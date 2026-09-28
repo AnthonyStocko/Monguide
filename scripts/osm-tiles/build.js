@@ -20,23 +20,27 @@ export async function* readLines(path) {
   if (rest) yield rest;
 }
 
-/** Version du format des tuiles (docs/osm-tiles.md). */
-export const FORMAT_VERSION = 1;
+/**
+ * Version du format des tuiles écrites (docs/osm-tiles.md). La lecture
+ * (osmTiles.js) accepte aussi la version 1, tant que des pays importés sont
+ * en v1 dans le manifeste en service.
+ */
+export const FORMAT_VERSION = 2;
 
 /**
  * Répartit dans les cases les objets d'un export osmium au format GeoJSON
  * séquentiel (un objet par ligne, précédé ou non du séparateur RS).
  * @param {AsyncIterable<string> | Iterable<string>} lines
- * @param {{ cellDeg: number, heritageFallback: boolean }} options
+ * @param {{ cellDeg: number, heritageFallback: boolean, country: string, nameLanguages: readonly string[] }} options
  * @returns {Promise<{ tiles: Map<string, any[]>, counts: Record<string, number>, total: number }>}
  */
-export async function collectTiles(lines, { cellDeg, heritageFallback }) {
+export async function collectTiles(lines, { cellDeg, ...entryOptions }) {
   const tiles = new Map();
   const seen = new Set();
   for await (const raw of lines) {
     const line = raw.replace(/^\x1e/, '').trim();
     if (!line) continue;
-    const entry = featureToEntry(JSON.parse(line), { heritageFallback });
+    const entry = featureToEntry(JSON.parse(line), entryOptions);
     // Un même objet peut sortir deux fois (chemin fermé en ligne et en surface) : on garde le premier.
     if (!entry || seen.has(entry[0])) continue;
     seen.add(entry[0]);

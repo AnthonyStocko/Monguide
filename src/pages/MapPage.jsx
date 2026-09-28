@@ -7,6 +7,7 @@ import { CATEGORY_GROUPS, GROUP_COLORS } from '../components/planning/categories
 import { DEFAULT_CENTER, DEFAULT_ZOOM } from '../config/map.js';
 import { useCurrentTrip } from '../hooks/useCurrentTrip.js';
 import { useFormat } from '../i18n/useFormat.js';
+import { usePlaceName } from '../i18n/usePlaceName.js';
 
 /**
  * Recadre la carte sur les points du jour et appelle invalidateSize : la
@@ -39,6 +40,7 @@ function FitToPoints({ points }) {
 export default function MapPage() {
   const { t } = useTranslation();
   const format = useFormat();
+  const { placeName } = usePlaceName();
   const { status, trip } = useCurrentTrip();
   const [dayIndex, setDayIndex] = useState(0);
   const day = trip?.days[Math.min(dayIndex, trip.days.length - 1)];
@@ -98,10 +100,10 @@ export default function MapPage() {
             </Marker>
           )}
           {stops.map((s, i) => (
-            <Marker key={s.id} position={[s.place.lat, s.place.lon]} icon={placeIcon(s.place.category, i + 1)} title={s.place.name}>
+            <Marker key={s.id} position={[s.place.lat, s.place.lon]} icon={placeIcon(s.place.category, i + 1)} title={placeName(s.place)}>
               <Popup>
                 <strong>
-                  {i + 1}. {s.place.name}
+                  {i + 1}. {placeName(s.place)}
                 </strong>
                 <br />
                 {s.start} – {s.end} · {t(`map.groups.${CATEGORY_GROUPS[s.place.category]}`)}

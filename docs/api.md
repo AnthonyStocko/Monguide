@@ -105,7 +105,7 @@ Appelée au lancement de l'application.
     "minAppVersion": "0.0.0",
     "rules": { "weather": { "rainThresholdPct": 50 }, "…": "…" },
     "contact": "contact@exemple.org",
-    "osm": { "source": "tiles", "dataDate": "2026-09-24" }
+    "osm": { "source": "tiles", "dataDate": "2026-09-28", "countries": { "BE": "2026-09-28", "FR": "2026-09-24" } }
   }
   ```
 
@@ -115,7 +115,7 @@ Appelée au lancement de l'application.
   | `minAppVersion` | chaîne `x.y.z` | version minimale de l'application (`0.0.0` si non définie) |
   | `rules` | objet | règles effectives : valeurs par défaut de `rules.js` fusionnées avec `app_config` |
   | `contact` | chaîne ? | contact de l'équipe (secret `MONGUIDE_CONTACT`), affiché dans l'écran Confidentialité ; `null` si non défini |
-  | `osm` | objet | source des lieux OSM (`tiles`, `overpass`, `off`) et `dataDate` (`YYYY-MM-DD`) de la version des tuiles en service, `null` si inconnue ; affichés dans « À propos et sources » et sur `/debug` |
+  | `osm` | objet | source des lieux OSM (`tiles`, `overpass`, `off`) et `dataDate` (`YYYY-MM-DD`) de la version des tuiles en service, `null` si inconnue ; `countries` : date des données de chaque pays importé (`null` hors mode tuiles ou manifeste illisible) ; affichés dans « À propos et sources » (par pays) et sur `/debug` |
 
 - **Cache serveur** : 5 minutes (`cacheTtlSec.config`), invalidé dès qu'une
   ligne de `app_config` change ; contient aussi le pointeur des tuiles OSM
@@ -255,14 +255,17 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
     des communes voisines (`terroir.neighborRadiusKm`).
   - `sources[].status` : `ok` (réponse fraîche), `cache` (cache partagé, y
     compris une copie expirée resservie après un échec, avec
-    `message: "stale"`), `failed` (aucune donnée ; l'application affiche un
-    message propre à la source, ex. « Marchés et petit patrimoine
-    momentanément indisponibles » pour `osm`).
+    `message: "stale"`), `partial` (`osm` en mode tuiles : la zone touche un
+    pays pris en charge dont les lieux ne sont pas encore importés ; lieux
+    des pays importés seulement, `message: "partial"`), `failed` (aucune
+    donnée ; l'application affiche un message propre à la source, ex.
+    « Marchés et petit patrimoine momentanément indisponibles » pour `osm`).
   - `sources[].message` : `stale`, `fallback_osm` (Wikidata en échec, lieux
     issus d'OpenStreetMap : à signaler), `no_regional_data` (aucune
     appellation régionale disponible), `not_covered` (`osm` : pays dont les
-    lieux OSM ne sont pas encore importés ; l'application affiche « Lieux
-    locaux non disponibles pour ce pays »), `disabled` (`osm` avec
+    lieux OSM ne sont pas encore importés, sans aucun pays importé dans la
+    zone ; l'application affiche « Lieux locaux non disponibles pour ce
+    pays »), `partial` (voir `status`), `disabled` (`osm` avec
     `osm.source = "off"`), ou la cause d'un échec.
   - `sources[].durationMs` : durée de l'appel (absente si servi par le
     cache, sauf `osm` en mode tuiles, où elle compte aussi la lecture du
@@ -273,7 +276,16 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
     données OpenStreetMap de la version en service) et `tilesRead` (tuiles
     lues, 0 si la réponse vient d'un cache) et `timings` (millisecondes
     écoulées à la fin de chaque étape : `lookup` cache partagé, `index`
-    manifeste, `tiles` lecture des tuiles ; diagnostic).
+    manifeste, `tiles` lecture des tuiles ; diagnostic). Les tuiles de tous
+    les pays importés qui touchent la zone sont lues, quel que soit le pays
+    de la destination, un seul exemplaire par identifiant OSM : `dataDates`
+    donne la date des données de chaque pays lu (`{ "BE": "2026-09-28",
+    "FR": "2026-09-24" }`) et `tilesByCountry` le nombre de tuiles lues par
+    pays (absent si la réponse vient d'un cache ; affichés sur `/debug`) ; `missingCountries` (avec `partial`, et avec une
+    copie expirée du cache) liste les pays pris en charge touchés mais pas
+    encore importés (contours approximatifs des extraits Geofabrik) ;
+    l'application affiche « Les lieux situés en Allemagne ne sont pas encore
+    disponibles ».
   - France : `monuments` (Mérimée), `museums` (Muséofile), `terroir` (INAO).
     Autres pays : `monuments` et `museums` (Wikidata, repli OpenStreetMap),
     `terroir` (liste vide : eAmbrosia n'indique pas les régions).
@@ -283,6 +295,12 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
   - Lieux OSM sans nom : gardés seulement pour `osm.unnamedTypes` (points
     de vue, lavoirs, ruines), avec un nom générique traduit (« Point de
     vue ») et `unnamed: true` (score plus bas à la génération).
+  - Noms des lieux OSM : `name` est le nom OSM tel quel (éventuellement
+    bilingue, « Grand-Place - Grote Markt ») ; `names` (facultatif) donne
+    les variantes par langue qui en diffèrent (`{ "fr": "Grand-Place",
+    "nl": "Grote Markt" }`). L'application affiche la variante de la langue
+    de l'interface, sinon `name` (`domain/displayName.js`) ; un séjour
+    enregistré ne change pas, seul l'affichage suit la langue.
   - L'application attend jusqu'à `api.placesTimeoutMs` (20 s) : Wikidata a
     un délai de 15 s côté serveur.
 
@@ -354,6 +372,9 @@ rien n'est modifié.
     `trip.fuelCost` : `{ amount, currency }` (voiture, monnaie du pays).
   - `warnings[].code` : `source_failed` (+ `source`, une fois par source ;
     + `message: "not_covered"` pour `osm` dans un pays pas encore importé),
+    `places_partial` (+ `countries` : pays pris en charge touchés par une
+    zone de collecte mais pas encore importés ; le séjour est généré avec
+    les lieux des autres pays),
     `free_time` (+ `count`),
     `weather_later`, `no_restaurants`, `no_fuel_price`, `no_carbon_factors`.
   - `sources` : état de chaque source (lieux par zone de collecte, météo,
@@ -416,3 +437,5 @@ pg_cron `monguide-purge-deleted-trips` efface les marqueurs de plus de
 | 1 | 2026-09-24 | Ajouts compatibles : `geocode` renvoie tous les pays (`timezone` null hors liste) ; `places` : sources avec `durationMs`, `query`, message `fallback_osm` ; fonctions `holidays`, `fuel`, `fuel-eu-refresh` ; code `403 forbidden`. |
 | 1 | 2026-09-24 | Ajout compatible : origine CORS `https://anthonystocko.github.io` (pages web publiques). |
 | 1 | 2026-09-25 | Ajouts compatibles : lieux OSM lus dans des tuiles statiques (réglage `osm.source`) ; source `osm` avec `source`, `dataDate`, `tilesRead`, `timings`, message `not_covered` ; `Place.unnamed` ; alerte `source_failed` avec `message` ; champ `osm` de `config`. |
+| 1 | 2026-09-28 | Ajout compatible : `Place.names` (variantes du nom par langue). `Place.name` d'un lieu OSM devient le `name` OSM tel quel (auparavant la variante de la langue demandée, désormais dans `names`). |
+| 1 | 2026-09-28 | Ajouts compatibles : lieux OSM de plusieurs pays (tuiles de tous les pays importés qui touchent la zone) ; source `osm` avec `status: "partial"`, `missingCountries`, `dataDates`, `tilesByCountry` ; alerte `places_partial` de `generate` ; `config.osm.countries` (date des données par pays importé). |

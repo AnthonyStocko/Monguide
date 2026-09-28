@@ -12,7 +12,7 @@ import { setRules } from './rules.js';
  * @property {string | null} minAppVersion
  * @property {typeof RULES} rules règles effectives
  * @property {string | null} contact contact de l'équipe (écran Confidentialité)
- * @property {{ source: string, dataDate: string | null } | null} osm source des lieux OSM et date des données (écran À propos)
+ * @property {{ source: string, dataDate: string | null, countries: Record<string, string> | null } | null} osm source des lieux OSM, date de la version en service et des données de chaque pays importé (écran À propos, /debug)
  * @property {string | null} fetchedAt date de réception par le serveur (ISO)
  * @property {boolean} updateRequired l'application est trop ancienne
  * @property {import('./api.js').ApiError} [error] raison du repli éventuel
@@ -33,10 +33,23 @@ export function defaultConfig(error) {
   };
 }
 
-/** Source des lieux OSM reçue du serveur ; dataDate "YYYY-MM-DD" ou null. */
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Source des lieux OSM reçue du serveur ; dataDate "YYYY-MM-DD" ou null ;
+ * countries : { code pays: "YYYY-MM-DD" } (entrées invalides ignorées), ou
+ * null (serveur plus ancien, manifeste illisible).
+ */
 function readOsm(osm) {
   if (!osm || typeof osm.source !== 'string') return null;
-  return { source: osm.source, dataDate: /^\d{4}-\d{2}-\d{2}$/.test(osm.dataDate ?? '') ? osm.dataDate : null };
+  const valid = Object.entries(osm.countries && typeof osm.countries === 'object' ? osm.countries : {}).filter(
+    ([code, date]) => /^[A-Z]{2}$/.test(code) && DAY.test(date ?? '')
+  );
+  return {
+    source: osm.source,
+    dataDate: DAY.test(osm.dataDate ?? '') ? osm.dataDate : null,
+    countries: valid.length ? Object.fromEntries(valid) : null
+  };
 }
 
 function fromServer(data, source, fetchedAt, error) {

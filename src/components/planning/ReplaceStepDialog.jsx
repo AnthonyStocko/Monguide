@@ -5,6 +5,7 @@ import { distanceKm } from '@domain/geo.js';
 import { alternativesFor } from '@domain/replaceStep.js';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus.js';
 import { useFormat } from '../../i18n/useFormat.js';
+import { usePlaceName } from '../../i18n/usePlaceName.js';
 import { getPlaces } from '../../services/dataApi.js';
 import Badge from '../ui/Badge.jsx';
 import Button from '../ui/Button.jsx';
@@ -19,6 +20,7 @@ import { CATEGORY_ICONS } from './categories.js';
  */
 export default function ReplaceStepDialog({ trip, dayIndex, stepIndex, onPick, onClose }) {
   const { t, i18n } = useTranslation();
+  const { placeName, stepName } = usePlaceName();
   const format = useFormat();
   const online = useOnlineStatus();
   const [extra, setExtra] = useState({ status: 'idle', places: [] });
@@ -44,7 +46,7 @@ export default function ReplaceStepDialog({ trip, dayIndex, stepIndex, onPick, o
   };
 
   return (
-    <Dialog title={t('replace.title', { name: step.place?.name ?? t('generation.freeTime') })} onClose={onClose}>
+    <Dialog title={t('replace.title', { name: stepName(step) ?? t('generation.freeTime') })} onClose={onClose}>
       {options.length === 0 && <p className="text-ink-muted">{t('replace.none')}</p>}
       <ul className="space-y-2">
         {options.map((p) => {
@@ -59,7 +61,7 @@ export default function ReplaceStepDialog({ trip, dayIndex, stepIndex, onPick, o
               >
                 <Icon aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-primary-strong" />
                 <span className="flex-1">
-                  <span className="block font-semibold">{p.name}</span>
+                  <span className="block font-semibold">{placeName(p)}</span>
                   <span className="block text-ink-muted">
                     {t(`categories.${p.category}`)}
                     {km !== null && ` · ${t('replace.distance', { km: format.number(km, { maximumFractionDigits: 1 }) })}`}

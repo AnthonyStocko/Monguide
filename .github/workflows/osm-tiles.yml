@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       pays:
-        description: 'Code du pays (FR…) ; vide = tous les pays de scripts/osm-tiles/config.js'
+        description: 'Pays à retraiter : un code (BE), une liste (BE,LU) ou all ; les autres gardent leurs tuiles'
         required: false
-        default: ''
+        default: 'all'
       publier:
         description: 'Publier dans le bucket (décoché : génération et contrôles seulement)'
         type: boolean
@@ -20,10 +20,14 @@ on:
         description: 'Générer deux fois et comparer les fichiers'
         type: boolean
         default: false
-      tronquer_extrait:
-        description: 'Test : réduire l’extrait à un petit rectangle (le contrôle doit échouer)'
-        type: boolean
-        default: false
+      tronquer_pays:
+        description: 'Test : pays dont l’extrait est réduit à un petit rectangle (ex. BE) ; leur contrôle doit échouer, les autres sont publiés'
+        required: false
+        default: ''
+      plafond_mo:
+        description: 'Test : plafond de stockage en Mo à la place de celui de countries.json (ex. 1 : la publication doit être bloquée)'
+        required: false
+        default: ''
 
 concurrency:
   group: osm-tiles
@@ -54,7 +58,8 @@ jobs:
       AWS_MAX_ATTEMPTS: 10
       AWS_RETRY_MODE: adaptive
       PUBLISH: ${{ github.event_name == 'schedule' || inputs.publier }}
-      TRUNCATE: ${{ inputs.tronquer_extrait == true }}
+      TRUNCATE: ${{ inputs.tronquer_pays }}
+      MAX_STORAGE_MB: ${{ inputs.plafond_mo }}
       CHECK_DETERMINISM: ${{ inputs.verifier_determinisme == true }}
     steps:
       - uses: actions/checkout@v7
@@ -84,7 +89,8 @@ jobs:
           echo "Pays : $countries"
 
       # Extraits filtrés gardés en cache pour le mois : un seul téléchargement
-      # par pays et par mois, même en relançant le workflow.
+      # par pays et par mois, même en relançant le workflow. Un pays absent du
+      # cache (échec du lancement précédent) est téléchargé.
       - name: Extraits filtrés du mois (cache)
         id: cache
         uses: actions/cache/restore@v6
@@ -92,12 +98,12 @@ jobs:
           path: work/filtered
           key: ${{ steps.plan.outputs.key }}
 
+      # Pays par pays ; un pays en échec est noté et n'arrête pas les autres.
       - name: Téléchargement et filtrage
-        if: steps.cache.outputs.cache-hit != 'true'
         run: bash scripts/osm-tiles/run.sh download
 
       - name: Mise en cache des extraits filtrés
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true' && hashFiles('work/filtered/*.date') != ''
         uses: actions/cache/save@v6
         with:
           path: work/filtered
@@ -110,20 +116,26 @@ jobs:
       - name: Version en service
         run: bash scripts/osm-tiles/run.sh current
 
+      # Contrôles par pays, plafond de stockage (échec = rien de publié).
       - name: Contrôles et manifeste
+        id: finalize
         env:
           VERSION: ${{ steps.generate.outputs.version }}
         run: bash scripts/osm-tiles/run.sh finalize
 
       - name: Publication (current.json en dernier)
-        if: env.PUBLISH == 'true'
+        if: env.PUBLISH == 'true' && steps.finalize.outputs.publish == 'true'
         env:
           VERSION: ${{ steps.generate.outputs.version }}
         run: bash scripts/osm-tiles/run.sh publish
 
       - name: Suppression des anciennes versions
-        if: env.PUBLISH == 'true'
+        if: env.PUBLISH == 'true' && steps.finalize.outputs.publish == 'true'
         run: bash scripts/osm-tiles/run.sh cleanup
+
+      # Les pays à jour sont publiés ; le lancement échoue quand même pour alerter.
+      - name: Pays en échec
+        run: bash scripts/osm-tiles/run.sh verdict
 
       - name: Résumé
         if: always()

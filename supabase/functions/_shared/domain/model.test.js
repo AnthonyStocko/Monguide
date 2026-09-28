@@ -29,6 +29,10 @@ describe('isPlace', () => {
     expect(isPlace({ ...minimal, certified: true, certification: 'protected_heritage', wikidata: 'Q1492' })).toBe(true);
   });
 
+  it('accepte names (facultatif) : variantes du nom par langue', () => {
+    expect(isPlace({ ...valid, name: 'Grand-Place - Grote Markt', names: { fr: 'Grand-Place', nl: 'Grote Markt' } })).toBe(true);
+  });
+
   it.each([
     ['sans id', { id: '' }],
     ['sans nom', { name: '  ' }],
@@ -41,7 +45,10 @@ describe('isPlace', () => {
     ['wheelchair invalide', { food: { regional: false, wheelchair: 'partial' } }],
     ['cuisine non tableau', { food: { regional: false, cuisine: 'pizza' } }],
     ['certification inconnue', { certification: 'unesco' }],
-    ['identifiant Wikidata invalide', { wikidata: 'P31' }]
+    ['identifiant Wikidata invalide', { wikidata: 'P31' }],
+    ['names non objet', { names: 'Grand-Place' }],
+    ['names tableau', { names: ['Grand-Place'] }],
+    ['variante de nom vide', { names: { fr: ' ' } }]
   ])('refuse un lieu %s', (_, patch) => {
     expect(isPlace({ ...valid, ...patch })).toBe(false);
   });

@@ -73,6 +73,11 @@ export default function DebugPage() {
             <Row label={t('debug.osmDataDate')}>
               {config.osm?.dataDate ? format.date(`${config.osm.dataDate}T12:00:00Z`, { dateStyle: 'medium', timeZone: 'UTC' }) : none}
             </Row>
+            {Object.entries(config.osm?.countries ?? {}).map(([code, date]) => (
+              <Row key={code} label={t('debug.osmCountryDate', { country: format.country(code) })}>
+                {format.date(`${date}T12:00:00Z`, { dateStyle: 'medium', timeZone: 'UTC' })}
+              </Row>
+            ))}
             <Row label={t('debug.rainThreshold')}>
               {format.number(config.rules.weather.rainThresholdPct / 100, { style: 'percent' })}
             </Row>

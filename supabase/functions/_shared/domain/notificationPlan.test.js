@@ -92,6 +92,32 @@ describe('planTripNotifications', () => {
   });
 });
 
+describe('planTripNotifications : noms dans la langue de l’interface', () => {
+  const brussels = () => {
+    const t = threeDays();
+    const first = t.days[0].steps[0];
+    t.days[0].steps[0] = { ...first, place: { ...first.place, name: 'Grand-Place - Grote Markt', names: { fr: 'Grand-Place' } } };
+    return t;
+  };
+  const texts = (plan, id) => [plan.find((n) => n.stepId === id).data.name, plan.find((n) => n.kind === 'summary' && n.date === '2026-10-06').data.steps[0].name];
+
+  it('variante de la langue, sinon nom enregistré ; sans lang, nom enregistré', () => {
+    const t = brussels();
+    const id = t.days[0].steps[0].id;
+    const now = Date.UTC(2026, 9, 1);
+    expect(texts(planTripNotifications(t, { now, ...all, lang: 'fr' }, rules), id)).toEqual(['Grand-Place', 'Grand-Place']);
+    expect(texts(planTripNotifications(t, { now, ...all, lang: 'en' }, rules), id)).toEqual(['Grand-Place - Grote Markt', 'Grand-Place - Grote Markt']);
+    expect(texts(planTripNotifications(t, { now, ...all }, rules), id)).toEqual(['Grand-Place - Grote Markt', 'Grand-Place - Grote Markt']);
+  });
+
+  it('mêmes identifiants quelle que soit la langue : la reprogrammation remplace, sans doublon', () => {
+    const t = brussels();
+    const now = Date.UTC(2026, 9, 1);
+    const ids = (lang) => planTripNotifications(t, { now, ...all, lang }, rules).map((n) => n.id);
+    expect(ids('en')).toEqual(ids('fr'));
+  });
+});
+
 describe('reconcilePlan', () => {
   it('programme les manquants, annule les orphelins, sans doublon', () => {
     const plan = planTripNotifications(threeDays(), { now: Date.UTC(2026, 9, 1), ...all }, rules);

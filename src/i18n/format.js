@@ -21,3 +21,16 @@ export function formatDate(value, locale, options = { dateStyle: 'long' }) {
 export function formatNumber(value, locale, options) {
   return new Intl.NumberFormat(locale, options).format(value);
 }
+
+/**
+ * Nom d'un pays dans la langue de l'interface ; le code lui-même s'il est inconnu.
+ * @param {string} code code ISO 3166-1 alpha-2
+ * @param {string} locale
+ */
+export function formatCountry(code, locale) {
+  try {
+    return new Intl.DisplayNames([locale], { type: 'region', fallback: 'code' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}

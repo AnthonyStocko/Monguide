@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Landmark } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { usePlaceName } from '../../i18n/usePlaceName.js';
 import { getPlaces } from '../../services/dataApi.js';
 import Badge from '../ui/Badge.jsx';
 import Button from '../ui/Button.jsx';
@@ -43,6 +44,7 @@ function FoodDetails({ food }) {
  */
 export default function PlacesDebug({ destination }) {
   const { t, i18n } = useTranslation();
+  const { placeName } = usePlaceName();
   const [state, setState] = useState({ status: 'idle' });
 
   const run = async () => {
@@ -105,7 +107,7 @@ export default function PlacesDebug({ destination }) {
               <ul className="divide-y divide-line">
                 {certified.slice(0, 15).map((p) => (
                   <li key={p.id} className="py-2">
-                    <span className="font-medium">{p.name}</span>
+                    <span className="font-medium">{placeName(p)}</span>
                     <span className="mt-1 flex flex-wrap gap-2">
                       <Badge tone="secondary">{t(`certifications.${p.certification}`)}</Badge>
                       <Badge>{t('debug.places.origin', { source: p.source })}</Badge>
@@ -123,7 +125,7 @@ export default function PlacesDebug({ destination }) {
             <ul className="divide-y divide-line">
               {restaurants.map((p) => (
                 <li key={p.id} className="py-2">
-                  <span className="font-medium">{p.name}</span>
+                  <span className="font-medium">{placeName(p)}</span>
                   {p.food.regional && <Badge tone="primary" className="ml-2">{t('food.regional')}</Badge>}
                   <FoodDetails food={p.food} />
                 </li>

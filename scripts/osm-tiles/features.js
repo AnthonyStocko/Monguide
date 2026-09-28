@@ -1,26 +1,25 @@
+import { nameVariants } from '../../supabase/functions/_shared/domain/displayName.js';
 import { roundCoord } from '../../supabase/functions/_shared/domain/geo.js';
 import { osmCategory } from '../../supabase/functions/_shared/services/osmMapping.js';
 import { pointOnSurface } from './pointOnSurface.js';
 
 /**
  * Conversion d'un objet exporté par osmium (GeoJSON) en lieu compact de
- * tuile : [id, category, subcategory, name, lat, lon, tags]
- * (docs/osm-tiles.md). La classification réutilise osmCategory, celle de la
- * lecture : un lieu est classé de la même façon à la génération et à la
- * lecture.
+ * tuile au format v2 : [id, category, subcategory, name, lat, lon, tags,
+ * names, cc] (docs/osm-tiles.md). La classification réutilise osmCategory,
+ * celle de la lecture : un lieu est classé de la même façon à la génération
+ * et à la lecture.
  */
 
 /** Catégories dont les objets sans nom sont gardés (filtrés ensuite par rules.osm.unnamedTypes). */
 export const UNNAMED_CATEGORIES = ['small_heritage', 'viewpoint'];
 
 /**
- * Tags conservés, dans cet ordre (sortie déterministe). name:fr et name:en
- * servent au nom dans la langue de l'application (osmElementToPlace lit
- * name:<lang> avant name), description au Place : les deux figuraient dans
- * l'étude des volumes.
+ * Tags conservés, dans cet ordre (sortie déterministe). description sert au
+ * Place ; elle figurait dans l'étude des volumes. Les variantes name:<langue>
+ * sont à part (champ names).
  */
 const KEPT_TAGS = ['cuisine', 'opening_hours', 'wheelchair', 'diet:vegetarian', 'diet:vegan', 'phone', 'website', 'wikidata', 'heritage', 'description'];
-const NAME_TAGS = ['name:fr', 'name:en'];
 
 const isHeritageListed = (tags) => tags.heritage === '1' || tags.heritage === '2';
 
@@ -68,18 +67,19 @@ export function pickTags(tags) {
     const value = source[key]?.trim();
     if (value) out[key] = value;
   }
-  const name = tags.name?.trim();
-  for (const key of NAME_TAGS) {
-    const value = tags[key]?.trim();
-    if (value && value !== name) out[key] = value;
-  }
   return out;
 }
 
 /**
+ * @typedef {[string, string, string, string | null, number, number, Record<string, string>, Record<string, string> | null, string]} TileEntry
+ * Lieu compact v2 : names null si aucune variante utile ; cc code pays de l'extrait.
+ */
+
+/**
  * @param {{ id?: string, geometry: any, properties?: Record<string, string> }} feature
- * @param {{ heritageFallback: boolean }} options
- * @returns {[string, string, string, string | null, number, number, Record<string, string>] | null}
+ * @param {{ heritageFallback: boolean, country: string, nameLanguages: readonly string[] }} options
+ *   country : code ISO de l'extrait ; nameLanguages : langues des variantes gardées (nameLanguages de countries.js)
+ * @returns {TileEntry | null}
  */
 export function featureToEntry(feature, options) {
   const tags = feature.properties ?? {};
@@ -88,11 +88,11 @@ export function featureToEntry(feature, options) {
   const id = osmId(feature.id ?? (tags['@type'] && `${tags['@type'][0]}${tags['@id']}`));
   if (!id) return null;
   const name = tags.name?.trim() || null;
-  const named = name || NAME_TAGS.some((key) => tags[key]?.trim());
-  if (!named && !UNNAMED_CATEGORIES.includes(kind.category)) return null;
+  const names = nameVariants(tags, options.nameLanguages) ?? null;
+  if (!name && !names && !UNNAMED_CATEGORIES.includes(kind.category)) return null;
   const point = pointOnSurface(feature.geometry);
   if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return null;
-  return [id, kind.category, kind.subcategory, name, roundCoord(point[1], 5), roundCoord(point[0], 5), pickTags(tags)];
+  return [id, kind.category, kind.subcategory, name, roundCoord(point[1], 5), roundCoord(point[0], 5), pickTags(tags), names, options.country];
 }
 
 /**
