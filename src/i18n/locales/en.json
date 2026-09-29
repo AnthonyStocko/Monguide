@@ -30,7 +30,25 @@
     "today": "Today is {{date}}.",
     "emptyTitle": "No trips yet",
     "emptyText": "Create your first trip: Mon guide prepares a day-by-day plan for you.",
-    "createCta": "Create a trip"
+    "createCta": "Create a trip",
+    "createNew": "Create a new trip",
+    "recentTitle": "Your recent trips",
+    "seeAll": "See all",
+    "enjoy": "Enjoy {{destination}}!",
+    "untilDeparture_one": "Leaving tomorrow.",
+    "untilDeparture_other": "{{count}} days to go.",
+    "untilDeparture_zero": "Leaving today!",
+    "countdown": {
+      "current": "In progress · day {{day}} of {{total}}",
+      "upcoming_zero": "Next trip · today",
+      "upcoming_one": "Next trip · tomorrow",
+      "upcoming_other": "Next trip · in {{count}} days"
+    },
+    "weather": "{{temperature}}° · {{label}}",
+    "travelers_one": "{{count}} traveller",
+    "travelers_other": "{{count}} travellers",
+    "tripLength_one": "{{count}} day · {{month}}",
+    "tripLength_other": "{{count}} days · {{month}}"
   },
   "planning": {
     "emptyTitle": "No schedule",
@@ -60,7 +78,8 @@
     "return": "Back to {{place}}:",
     "lodgingTitle": "Accommodation",
     "readOnly": "This trip was created with a newer version of Mon guide. Update the app to edit this trip.",
-    "conflict": "Time conflict"
+    "conflict": "Time conflict",
+    "dayOf": "Day {{day}} of {{total}} · {{date}}"
   },
   "map": {
     "attribution": "OpenStreetMap contributors",
@@ -75,7 +94,12 @@
       "personal": "Personal stops"
     },
     "lodging": "Accommodation",
-    "orderNotice": "Lines connect the stops in visiting order; they are not road routes."
+    "orderNotice": "Lines connect the stops in visiting order; they are not road routes.",
+    "sheetWhen": "Stop {{order}} · {{start}} – {{end}}",
+    "openInPlanning": "See in the planning",
+    "markerLabel": "{{order}}. {{name}}: open details",
+    "emptyTitle": "No trip to show",
+    "emptyText": "Create a trip: its stops will appear here, day by day."
   },
   "settings": {
     "language": "Language",
@@ -172,7 +196,9 @@
       "date": "Prices of {{date}}",
       "perLitre": "{{price}} / litre",
       "source": "Source: {{source}}"
-    }
+    },
+    "themeLink": "Design system: components and contrast",
+    "illustrationsLink": "House illustrations"
   },
   "categories": {
     "museum": "Museum",
@@ -436,17 +462,13 @@
       "text": "Your trip to {{destination}} is saved on this phone.",
       "another": "Create another trip",
       "viewPlanning": "View the schedule"
-    }
+    },
+    "offlineTitle": "You are offline",
+    "offlineText": "You can fill in the form: your draft is saved. Preparing the trip will need a connection.",
+    "offlineAction": "See my saved trips"
   },
   "generation": {
     "title": "Preparing your trip",
-    "phases": {
-      "places": "Finding places around your destination…",
-      "weather": "Weather, public holidays and prices…",
-      "planning": "Building the day-by-day plan…",
-      "finishing": "A few more seconds…"
-    },
-    "elapsed": "{{seconds}} s elapsed",
     "failed": "Trip generation failed",
     "warningsTitle": "Good to know about this trip",
     "warnings": {
@@ -852,11 +874,12 @@
       "culture": "historic monuments and museums",
       "inao": "local produce",
       "fuelFr": "fuel prices",
-      "wikidata": "heritage and museums",
+      "wikidata": "heritage, museums and place photos",
       "ember": "carbon intensity of electricity",
       "oilBulletin": "fuel prices",
       "ecb": "exchange rates",
-      "geoApi": "administrative areas (départements)"
+      "geoApi": "administrative areas (départements)",
+      "commons": "place photos"
     }
   },
   "about": {
@@ -908,5 +931,217 @@
     "NO": "in Norway",
     "IS": "in Iceland",
     "LI": "in Liechtenstein"
+  },
+  "image": {
+    "byAuthor": "Photo: {{author}}",
+    "unknownAuthor": "unknown author",
+    "source": "Source",
+    "licenseLabel": "{{license}} licence: open the licence text",
+    "sourceLabel": "Photo source: open its page on Wikimedia Commons",
+    "showCredit": "Show photo credit",
+    "hideCredit": "Hide photo credit"
+  },
+  "debugTheme": {
+    "title": "Design system",
+    "intro": "Every component in its states, with bundled fonts and images: the page must look the same in airplane mode.",
+    "typography": "Typography",
+    "h1": "Heading 1 · Fraunces 600",
+    "h2": "Heading 2 · Travel journal",
+    "h3": "Heading 3 · A day in Lyon",
+    "h4": "Heading 4 · Musée des Confluences",
+    "sampleText": "Body text in Inter 16 px: a well-paced day, breaks in the shade and a lunch of local specialities.",
+    "bold": "Bold text (Inter 600)",
+    "muted": "Secondary text (ink-muted)",
+    "credit": "Credit or secondary metadata, the only size allowed below 16 px (13 px)",
+    "accent": "Accent text (accent-rust)",
+    "colors": "Colours",
+    "contrast": "Contrast (WCAG AA)",
+    "contrastOk": "All {{count}} pairs meet the threshold.",
+    "contrastFail": "{{count}} pair(s) below the threshold.",
+    "buttons": "Buttons",
+    "variants": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "ghost": "Subtle"
+    },
+    "action": "Continue",
+    "withIcon": "Add",
+    "iconOnly": "Add to favourites",
+    "disabled": "Unavailable",
+    "pressHint": "When pressed, a button shrinks slightly (unless motion is reduced).",
+    "chipsBadges": "Chips and badges",
+    "chips": "Chips (filters)",
+    "badges": "Badges: category, certification, weather, status",
+    "certified": "Historic monument",
+    "cards": "Cards",
+    "plainCard": "Plain card",
+    "photoTop": "Photo on top",
+    "noAuthor": "Credit without a known author",
+    "overlayWhite": "Title on a white photo",
+    "overlayYellow": "Title on a bright yellow photo",
+    "worstCase": "Worst case: the scrim guarantees contrast",
+    "noPhoto": "No photo",
+    "illustrationShown": "House illustration instead",
+    "brokenPhoto": "Photo not found",
+    "forbiddenPhoto": "Domain not allowed",
+    "thumb": "Thumbnail",
+    "feedback": "Loading and messages",
+    "skeleton": "Loading (animated sheen)",
+    "toasts": "Toasts",
+    "toastInfo": "Opening hours for this place are not confirmed.",
+    "toastSuccess": "Trip saved.",
+    "toastUndo": "Day rearranged.",
+    "showToast": "Show a toast",
+    "modals": "Panels",
+    "openSheet": "Open the bottom sheet",
+    "openDialog": "Open the dialog",
+    "sheetTitle": "Bottom sheet",
+    "dialogTitle": "Dialog",
+    "forms": "Forms",
+    "switchLabel": "Switch",
+    "choiceLegend": "Single choice",
+    "choiceA": "On foot",
+    "choiceB": "By car",
+    "choiceHint": "With a description",
+    "choiceError": "Choice with an error",
+    "errorText": "An error message explains what to do.",
+    "states": "Empty states and errors",
+    "emptyTitle": "No trip yet",
+    "emptyText": "Create your first trip: it will show up here.",
+    "emptyIconTitle": "Icon variant",
+    "navHint": "Tab bar: see the bottom of the screen (pill behind the active tab icon).",
+    "illustrationsLink": "All illustrations"
+  },
+  "photos": {
+    "title": "Photos",
+    "hint": "Place photos come from Wikimedia Commons. Photos of your trips are saved on the phone so they stay visible offline (5 MB at most per trip).",
+    "wifiOnlySetting": "Download images on Wi-Fi only",
+    "wifiOnly": "Photos not saved for offline use: you are on mobile data and image downloads are limited to Wi-Fi. They will be saved on your next Wi-Fi connection.",
+    "settingsLink": "Change this setting"
+  },
+  "motion": {
+    "title": "Display",
+    "hint": "Animations are also turned off when your phone asks to reduce motion.",
+    "reduce": "Reduce motion",
+    "haptics": "Vibrations",
+    "hapticsHint": "A light vibration confirms a completed step or an important action, and signals an error. With “Reduce motion”, only the error one remains."
+  },
+  "debugIllustrations": {
+    "title": "Illustrations",
+    "intro": "The {{count}} house illustrations, decorative and bundled. Turn on “Reduce motion”: sun, clouds and pin stand still.",
+    "inWideFrame": "Thumbnails in a wide frame",
+    "formats": {
+      "square": "Category thumbnails",
+      "wide": "Destination landscape",
+      "empty": "Empty states",
+      "onboarding": "Welcome screens"
+    },
+    "names": {
+      "restaurant": "Restaurant",
+      "market": "Market",
+      "farm": "Producer",
+      "park": "Park",
+      "nature": "Natural area",
+      "viewpoint": "Viewpoint",
+      "smallHeritage": "Small heritage",
+      "monument": "Monument without photo",
+      "museum": "Museum without photo",
+      "personal": "Personal step",
+      "lodging": "Accommodation",
+      "landscape": "Default landscape",
+      "noTrips": "No trip",
+      "offline": "Offline",
+      "error": "Error",
+      "noResults": "No results",
+      "onboardingPrepare": "Plan",
+      "onboardingFollow": "Follow your day",
+      "onboardingFree": "Travel with a free mind"
+    }
+  },
+  "preparation": {
+    "title": "We are preparing your trip",
+    "subtitle_one": "{{destination}} · {{count}} day",
+    "subtitle_other": "{{destination}} · {{count}} days",
+    "progressLabel": "Trip preparation",
+    "progressText": "{{done}} of {{total}} steps done",
+    "indeterminate": "Preparing",
+    "starting": "Preparing…",
+    "tips": [
+      "Tip: once generated, you can replace a step or change its times with a single tap.",
+      "Tip: once saved, your trip stays available offline, photos included.",
+      "Tip: add your own steps (appointment, booked visit): the planning adapts around them.",
+      "Tip: on the day, confirm each step; if it rains, Mon guide offers to swap activities."
+    ],
+    "steps": {
+      "weather": {
+        "pending": "Weather",
+        "running": "Checking the weather…",
+        "done": "Weather checked",
+        "failed": "Weather unavailable for now",
+        "detail": "For each day of the trip"
+      },
+      "heritage": {
+        "pending": "Monuments and museums",
+        "running": "Looking for monuments and museums…",
+        "done": "Monuments and museums found",
+        "failed": "Monuments and museums unavailable",
+        "detail": "Within {{km}} km"
+      },
+      "places": {
+        "pending": "Markets, walks and viewpoints",
+        "running": "Looking for markets, walks and viewpoints…",
+        "done": "Markets, walks and viewpoints found",
+        "failed": "Markets, walks and viewpoints unavailable",
+        "detail": "OpenStreetMap data"
+      },
+      "restaurants": {
+        "pending": "Restaurants",
+        "running": "Looking for restaurants…",
+        "done": "Restaurants found",
+        "failed": "Restaurants unavailable",
+        "detail": "Open at lunchtime, regional cuisine first"
+      },
+      "planning": {
+        "pending": "Organising your days",
+        "running": "Organising your days…",
+        "done": "Days organised",
+        "failed": "Could not organise the days",
+        "detail": "Travel, times and weather"
+      }
+    }
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "previous": "Back",
+    "start": "Get started",
+    "progress": "Screen {{current}} of {{total}}",
+    "prepare": {
+      "title": "Plan your trip in a few minutes",
+      "text": "Pick a destination and dates: Mon guide builds a day-by-day programme with monuments, markets and good restaurants."
+    },
+    "follow": {
+      "title": "Follow your day step by step",
+      "text": "Times, travel and weather at a glance. Confirm each step: if it rains, the programme adapts."
+    },
+    "free": {
+      "title": "Travel with a free mind",
+      "text": "Your trip stays available offline, photos included, and a reminder lets you know before each step."
+    }
+  },
+  "weatherKinds": {
+    "clear": "sunny",
+    "partly": "sunny spells",
+    "cloudy": "overcast",
+    "fog": "fog",
+    "drizzle": "drizzle",
+    "rain": "rain",
+    "snow": "snow",
+    "storm": "storms"
+  },
+  "tripStatus": {
+    "current": "In progress",
+    "upcoming": "Upcoming",
+    "past": "Finished"
   }
 }

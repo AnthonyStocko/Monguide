@@ -6,11 +6,11 @@ const ids = (list) => list.map((s) => s.id);
 
 describe('sourcesFor', () => {
   it('France : sources françaises, carburants seulement en voiture', () => {
-    expect(ids(sourcesFor('FR', 'walk', EU_MEMBERS))).toEqual(['osm', 'photon', 'openMeteo', 'nagerDate', 'ademe', 'culture', 'geoApi', 'inao']);
+    expect(ids(sourcesFor('FR', 'walk', EU_MEMBERS))).toEqual(['osm', 'photon', 'openMeteo', 'nagerDate', 'ademe', 'culture', 'geoApi', 'inao', 'wikidata', 'commons']);
     expect(ids(sourcesFor('FR', 'car', EU_MEMBERS))).toContain('fuelFr');
   });
 
-  it('hors de France : Wikidata, Ember ; Bulletin pétrolier pour les seuls pays de l\'UE', () => {
+  it('partout : Wikidata et Wikimedia Commons (photos) ; hors de France : Ember ; Bulletin pétrolier pour les seuls pays de l\'UE', () => {
     expect(ids(sourcesFor('PT', 'car', EU_MEMBERS))).toEqual(expect.arrayContaining(['wikidata', 'ember', 'oilBulletin', 'ecb']));
     expect(ids(sourcesFor('CH', 'car', EU_MEMBERS))).not.toContain('oilBulletin');
     expect(ids(sourcesFor('PT', 'walk', EU_MEMBERS))).not.toContain('culture');

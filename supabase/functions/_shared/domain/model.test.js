@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLACE_CATEGORIES, SCHEMA_VERSION, isPlace } from './model.js';
+import { PLACE_CATEGORIES, SCHEMA_VERSION, isPlace, isPlaceImage } from './model.js';
 
 const valid = {
   id: 'osm:node/1',
@@ -56,5 +56,34 @@ describe('isPlace', () => {
   it('refuse une valeur non objet', () => {
     expect(isPlace(null)).toBe(false);
     expect(isPlace('place')).toBe(false);
+  });
+});
+
+describe('isPlaceImage', () => {
+  const image = {
+    thumbUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/X.jpg/500px-X.jpg',
+    width: 500,
+    height: 666,
+    credit: { author: 'A. Harassek', license: 'CC BY-SA 3.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0', sourceUrl: 'https://commons.wikimedia.org/wiki/File:X.jpg' }
+  };
+
+  it('accepte une photo complète, et une photo du domaine public sans auteur ni lien de licence', () => {
+    expect(isPlaceImage(image)).toBe(true);
+    expect(isPlaceImage({ ...image, credit: { license: 'Public domain', sourceUrl: image.credit.sourceUrl } })).toBe(true);
+  });
+
+  it.each([
+    ['sans crédit', { credit: undefined }],
+    ['sans licence', { credit: { ...image.credit, license: '' } }],
+    ['sans page source', { credit: { ...image.credit, sourceUrl: undefined } }],
+    ['autre domaine', { thumbUrl: 'https://example.org/x.jpg' }],
+    ['dimensions nulles', { width: 0 }]
+  ])('refuse une photo %s', (_label, patch) => {
+    expect(isPlaceImage({ ...image, ...patch })).toBe(false);
+  });
+
+  it('Place.image est facultatif, mais vérifié s’il est présent', () => {
+    expect(isPlace({ ...valid, image })).toBe(true);
+    expect(isPlace({ ...valid, image: { ...image, credit: undefined } })).toBe(false);
   });
 });

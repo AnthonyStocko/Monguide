@@ -9,6 +9,8 @@ Guide touristique sur-mesure (France et Europe), en architecture hybride :
 - `supabase/functions/_shared/domain/` : le domaine partagé (fonctions pures,
   testées), importé par l'application via l'alias `@domain`.
 - `docs/api.md` : contrat d'API versionné.
+- `docs/design-system.md` : design system « Carnet de voyage » (jetons,
+  animations, photos, contrastes vérifiés) ; vitrine sur /debug/theme.
 
 ## Prérequis
 

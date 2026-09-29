@@ -19,6 +19,22 @@ export const SCHEMA_VERSION = 1;
  */
 
 /**
+ * @typedef {object} ImageCredit
+ * @property {string} [author] texte seul ; absent si inconnu (domaine public ou CC0 uniquement)
+ * @property {string} license licence courte (ex. "CC BY-SA 4.0", "Public domain")
+ * @property {string} [licenseUrl] absent pour le domaine public
+ * @property {string} sourceUrl page du fichier sur Wikimedia Commons
+ */
+
+/**
+ * @typedef {object} PlaceImage Photo Wikimedia Commons (fonction images, docs/api.md).
+ * @property {string} thumbUrl miniature, toujours sur https://upload.wikimedia.org/
+ * @property {number} width dimensions réelles du fichier, en pixels
+ * @property {number} height
+ * @property {ImageCredit} credit toujours affiché avec la photo
+ */
+
+/**
  * @typedef {object} Place Lieu normalisé, quelle que soit sa source.
  * @property {string} id identifiant stable préfixé par la source (ex. "merimee:PA00118092", "osm:node/123")
  * @property {string} name nom enregistré (lieu OSM : name tel quel, éventuellement bilingue) ; à l'écran,
@@ -38,6 +54,9 @@ export const SCHEMA_VERSION = 1;
  * @property {string} [url]
  * @property {PlaceFood} [food]
  * @property {boolean} [unnamed] lieu OSM sans nom, affiché sous un nom générique (« Point de vue »)
+ * @property {PlaceImage} [image] photo du lieu, ajoutée par l'application après la génération (fonction
+ *   images). Champ facultatif, rétrocompatible, sans changement de schemaVersion : un séjour enregistré
+ *   avant ce champ s'affiche avec une illustration, sans migration.
  */
 
 /**
@@ -141,7 +160,8 @@ export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed'
  * @property {string} createdAt ISO
  * @property {string} updatedAt ISO
  * @property {boolean} deleted
- * @property {{ name: string, countryCode: string, lat: number, lon: number, radiusKm: number }} destination
+ * @property {{ name: string, countryCode: string, lat: number, lon: number, radiusKm: number, wikidata?: string | null }} destination
+ *   wikidata : identifiant de la ville (fonction images), null si introuvable ; absent tant qu'il n'a pas été cherché
  * @property {string} timezone IANA
  * @property {string} currency ISO 4217
  * @property {string} startDate
@@ -159,9 +179,29 @@ export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed'
  * @property {{ totalKgCo2e: number, byDay: number[], byMode: Record<'walk' | 'transit' | 'bike' | 'car', number>, distanceKm: number }} [carbon]
  *   émissions estimées des déplacements (mode choisi, par jour, et comparaison des 4 modes)
  * @property {{ amount: number, currency: string }} [fuelCost]
+ * @property {PlaceImage} [hero] photo de la destination (fonction images). Champ facultatif, rétrocompatible,
+ *   sans changement de schemaVersion (comme destination.wikidata) : sans lui, l'application affiche
+ *   l'illustration de paysage par défaut.
  */
 
 const isFiniteNumber = (v) => typeof v === 'number' && Number.isFinite(v);
+const isText = (v) => typeof v === 'string' && v.trim() !== '';
+
+/**
+ * Photo utilisable : miniature Wikimedia Commons, dimensions et crédit
+ * (licence et page source) présents. Sans crédit, pas de photo.
+ * @param {unknown} image
+ * @returns {image is PlaceImage}
+ */
+export function isPlaceImage(image) {
+  if (!image || typeof image !== 'object') return false;
+  const i = /** @type {Record<string, any>} */ (image);
+  if (typeof i.thumbUrl !== 'string' || !i.thumbUrl.startsWith('https://upload.wikimedia.org/')) return false;
+  if (!isFiniteNumber(i.width) || i.width <= 0 || !isFiniteNumber(i.height) || i.height <= 0) return false;
+  const c = i.credit;
+  if (!c || typeof c !== 'object' || !isText(c.license) || !isText(c.sourceUrl)) return false;
+  return (c.author === undefined || isText(c.author)) && (c.licenseUrl === undefined || isText(c.licenseUrl));
+}
 const WHEELCHAIR = ['yes', 'limited', 'no'];
 
 /**
@@ -185,6 +225,7 @@ export function isPlace(place) {
     if (!p.names || typeof p.names !== 'object' || Array.isArray(p.names)) return false;
     if (!Object.values(p.names).every((v) => typeof v === 'string' && v.trim())) return false;
   }
+  if (p.image !== undefined && !isPlaceImage(p.image)) return false;
   if (p.food !== undefined) {
     if (!p.food || typeof p.food.regional !== 'boolean') return false;
     if (p.food.wheelchair !== undefined && !WHEELCHAIR.includes(p.food.wheelchair)) return false;

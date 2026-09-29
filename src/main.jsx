@@ -5,11 +5,17 @@ import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ConfigProvider } from './context/ConfigContext.jsx';
 import { initI18n } from './i18n/index.js';
+import { initReducedMotion } from './services/motion.js';
+import { initOnboarding } from './services/onboarding.js';
 import { reconcileNotifications } from './services/notifications.js';
 import './index.css';
 
 // La langue est chargée avant le premier rendu : pas de texte dans la mauvaise langue.
 await initI18n();
+// Réglage "Réduire les animations" appliqué avant le premier affichage.
+await initReducedMotion().catch(() => {});
+// Premier lancement : écrans d'accueil (une seule fois).
+await initOnboarding().catch(() => {});
 
 // Lancement à froid : rappels manquants reprogrammés avant le premier affichage
 // (App.addListener ne se déclenche pas au lancement). Jamais bloquant au-delà de 1,5 s.

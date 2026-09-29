@@ -1,18 +1,17 @@
-import { RotateCcw, TriangleAlert } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import Illustration from '../../illustrations/index.jsx';
 import Button from './Button.jsx';
 
 /**
- * Erreur avec bouton "Réessayer".
- * @param {{ title?: string, message?: string, onRetry?: () => void }} props
+ * Erreur avec illustration (erreur, ou hors ligne) et bouton "Réessayer".
+ * @param {{ title?: string, message?: string, onRetry?: () => void, illustration?: 'error' | 'offline' }} props
  */
-export default function ErrorState({ title, message, onRetry }) {
+export default function ErrorState({ title, message, onRetry, illustration = 'error' }) {
   const { t } = useTranslation();
   return (
     <div role="alert" className="flex flex-col items-center gap-3 px-4 py-10 text-center">
-      <div className="flex size-16 items-center justify-center rounded-full bg-danger-soft">
-        <TriangleAlert aria-hidden="true" className="size-8 text-danger-on-soft" />
-      </div>
+      <Illustration name={illustration} className="aspect-[4/3] w-full max-w-48 rounded-3xl" />
       <h2 className="text-xl font-semibold">{title ?? t('error.title')}</h2>
       {message && <p className="max-w-md text-ink-muted">{message}</p>}
       {onRetry && (

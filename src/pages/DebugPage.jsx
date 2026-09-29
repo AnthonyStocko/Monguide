@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { ChevronRight, Image, Palette, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { API_VERSION } from '@domain/version.js';
 import FuelDebug from '../components/debug/FuelDebug.jsx';
 import GeocodeDebug from '../components/debug/GeocodeDebug.jsx';
@@ -50,6 +51,19 @@ export default function DebugPage() {
 
   return (
     <Page>
+      <Card className="p-0">
+        <Link to="/debug/theme" className="flex min-h-12 items-center gap-3 rounded-2xl px-4 py-3 font-semibold hover:bg-subtle">
+          <Palette aria-hidden="true" className="size-6 shrink-0 text-primary-strong" />
+          <span className="flex-1">{t('debug.themeLink')}</span>
+          <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-ink-muted" />
+        </Link>
+        <Link to="/debug/illustrations" className="flex min-h-12 items-center gap-3 rounded-2xl px-4 py-3 font-semibold hover:bg-subtle">
+          <Image aria-hidden="true" className="size-6 shrink-0 text-primary-strong" />
+          <span className="flex-1">{t('debug.illustrationsLink')}</span>
+          <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-ink-muted" />
+        </Link>
+      </Card>
+
       <Card as="section">
         {status === 'loading' ? (
           <div className="space-y-3">

@@ -209,6 +209,10 @@ export const RULES = Object.freeze({
    */
   wikidata: {
     timeoutSec: 15,
+    /** France : identifiants Wikidata des lieux Mérimée et Muséofile (délai court, sans bloquer places). */
+    linkTimeoutSec: 6,
+    /** Références par requête (POST). */
+    linkBatch: 1000,
     /** LIMIT de chaque requête SPARQL. */
     limit: 300
   },
@@ -260,6 +264,17 @@ export const RULES = Object.freeze({
   },
 
   /** Appels du serveur vers les API externes (module _shared/http.js). */
+  images: {
+    /** Identifiants Wikidata par appel de la fonction images. */
+    maxIds: 30,
+    /** Largeurs d'affichage acceptées (Commons sert une largeur standard au moins égale). */
+    widths: [400, 800],
+    /** Recherche de la ville de destination : distance maximale du résultat Wikidata. */
+    cityMaxDistanceKm: 15,
+    /** Délai de chaque appel à Wikidata ou Commons (un seul essai en plus du premier). */
+    timeoutMs: 8000
+  },
+
   http: {
     timeoutMs: 10000,
     maxAttempts: 2,
@@ -292,6 +307,8 @@ export const RULES = Object.freeze({
     terroir: 2592000,
     /** Découpage administratif (départements, communes). */
     admin: 2592000,
-    fuel: 3600
+    fuel: 3600,
+    /** Photos Wikimedia Commons, y compris les "pas d'image" : 30 jours. */
+    images: 2592000
   }
 });

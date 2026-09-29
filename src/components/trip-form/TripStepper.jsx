@@ -1,24 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { AnimatePresence, m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { generateTrip } from '../../services/dataApi.js';
-import { todayIn } from '@domain/dates.js';
+import { daysBetween, todayIn } from '@domain/dates.js';
 import { STEPS, buildTrip, firstInvalidStep, validateStep } from '@domain/tripDraft.js';
 import { useConfig } from '../../hooks/useConfig.js';
 import { useTripDraft } from '../../hooks/useTripDraft.js';
+import { refreshTripPhotos } from '../../services/tripImages.js';
+import { hapticConfirm, hapticError } from '../../services/haptics.js';
 import { saveTrip } from '../../services/tripsStore.js';
+import { useMotionAllowed, variants } from '../../ui/motion.js';
+import Illustration from '../../illustrations/index.jsx';
 import Button from '../ui/Button.jsx';
 import Card from '../ui/Card.jsx';
 import ErrorState from '../ui/ErrorState.jsx';
 import Skeleton from '../ui/Skeleton.jsx';
 import DatesStep from './DatesStep.jsx';
 import DestinationStep from './DestinationStep.jsx';
-import GenerationProgress from './GenerationProgress.jsx';
 import LodgingStep from './LodgingStep.jsx';
+import PreparationScreen from './PreparationScreen.jsx';
 import ProfileStep from './ProfileStep.jsx';
 import StepProgress from './StepProgress.jsx';
 import SummaryStep from './SummaryStep.jsx';
 import TransportStep from './TransportStep.jsx';
+
+/** Illustration en tête de chaque étape du formulaire (décorative). */
+const STEP_ILLUSTRATIONS = {
+  destination: 'onboardingPrepare',
+  dates: 'onboardingFollow',
+  lodging: 'lodging',
+  transport: 'onboardingFree',
+  profile: 'monument',
+  summary: 'landscape'
+};
 
 const STEP_COMPONENTS = {
   destination: DestinationStep,
@@ -45,8 +60,13 @@ export default function TripStepper({ onCreated }) {
   const headingRef = useRef(null);
   const alertRef = useRef(null);
   const previousIndex = useRef(null);
+  const cancelRef = useRef(null);
 
   const index = draft?.step ?? 0;
+  const allowed = useMotionAllowed();
+  // Sens du glissement entre deux étapes (+1 : suivante, -1 : précédente), stable d'un rendu à l'autre.
+  const slide = useRef({ index, direction: 1 });
+  if (slide.current.index !== index) slide.current = { index, direction: index > slide.current.index ? 1 : -1 };
   const stepName = STEPS[index];
   // "Aujourd'hui" dans le fuseau de la destination (celui de l'appareil tant qu'elle n'est pas choisie).
   const today = todayIn(draft?.destination?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -88,27 +108,70 @@ export default function TripStepper({ onCreated }) {
       setErrorTick((n) => n + 1);
       return;
     }
-    setGeneration({ status: 'loading' });
+    setGeneration({ status: 'loading', steps: null });
+    const controller = new AbortController();
+    cancelRef.current = controller;
+    // Progression réelle envoyée par le serveur : start (liste des étapes), puis step (état de chacune).
+    const onEvent = (event) => {
+      if (event.event === 'start') setGeneration({ status: 'loading', steps: event.steps.map((name) => ({ name, status: 'pending' })) });
+      if (event.event === 'step') {
+        setGeneration((g) => (g.steps ? { ...g, steps: g.steps.map((st) => (st.name === event.step ? { ...st, status: event.status } : st)) } : g));
+      }
+    };
     try {
       const request = buildTrip(draft, { id: crypto.randomUUID(), now: new Date().toISOString(), makeId: () => crypto.randomUUID() });
-      const { trip, warnings } = await generateTrip(request, i18n.resolvedLanguage);
+      const { trip, warnings } = await generateTrip(request, i18n.resolvedLanguage, { onEvent, signal: controller.signal });
       await saveTrip(trip);
+      // Photos demandées après la génération (jamais par elle), sans attendre.
+      refreshTripPhotos(trip.id).catch(() => {});
       await reset();
       setGeneration({ status: 'idle' });
+      hapticConfirm();
       onCreated({ trip, warnings });
     } catch (error) {
-      // Le brouillon est conservé : l'utilisateur peut réessayer.
+      // Annulé : retour au formulaire, sans message. Sinon, le brouillon est conservé : l'utilisateur peut réessayer.
+      if (error?.code === 'cancelled') {
+        setGeneration({ status: 'idle' });
+        return;
+      }
       setGeneration({ status: 'error', error });
+      hapticError();
+    } finally {
+      cancelRef.current = null;
     }
   };
 
-  if (generation.status === 'loading') return <GenerationProgress />;
+  if (generation.status === 'loading') {
+    return (
+      <PreparationScreen
+        destination={draft.destination?.name ?? ''}
+        days={draft.startDate && draft.endDate ? daysBetween(draft.startDate, draft.endDate) + 1 : 1}
+        radiusKm={draft.radiusKm}
+        steps={generation.steps}
+        onCancel={() => cancelRef.current?.abort()}
+      />
+    );
+  }
 
   const StepComponent = STEP_COMPONENTS[stepName];
   const isLast = index === STEPS.length - 1;
 
   return (
     <Card as="section" aria-labelledby="step-title" className="space-y-5">
+      <div className="-mx-1 overflow-x-clip px-1">
+        <AnimatePresence mode="wait" initial={false} custom={slide.current.direction}>
+          <m.div
+            key={stepName}
+            custom={slide.current.direction}
+            variants={variants.slide}
+            initial={allowed ? 'hidden' : false}
+            animate="visible"
+            exit={allowed ? 'exit' : undefined}
+          >
+            <Illustration name={STEP_ILLUSTRATIONS[stepName]} className="aspect-[5/2] w-full rounded-2xl" />
+          </m.div>
+        </AnimatePresence>
+      </div>
       <StepProgress index={index} />
       <h2 id="step-title" ref={headingRef} tabIndex={-1} className="text-2xl font-bold">
         {t(`tripForm.steps.${stepName}`)}
@@ -120,7 +183,7 @@ export default function TripStepper({ onCreated }) {
         </p>
       )}
 
-      {generation.status === 'error' && <ErrorState title={t('generation.failed')} message={t(generation.error.messageKey ?? 'errors.unknown')} onRetry={generate} />}
+      {generation.status === 'error' && <ErrorState title={t('generation.failed')} message={t(generation.error.messageKey ?? 'errors.unknown')} onRetry={generate} illustration={generation.error.code === 'offline' ? 'offline' : 'error'} />}
 
       <form
         noValidate
@@ -131,7 +194,21 @@ export default function TripStepper({ onCreated }) {
         }}
         className="space-y-6"
       >
-        <StepComponent draft={draft} update={update} errors={errors} rules={rules} today={today} goTo={goTo} />
+        {/* Glissement horizontal entre les étapes (l'ancienne sort, la nouvelle entre du même côté que le geste). */}
+        <div className="-mx-1 overflow-x-clip px-1">
+          <AnimatePresence mode="wait" initial={false} custom={slide.current.direction}>
+            <m.div
+              key={index}
+              custom={slide.current.direction}
+              variants={variants.slide}
+              initial={allowed ? 'hidden' : false}
+              animate="visible"
+              exit={allowed ? 'exit' : undefined}
+            >
+              <StepComponent draft={draft} update={update} errors={errors} rules={rules} today={today} goTo={goTo} />
+            </m.div>
+          </AnimatePresence>
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <Button variant="secondary" icon={ArrowLeft} onClick={() => goTo(index - 1)} disabled={index === 0} className="min-h-14">

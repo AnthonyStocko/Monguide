@@ -1,10 +1,16 @@
 import { Fragment } from 'react';
-import { CalendarHeart, CloudSun, House, Pencil, Plus } from 'lucide-react';
+import { Bike, BusFront, CalendarHeart, Car, CloudSun, Footprints, House, Pencil, Plus } from 'lucide-react';
+import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import Illustration from '../../illustrations/index.jsx';
+import { cascadeProps, useFirstShow, useMotionAllowed } from '../../ui/motion.js';
 import { geoUrl } from '../../utils/navigation.js';
 import Button from '../ui/Button.jsx';
 import StepCard from './StepCard.jsx';
 import TravelTime from './TravelTime.jsx';
+
+/** Icône du mode de déplacement des trajets entre deux étapes. */
+const MODE_ICONS = { walk: Footprints, transit: BusFront, bike: Bike, car: Car };
 
 /**
  * Une journée du planning : bandeau férié, départ de l'hébergement, étapes,
@@ -24,13 +30,19 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
   const start = lodging(day.startLodgingId);
   const end = lodging(day.endLodgingId);
   const lodgingName = (l) => l.name ?? l.address;
+  // Cascade au premier affichage de cette journée seulement (revenir sur l'onglet ne rejoue rien).
+  const firstShow = useFirstShow(`day:${trip.id}:${day.date}`);
+  const animate = useMotionAllowed() && firstShow;
+  // Prochaine étape du jour en cours : bordure verte.
+  const currentIndex = isToday ? day.steps.findIndex((st) => (st.status ?? 'planned') === 'planned') : -1;
+  const ModeIcon = MODE_ICONS[trip.mode] ?? Footprints;
   const addButton = (afterIndex, label) =>
     !readOnly && (
-      <li className="flex justify-center">
+      <m.li {...cascadeProps(afterIndex + 1, animate)} className="flex justify-center">
         <Button variant="ghost" icon={Plus} onClick={() => onAddStep(afterIndex)}>
           {label}
         </Button>
-      </li>
+      </m.li>
     );
 
   return (
@@ -66,8 +78,8 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
       </div>
 
       {start && day.departure && (
-        <p className="flex items-start gap-2">
-          <House aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-ink-muted" />
+        <p className="flex items-center gap-3">
+          <Illustration name="lodging" className="size-12 shrink-0 rounded-lg" />
           <span>
             {t('planning.departure', { place: lodgingName(start), time: day.departure.time })}{' '}
             <TravelTime minutes={day.departure.travelMin} mode={trip.mode} />
@@ -78,6 +90,12 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
       <ol className="space-y-3">
         {day.steps.map((step, i) => (
           <Fragment key={step.id}>
+            {(i > 0 || start) && step.travelFromPreviousMin > 0 && (
+              <m.li {...cascadeProps(i, animate)} className="flex items-center gap-2 pl-6 text-ink-muted">
+                <ModeIcon aria-hidden="true" className="size-5 shrink-0" />
+                <TravelTime minutes={step.travelFromPreviousMin} mode={trip.mode} />
+              </m.li>
+            )}
             <StepCard
               ref={(el) => stepRefs && (stepRefs.current[step.id] = el)}
               step={step}
@@ -87,11 +105,12 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
               isToday={isToday}
               readOnly={readOnly}
               highlighted={highlightId === step.id}
-              showTravel={i > 0 || Boolean(start)}
+              current={i === currentIndex}
               onEditTime={() => onEditTime(i)}
               onReplace={() => onReplace(i)}
               onEditPersonal={() => onEditPersonal(i)}
               onTrack={(status) => onTrack(i, status)}
+              cascade={{ index: i, animate }}
             />
             {i < day.steps.length - 1 && addButton(i, t('personal.addBetween'))}
           </Fragment>
@@ -100,8 +119,8 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
       </ol>
 
       {end && day.returnTravelMin !== undefined && (
-        <p className="flex items-start gap-2">
-          <House aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-ink-muted" />
+        <p className="flex items-center gap-3">
+          <Illustration name="lodging" className="size-12 shrink-0 rounded-lg" />
           <TravelTime minutes={day.returnTravelMin} mode={trip.mode} label={t('planning.return', { place: lodgingName(end) })} />
         </p>
       )}

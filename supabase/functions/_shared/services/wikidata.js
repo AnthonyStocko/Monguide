@@ -122,21 +122,54 @@ export function bindingsToPlaces(bindings, category) {
 }
 
 /**
+ * Éléments portant l'une des références données (ex. P380 = référence
+ * Mérimée). Références limitées à des lettres et chiffres (aucune injection).
+ * @param {string} property ex. "P380"
+ * @param {string[]} refs
+ */
+export function buildReferenceQuery(property, refs) {
+  const values = refs.filter((r) => /^[A-Za-z0-9]+$/.test(r)).map((r) => `"${r}"`).join(' ');
+  return `SELECT ?item ?ref WHERE { VALUES ?ref { ${values} } ?item wdt:${property} ?ref . }`;
+}
+
+/**
+ * Lignes { item, ref } -> { référence: "Q…" } (premier élément gardé si une
+ * référence en a plusieurs).
+ * @param {any[]} bindings
+ * @returns {Record<string, string>}
+ */
+export function referenceBindingsToMap(bindings) {
+  const map = {};
+  for (const b of bindings) {
+    const qid = b.item?.value?.split('/').pop();
+    const ref = b.ref?.value;
+    if (ref && qid && /^Q\d+$/.test(qid) && !(ref in map)) map[ref] = qid;
+  }
+  return map;
+}
+
+/**
  * Exécute une requête SPARQL. Exception à la règle HTTP globale : délai de
  * 15 s (rules.wikidata.timeoutSec) et un seul essai (aucune nouvelle tentative,
  * en particulier sur 429). En-tête Api-User-Agent en plus du User-Agent, que
  * Supabase complète de sa propre signature.
  * @param {string} query
  * @param {number} timeoutSec
+ * @param {{ post?: boolean }} [options]
  * @returns {Promise<any[]>} lignes (results.bindings)
  */
-export async function runSparql(query, timeoutSec) {
-  const res = await fetchExternal(`${WIKIDATA_URL()}?${new URLSearchParams({ query })}`, {
-    source: 'wikidata',
-    headers: { Accept: 'application/sparql-results+json', 'Api-User-Agent': userAgent() },
-    timeoutMs: timeoutSec * 1000,
-    maxAttempts: 1
-  });
+export async function runSparql(query, timeoutSec, { post = false } = {}) {
+  const headers = { Accept: 'application/sparql-results+json', 'Api-User-Agent': userAgent() };
+  const common = { source: 'wikidata', timeoutMs: timeoutSec * 1000, maxAttempts: 1 };
+  // POST pour les longues listes de valeurs (URL trop longue en GET).
+  const res = post
+    ? await fetchExternal(WIKIDATA_URL(), {
+        ...common,
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ query }).toString()
+      })
+    : await fetchExternal(`${WIKIDATA_URL()}?${new URLSearchParams({ query })}`, { ...common, headers });
   try {
     return (await res.json()).results.bindings;
   } catch {

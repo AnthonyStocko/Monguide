@@ -1,4 +1,5 @@
 import { migrate } from '@domain/migrations.js';
+import { deleteAllTripPhotos, deleteTripPhotos } from './offlineImages.js';
 import * as settings from './settings.js';
 import * as storage from './storage.js';
 
@@ -79,20 +80,29 @@ export async function deleteTrip(id) {
   const trip = await storage.get(`${PREFIX}${id}`);
   if (trip) await saveTrip({ ...trip, deleted: true, updatedAt: new Date().toISOString() });
   if ((await getCurrentTripId()) === id) await settings.remove(CURRENT_KEY);
+  await forgetPhotos(id);
+}
+
+/** Photos enregistrées pour le hors ligne et marque de vérification d'un séjour supprimé. */
+async function forgetPhotos(id) {
+  await deleteTripPhotos(id).catch(() => {});
+  await storage.remove(`tripimgcheck:${id}`).catch(() => {});
 }
 
 /** Efface définitivement un séjour de l'appareil (après synchronisation de sa suppression). */
 export async function purgeTrip(id) {
   await storage.remove(`${PREFIX}${id}`);
   if ((await getCurrentTripId()) === id) await settings.remove(CURRENT_KEY);
+  await forgetPhotos(id);
   listeners.forEach((l) => l(id, { remote: true }));
 }
 
 /** Efface tous les séjours de l'appareil (déconnexion avec effacement, suppression du compte). */
 export async function purgeAllTrips() {
-  const keys = (await storage.keys()).filter((k) => typeof k === 'string' && k.startsWith(PREFIX));
+  const keys = (await storage.keys()).filter((k) => typeof k === 'string' && (k.startsWith(PREFIX) || k.startsWith('tripimgcheck:')));
   await Promise.all(keys.map((k) => storage.remove(k)));
   await settings.remove(CURRENT_KEY);
+  await deleteAllTripPhotos().catch(() => {});
   listeners.forEach((l) => l(null, { remote: true }));
 }
 

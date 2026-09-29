@@ -13,7 +13,11 @@ export const P = {
   /** désignation patrimoniale (monument classé, bien culturel…) */
   heritageDesignation: 'P1435',
   /** nature de l'élément */
-  instanceOf: 'P31'
+  instanceOf: 'P31',
+  /** référence Mérimée (monuments historiques, France) */
+  merimeeId: 'P380',
+  /** référence Muséofile (musées de France) */
+  museofileId: 'P539'
 };
 
 /**

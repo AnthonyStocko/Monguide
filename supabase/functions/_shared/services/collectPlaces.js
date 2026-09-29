@@ -13,12 +13,23 @@ import { osmPlacesSource } from './osmSource.js';
  * @param {number} radiusKm
  * @param {{ lunch: 'market' | 'restaurant' | 'both' }} options
  * @param {import('../providers/types.js').ProviderContext} ctx
+ * @param {(step: 'heritage' | 'places' | 'restaurants', status: 'done' | 'failed') => void} [onProgress]
  */
-export async function collectPlaces(provider, point, radiusKm, { lunch }, ctx) {
+export async function collectPlaces(provider, point, radiusKm, { lunch }, ctx, onProgress = () => {}) {
   const includeRestaurants = lunch !== 'market';
+  // Progression réelle (fonction generate en flux) : chaque source signale sa fin dès qu'elle arrive.
+  const ok = (outcomes) => (outcomes.every((o) => o.status === 'failed') ? 'failed' : 'done');
   const [heritage, osm, terroir] = await Promise.all([
-    provider.heritage(point, radiusKm, ctx),
-    osmPlacesSource(point, radiusKm, includeRestaurants, ctx),
+    provider.heritage(point, radiusKm, ctx).then((outcomes) => {
+      onProgress('heritage', ok(outcomes));
+      return outcomes;
+    }),
+    osmPlacesSource(point, radiusKm, includeRestaurants, ctx).then((outcome) => {
+      onProgress('places', ok([outcome]));
+      // Restaurants : lus dans la même source OSM que les autres lieux.
+      if (includeRestaurants) onProgress('restaurants', ok([outcome]));
+      return outcome;
+    }),
     provider.terroir(point, ctx)
   ]);
 

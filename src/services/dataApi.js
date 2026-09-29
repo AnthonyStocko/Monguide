@@ -1,4 +1,4 @@
-import { callFunction } from './api.js';
+import { callFunction, streamFunction } from './api.js';
 import { getRules } from './rules.js';
 
 /**
@@ -57,12 +57,27 @@ export function getFuel(params) {
 }
 
 /**
- * Génération d'un séjour par le serveur (délai rules.api.generateTimeoutMs).
+ * Photos Wikimedia Commons de lieux (identifiants Wikidata, 30 au plus) et,
+ * facultativement, de la ville de destination (docs/api.md, fonction images).
+ * Pas de cache local : les photos retenues sont enregistrées dans le séjour.
+ * @param {{ wikidataIds: string[], width: 400 | 800, destination?: { name: string, countryCode: string, lat: number, lon: number } }} params
+ * @returns {Promise<{ images: Record<string, object | null>, destination?: { wikidata: string | null } }>}
+ */
+export async function getImages(params) {
+  const { data } = await callFunction('images', { method: 'POST', body: params });
+  return data;
+}
+
+/**
+ * Génération d'un séjour par le serveur (délai rules.api.generateTimeoutMs),
+ * avec sa progression en flux (écran "Préparation du séjour") : onEvent
+ * reçoit les événements start et step au moment où le serveur les envoie.
  * @param {import('@domain/model.js').Trip} tripRequest séjour issu du formulaire
  * @param {'fr' | 'en'} lang
+ * @param {{ onEvent?: (event: object) => void, signal?: AbortSignal }} [options] signal : bouton "Annuler"
  * @returns {Promise<{ trip: object, warnings: object[], sources: object[] }>}
  */
-export async function generateTrip(tripRequest, lang) {
-  const { data } = await callFunction('generate', { method: 'POST', body: { tripRequest, lang }, timeoutMs: getRules().api.generateTimeoutMs });
+export async function generateTrip(tripRequest, lang, { onEvent, signal } = {}) {
+  const { data } = await streamFunction('generate', { body: { tripRequest, lang }, timeoutMs: getRules().api.generateTimeoutMs, onEvent, signal });
   return data;
 }

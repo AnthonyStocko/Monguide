@@ -10,7 +10,8 @@ import { errorResponse, jsonResponse } from './respond.js';
 /**
  * Point d'entrée commun des Edge Functions. Pour chaque requête : CORS,
  * méthode, jeton, versions (contrat et application), limite de requêtes,
- * puis handle(). Réponses JSON ; erreurs { error: { code, message } } ;
+ * puis handle(). Réponses JSON (ou un Response déjà construit, ex. flux
+ * NDJSON de generate) ; erreurs { error: { code, message } } ;
  * une ligne de journal par requête, sans donnée personnelle.
  *
  * @param {{
@@ -38,7 +39,14 @@ export function serveFunction({ name, methods = ['POST'], rateLimitKind = 'defau
       assertMinAppVersion(appVersion, appConfig.minAppVersion);
       await enforceRateLimit({ req, caller, kind: rateLimitKind, rules: appConfig.rules });
 
-      response = jsonResponse(await handle({ req, caller, appConfig }), { headers: cors });
+      const result = await handle({ req, caller, appConfig });
+      // Réponse déjà construite (flux NDJSON) : on n'y ajoute que les en-têtes CORS.
+      if (result instanceof Response) {
+        for (const [k, v] of Object.entries(cors)) result.headers.set(k, v);
+        response = result;
+      } else {
+        response = jsonResponse(result, { headers: cors });
+      }
     } catch (err) {
       if (!(err instanceof AppError)) log('error', 'unhandled_error', { fn: name, message: String(err?.message ?? err) });
       response = errorResponse(err, cors);

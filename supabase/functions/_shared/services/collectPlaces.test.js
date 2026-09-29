@@ -72,4 +72,24 @@ describe('collectPlaces', () => {
     await collectPlaces(provider(), POINT, 20, { lunch: 'market' }, ctx());
     expect(new URLSearchParams(fetchMock.mock.calls[0][1].body).get('data')).not.toContain('restaurant');
   });
+
+  it('progression réelle : une source ralentie volontairement termine son étape en dernier', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ elements: [restaurant] })));
+    const slow = provider();
+    // Patrimoine ralenti de 150 ms : son étape ne peut finir qu'à sa réponse.
+    slow.heritage = vi.fn(() => new Promise((resolve) => setTimeout(() => resolve([{ name: 'monuments', status: 'ok', data: [monument] }]), 150)));
+    const t0 = Date.now();
+    const events = [];
+    await collectPlaces(slow, POINT, 20, { lunch: 'both' }, ctx(), (step, status) => events.push({ step, status, at: Date.now() - t0 }));
+    expect(events.map((e) => e.step)).toEqual(['places', 'restaurants', 'heritage']);
+    expect(events.find((e) => e.step === 'heritage').at).toBeGreaterThanOrEqual(140);
+    expect(events.find((e) => e.step === 'places').at).toBeLessThan(140);
+  });
+
+  it('progression : sans restaurants (déjeuner au marché), pas d’étape restaurants ; source en échec signalée', async () => {
+    fetchMock.mockResolvedValue(new Response('boom', { status: 500 }));
+    const events = [];
+    await collectPlaces(provider({ heritageFails: true }), POINT, 20, { lunch: 'market' }, ctx(), (step, status) => events.push(`${step}:${status}`));
+    expect(events.sort()).toEqual(['heritage:done', 'places:failed']);
+  });
 });

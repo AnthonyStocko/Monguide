@@ -144,6 +144,93 @@ export async function callFunction(name, { method = 'POST', body, timeoutMs, cac
   }
 }
 
+/** Erreur d'une réponse HTTP non 2xx d'un appel direct (fetch). */
+async function httpError(res) {
+  let code = null;
+  try {
+    code = (await res.json())?.error?.code ?? null;
+  } catch {
+    // Corps illisible : code déduit du statut.
+  }
+  const retryAfter = Number(res.headers.get('Retry-After'));
+  const error = new ApiError(code ?? STATUS_CODES[res.status] ?? 'server', {
+    status: res.status,
+    retryAfterSec: Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : null
+  });
+  if (error.code === 'app_outdated') updateListeners.forEach((listener) => listener());
+  return error;
+}
+
+/**
+ * Appelle une Edge Function qui répond en flux NDJSON (docs/api.md,
+ * generate) : chaque événement est transmis à onEvent dès sa réception,
+ * puis le résultat final ({ event: "result" }) est renvoyé. Passe par fetch,
+ * supabase.functions.invoke ne lisant pas les flux. Réponse JSON ordinaire
+ * (flux indisponible) : renvoyée telle quelle, streamed = false.
+ * Annulation par signal : ApiError "cancelled".
+ * @param {string} name
+ * @param {{ body: object, timeoutMs: number, onEvent?: (event: object) => void, signal?: AbortSignal }} options
+ * @returns {Promise<{ data: any, streamed: boolean }>}
+ */
+export async function streamFunction(name, { body, timeoutMs, onEvent = () => {}, signal }) {
+  if (!supabase) throw new ApiError('not_configured');
+  if (!navigator.onLine) throw new ApiError('offline');
+  const publicKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const token = (await supabase.auth.getSession().catch(() => null))?.data?.session?.access_token ?? publicKey;
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  signal?.addEventListener('abort', cancel);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  try {
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: publicKey,
+        'Content-Type': 'application/json',
+        Accept: 'application/x-ndjson',
+        'x-monguide-api': String(API_VERSION),
+        'x-monguide-app': APP_VERSION
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    if (!res.ok) throw await httpError(res);
+    if (!(res.headers.get('content-type') ?? '').includes('application/x-ndjson') || !res.body) return { data: await res.json(), streamed: false };
+
+    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = '';
+    let streamed = false;
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (value) buffer += value;
+      let newline;
+      while ((newline = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, newline).trim();
+        buffer = buffer.slice(newline + 1);
+        if (!line) continue;
+        const { event, ...rest } = JSON.parse(line);
+        if (event === 'result') return { data: rest, streamed };
+        if (event === 'error') throw new ApiError(rest.error?.code ?? 'server');
+        streamed = true;
+        onEvent({ event, ...rest });
+      }
+      if (done) throw new ApiError('server');
+    }
+  } catch (err) {
+    if (signal?.aborted) throw new ApiError('cancelled');
+    if (err instanceof ApiError) throw err;
+    throw new ApiError(timedOut ? 'timeout' : 'network');
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', cancel);
+  }
+}
+
 /** Délai garanti pour un appel au client Supabase (authentification, table trips). */
 function withTimeout(promise, timeoutMs) {
   let timer;

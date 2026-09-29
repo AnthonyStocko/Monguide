@@ -109,7 +109,7 @@ export default function PlacesDebug({ destination }) {
                   <li key={p.id} className="py-2">
                     <span className="font-medium">{placeName(p)}</span>
                     <span className="mt-1 flex flex-wrap gap-2">
-                      <Badge tone="secondary">{t(`certifications.${p.certification}`)}</Badge>
+                      <Badge tone="accent">{t(`certifications.${p.certification}`)}</Badge>
                       <Badge>{t('debug.places.origin', { source: p.source })}</Badge>
                       <Badge>{t(p.indoor === true ? 'debug.places.indoor' : p.indoor === false ? 'debug.places.outdoor' : 'debug.places.unknown')}</Badge>
                     </span>

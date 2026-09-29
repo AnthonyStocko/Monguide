@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { RULES } from '../../domain/config/rules.js';
 import { isPlace } from '../../domain/model.js';
-import { merimeeToPlace, museofileToPlace } from './heritage.js';
+import { linkWikidata, merimeeToPlace, museofileToPlace } from './heritage.js';
+import * as wikidata from '../../services/wikidata.js';
 import { capitalize, parseLatLon } from './dataGouv.js';
 
 describe('merimeeToPlace', () => {
@@ -87,5 +89,44 @@ describe('dataGouv helpers', () => {
   it('met une capitale initiale', () => {
     expect(capitalize('écomusée')).toBe('Écomusée');
     expect(capitalize('')).toBe('');
+  });
+});
+
+describe('linkWikidata', () => {
+  const places = [
+    { id: 'merimee:PA00118090', name: 'Église Notre-Dame-des-Marais', wikidata: undefined },
+    { id: 'merimee:PA00999999', name: 'Sans correspondance' }
+  ];
+  const memoryCache = () => {
+    const store = new Map();
+    return { store, lookup: async (k) => store.get(k), set: async (k, _s, value) => store.set(k, { value, fresh: true }) };
+  };
+  const source = { property: 'P380', prefix: 'merimee:', cacheSource: 'merimee-wikidata' };
+  const params = { lat: 45.99, lon: 4.72, radius: 5 };
+
+  it('ajoute les identifiants trouvés, par référence, et met la correspondance en cache', async () => {
+    const spy = vi.spyOn(wikidata, 'runSparql').mockResolvedValue([
+      { item: { value: 'http://www.wikidata.org/entity/Q2983916' }, ref: { value: 'PA00118090' } }
+    ]);
+    const ctx = { cache: memoryCache(), rules: RULES };
+    const out = await linkWikidata({ name: 'monuments', status: 'ok', data: places }, source, params, ctx);
+    expect(out.data.map((p) => p.wikidata)).toEqual(['Q2983916', undefined]);
+    expect(out.status).toBe('ok');
+    await linkWikidata({ data: places }, source, params, ctx);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][2]).toEqual({ post: true });
+    spy.mockRestore();
+  });
+
+  it('Wikidata en panne : lieux inchangés, rien en cache', async () => {
+    const spy = vi.spyOn(wikidata, 'runSparql').mockRejectedValue(new Error('timeout'));
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const ctx = { cache: memoryCache(), rules: RULES };
+    const outcome = { data: places };
+    expect(await linkWikidata(outcome, source, params, ctx)).toBe(outcome);
+    expect(ctx.cache.store.size).toBe(0);
+    vi.restoreAllMocks();
+    spy.mockRestore();
   });
 });

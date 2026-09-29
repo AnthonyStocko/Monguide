@@ -69,7 +69,9 @@ describe('RULES', () => {
     expect(RULES.cacheTtlSec.geocode).toBe(30 * 24 * 3600);
     expect(RULES.places.regionalCuisines).toEqual(['regional', 'french']);
     expect(RULES.osm.timeoutSec).toBe(8);
-    expect(RULES.wikidata).toEqual({ timeoutSec: 15, limit: 300 });
+    expect(RULES.wikidata).toEqual({ timeoutSec: 15, linkTimeoutSec: 6, linkBatch: 1000, limit: 300 });
+    expect(RULES.cacheTtlSec.images).toBe(30 * 24 * 3600);
+    expect(RULES.images.maxIds).toBe(30);
     expect(RULES.cacheTtlSec.wikidata).toBe(7 * 24 * 3600);
     expect(RULES.cacheTtlSec.holidays).toBe(30 * 24 * 3600);
     expect(RULES.geocode).toMatchObject({ minChars: 3, debounceMs: 300 });

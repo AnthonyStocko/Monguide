@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CalendarDays, CirclePlus, CloudOff, FileDown } from 'lucide-react';
+import { CirclePlus, FileDown, ImageOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { applyChanges } from '@domain/applyChanges.js';
 import { checkDayInvariants } from '@domain/checkDayInvariants.js';
 import { clearResolvedConflicts } from '@domain/conflicts.js';
@@ -20,6 +20,7 @@ import PersonalStepForm from '../components/planning/PersonalStepForm.jsx';
 import ReplanPanel from '../components/planning/ReplanPanel.jsx';
 import ReplaceStepDialog from '../components/planning/ReplaceStepDialog.jsx';
 import TimeEditorDialog from '../components/planning/TimeEditorDialog.jsx';
+import TripHero from '../components/planning/TripHero.jsx';
 import UndoBar from '../components/planning/UndoBar.jsx';
 import Button from '../components/ui/Button.jsx';
 import Card from '../components/ui/Card.jsx';
@@ -30,6 +31,9 @@ import { useCurrentTrip } from '../hooks/useCurrentTrip.js';
 import { useFormat } from '../i18n/useFormat.js';
 import { usePlaceName } from '../i18n/usePlaceName.js';
 import { getWeather } from '../services/dataApi.js';
+import { onConnectionChange } from '../services/network.js';
+import { hapticStepValidated } from '../services/haptics.js';
+import { refreshTripPhotos } from '../services/tripImages.js';
 
 /** En développement : invariants vérifiés après chaque recalcul, sur les journées recalculées (console). */
 function devCheck(before, after, mode, rules) {
@@ -54,7 +58,6 @@ export default function PlanningPage() {
   const [dialog, setDialog] = useState(null);
   const [proposal, setProposal] = useState(null);
   const [undo, setUndo] = useState(null);
-  const [notice, setNotice] = useState(null);
   const [highlightId, setHighlightId] = useState(null);
   const tabRefs = useRef([]);
   const stepRefs = useRef({});
@@ -78,6 +81,26 @@ export default function PlanningPage() {
 
   const expireUndo = useCallback(() => setUndo(null), []);
 
+  // Photos du séjour (après la génération, jamais par elle) et copie hors ligne ;
+  // nouvel essai quand le Wi-Fi revient si le réglage l'avait empêchée.
+  const [photos, setPhotos] = useState(null);
+  const shownTripId = status === 'ready' ? trip.id : null;
+  useEffect(() => {
+    setPhotos(null);
+    if (!shownTripId) return undefined;
+    let alive = true;
+    const run = () =>
+      refreshTripPhotos(shownTripId)
+        .then((record) => alive && setPhotos(record))
+        .catch(() => {});
+    run();
+    const stop = onConnectionChange((type) => type === 'wifi' && run());
+    return () => {
+      alive = false;
+      stop();
+    };
+  }, [shownTripId]);
+
   if (status === 'loading') {
     return (
       <Page>
@@ -93,7 +116,7 @@ export default function PlanningPage() {
       <Page>
         <Card>
           <EmptyState
-            icon={CalendarDays}
+            illustration="noTrips"
             title={t('planning.emptyTitle')}
             description={t('planning.emptyText')}
             action={
@@ -145,7 +168,10 @@ export default function PlanningPage() {
   const track = async (stepIndex, stepStatus) => {
     const step = current.steps[stepIndex];
     const now = nowInZone(trip.timezone);
+    const before = trip;
     let next = await save(setStepStatus(trip, day, step.id, stepStatus, now.time));
+    // Validée : coche animée (StepCard) et vibration légère.
+    if (stepStatus === 'done') hapticStepValidated();
     // Météo : seulement en ligne, via la fonction weather (met aussi à jour Day.weather).
     let online = navigator.onLine;
     if (online) {
@@ -163,8 +189,10 @@ export default function PlanningPage() {
     }
     const result = reevaluatePlanning(next, day, step.id, { now: now.time, online, today: now.date }, rules);
     const doneText = t(stepStatus === 'done' ? 'tracking.doneNotice' : 'tracking.skippedNotice');
+    const message = result.weatherChecked ? doneText : `${doneText} · ${t('replan.weatherOffline')}`;
     if (result.changes.length) setProposal({ kind: 'tracking', base: next, result });
-    else setNotice(result.weatherChecked ? doneText : `${doneText} · ${t('replan.weatherOffline')}`);
+    // Message en bas d'écran avec "Annuler" (retour à l'état d'avant la validation).
+    setUndo({ previous: before, message });
   };
 
   // --- Étapes personnelles ---
@@ -231,15 +259,30 @@ export default function PlanningPage() {
 
   return (
     <Page>
-      <header className="space-y-2">
-        <h2 className="text-2xl font-bold">{trip.title}</h2>
-        <p className="text-ink-muted">
-          {format.date(`${trip.startDate}T12:00:00Z`, { dateStyle: 'long', timeZone: 'UTC' })} – {format.date(`${trip.endDate}T12:00:00Z`, { dateStyle: 'long', timeZone: 'UTC' })}
-        </p>
+      <TripHero
+        trip={trip}
+        kicker={t('planning.dayOf', {
+          day: day + 1,
+          total: trip.days.length,
+          date: format.date(`${current.date}T12:00:00Z`, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+        })}
+      >
         <Button variant="secondary" icon={FileDown} onClick={() => setDialog({ kind: 'export' })}>
           {t('export.button')}
         </Button>
-      </header>
+      </TripHero>
+
+      {photos?.status === 'wifi_only' && (
+        <p role="status" className="flex items-start gap-2 rounded-xl bg-secondary-soft px-3 py-2 text-secondary-on-soft">
+          <ImageOff aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+          <span>
+            <span className="block">{t('photos.wifiOnly')}</span>
+            <Link to="/settings" className="inline-flex min-h-12 items-center font-semibold underline underline-offset-2">
+              {t('photos.settingsLink')}
+            </Link>
+          </span>
+        </p>
+      )}
 
       {readOnly && (
         <p role="status" className="rounded-xl bg-warning-soft px-3 py-2 font-medium text-warning-on-soft">
@@ -260,21 +303,13 @@ export default function PlanningPage() {
             tabIndex={i === day ? 0 : -1}
             onClick={() => setDayIndex(i)}
             onKeyDown={(e) => onTabKey(e, i)}
-            className={`min-h-12 shrink-0 rounded-xl px-4 font-semibold first-letter:uppercase ${i === day ? 'bg-primary-strong text-white' : 'bg-subtle text-ink hover:bg-line'}`}
+            className={`min-h-12 min-w-24 flex-1 shrink-0 rounded-xl border px-4 font-semibold first-letter:uppercase ${i === day ? 'border-ink bg-ink text-white' : 'border-line bg-surface text-ink hover:bg-subtle'}`}
           >
             {tabLabel(d)}
           </button>
         ))}
       </div>
 
-      <div role="status" aria-live="polite">
-        {notice && (
-          <p className="flex items-center gap-2 rounded-xl bg-subtle px-3 py-2">
-            {notice.includes(t('replan.weatherOffline')) && <CloudOff aria-hidden="true" className="size-5 shrink-0" />}
-            {notice}
-          </p>
-        )}
-      </div>
 
       <section role="tabpanel" id={`panel-${day}`} aria-labelledby={`tab-${day}`} tabIndex={0}>
         <DayView

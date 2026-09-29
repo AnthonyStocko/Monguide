@@ -10,7 +10,11 @@ const TABS = [
   { to: '/favorites', label: 'nav.favorites', icon: Heart }
 ];
 
-/** Barre d'onglets fixe en bas de l'écran, au-dessus de la zone sûre. */
+/**
+ * Barre d'onglets fixe en bas de l'écran, au-dessus de la zone sûre. Onglet
+ * actif : pastille colorée derrière l'icône, libellé en vert et en gras
+ * (jamais la couleur seule), aria-current posé par NavLink.
+ */
 export default function BottomNav() {
   const { t } = useTranslation();
   return (
@@ -22,13 +26,24 @@ export default function BottomNav() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex h-[var(--nav-height)] flex-col items-center justify-center gap-1 px-1 text-base leading-tight ${
-                  isActive ? 'bg-primary-soft font-semibold text-primary-strong' : 'text-ink-muted hover:bg-subtle'
+                `group flex h-[var(--nav-height)] flex-col items-center justify-center gap-1 px-1 text-base leading-tight ${
+                  isActive ? 'font-semibold text-primary-strong' : 'text-ink-muted'
                 }`
               }
             >
-              <Icon aria-hidden="true" className="size-6" />
-              <span>{t(label)}</span>
+              {({ isActive }) => (
+                <>
+                  <span className="relative flex h-8 w-16 items-center justify-center">
+                    {isActive ? (
+                      <span aria-hidden="true" className="absolute inset-0 rounded-full bg-primary-soft motion-ok:animate-pop-in" />
+                    ) : (
+                      <span aria-hidden="true" className="absolute inset-0 rounded-full group-hover:bg-subtle" />
+                    )}
+                    <Icon aria-hidden="true" className="relative size-6" />
+                  </span>
+                  <span>{t(label)}</span>
+                </>
+              )}
             </NavLink>
           </li>
         ))}

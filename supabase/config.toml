@@ -458,6 +458,11 @@ verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/generate/index.js"
 
+[functions.images]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/images/index.js"
+
 [functions.delete-account]
 verify_jwt = true
 import_map = "./functions/deno.json"

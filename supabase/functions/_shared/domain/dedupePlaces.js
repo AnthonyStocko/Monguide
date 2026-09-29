@@ -37,7 +37,9 @@ const wikidataOf = (p) => p.wikidata ?? (p.id.startsWith('wikidata:') ? p.id.sli
  *  1. même identifiant de lieu ;
  *  2. même identifiant Wikidata (ex. un lieu OSM tagué wikidata=Q… et
  *     l'élément Wikidata correspondant), quelle que soit la distance ;
- *  3. nom similaire (similarNames) à moins de `maxDistanceM` mètres.
+ *  3. nom similaire (similarNames) à moins de `maxDistanceM` mètres ; le
+ *     doublon écarté transmet alors son identifiant Wikidata au lieu gardé
+ *     qui n'en a pas (copie, l'entrée n'est pas modifiée).
  * Les lieux certifiés sont gardés en priorité ; l'ordre d'origine est
  * conservé sinon.
  * @template {{ id: string, name: string, lat: number, lon: number, certified: boolean, wikidata?: string }} P
@@ -49,18 +51,29 @@ export function dedupePlaces(places, maxDistanceM) {
   const ordered = [...places].sort((a, b) => Number(b.certified) - Number(a.certified));
   /** @type {P[]} */
   const kept = [];
+  /** Lieu d'origine de chaque entrée de kept. */
+  const origins = [];
   const ids = new Set();
   const qids = new Set();
   for (const place of ordered) {
     if (ids.has(place.id)) continue;
     const qid = wikidataOf(place);
     if (qid && qids.has(qid)) continue;
-    const duplicate = kept.some((k) => distanceKm(k, place) * 1000 <= maxDistanceM && similarNames(k.name, place.name));
-    if (duplicate) continue;
+    const index = kept.findIndex((k) => distanceKm(k, place) * 1000 <= maxDistanceM && similarNames(k.name, place.name));
+    if (index >= 0) {
+      // Le doublon écarté transmet son identifiant Wikidata (photo, dédoublonnage) au lieu gardé qui n'en a pas.
+      if (qid && !wikidataOf(kept[index])) {
+        kept[index] = { ...kept[index], wikidata: qid };
+        qids.add(qid);
+      }
+      continue;
+    }
     ids.add(place.id);
     if (qid) qids.add(qid);
     kept.push(place);
+    origins.push(place);
   }
-  const keptSet = new Set(kept);
-  return places.filter((p) => keptSet.has(p));
+  // Ordre d'origine conservé ; chaque lieu gardé remplacé par sa version éventuellement complétée.
+  const result = new Map(origins.map((o, i) => [o, kept[i]]));
+  return places.filter((p) => result.has(p)).map((p) => result.get(p));
 }

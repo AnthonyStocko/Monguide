@@ -7,7 +7,15 @@ import { Preferences } from '@capacitor/preferences';
  */
 
 export const SETTINGS_KEYS = {
-  language: 'language'
+  language: 'language',
+  /** Photos enregistrées pour le hors ligne seulement en Wi-Fi (true par défaut). */
+  imagesWifiOnly: 'imagesWifiOnly',
+  /** Réglage "Réduire les animations" (false par défaut). */
+  reduceMotion: 'reduceMotion',
+  /** Vibrations (true par défaut). */
+  haptics: 'haptics',
+  /** Écrans d'accueil du premier lancement déjà vus (ou passés). */
+  onboardingDone: 'onboardingDone'
 };
 
 /**

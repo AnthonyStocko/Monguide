@@ -1,73 +1,81 @@
 import { forwardRef } from 'react';
-import { BadgeCheck, CircleCheck, Clock, CloudRain, Globe, Navigation, Pencil, Replace, SkipForward, TriangleAlert, UserPen } from 'lucide-react';
+import { BadgeCheck, CircleCheck, CloudRain, Globe, Navigation, Pencil, Replace, SkipForward, TriangleAlert, UserPen } from 'lucide-react';
+import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { averageRain } from '@domain/weatherArbitration.js';
 import { usePlaceName } from '../../i18n/usePlaceName.js';
 import { geoUrl, webUrl } from '../../utils/navigation.js';
+import { illustrationForStep } from '../../illustrations/index.jsx';
 import Badge from '../ui/Badge.jsx';
 import Button from '../ui/Button.jsx';
-import { CATEGORY_ICONS } from './categories.js';
+import { usePhoto } from '../ui/Photo.jsx';
+import { cascadeProps } from '../../ui/motion.js';
+import ValidatedCheck from '../../ui/ValidatedCheck.jsx';
 import RestaurantDetails from './RestaurantDetails.jsx';
-import TravelTime from './TravelTime.jsx';
 
 const STATUS_TONES = { planned: 'neutral', done: 'primary', skipped: 'warning' };
 
 /**
- * Carte d'une étape du planning : horaire (bouton de réglage), statut
- * (prévue, terminée, passée), lieu, badges, trajet estimé, itinéraire, site
- * du lieu (hors restaurant, qui a le sien) et remplacement. Jour en cours :
- * "Valider cette étape" et "Passer cette étape". Étape personnelle : modifier ou supprimer (jamais remplacée).
+ * Carte d'une étape du planning : vignette à gauche (photo du lieu et son
+ * crédit écrit en clair, sinon illustration de sa catégorie), plage horaire
+ * (bouton de réglage), statut, nom, type et badges ; itinéraire, site du
+ * lieu (hors restaurant, qui a le sien) et remplacement. current : prochaine
+ * étape du jour (bordure verte). Jour en cours : "Valider cette étape" et
+ * "Passer cette étape". Étape personnelle : modifier ou supprimer (jamais
+ * remplacée). Les trajets "≈" entre deux cartes sont affichés par DayView.
  * @param {{
- *   step: object, day: object, trip: object, rules: any, showTravel: boolean, isToday: boolean, highlighted?: boolean, readOnly?: boolean,
- *   onEditTime: () => void, onReplace: () => void, onEditPersonal: () => void, onTrack: (status: 'done' | 'skipped') => void
+ *   step: object, day: object, trip: object, rules: any, isToday: boolean, highlighted?: boolean, current?: boolean, readOnly?: boolean,
+ *   onEditTime: () => void, onReplace: () => void, onEditPersonal: () => void, onTrack: (status: 'done' | 'skipped') => void,
+ *   cascade?: { index: number, animate: boolean }
  * }} props
  */
-const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTime, onReplace, onEditPersonal, onTrack, showTravel, isToday, highlighted, readOnly }, ref) {
+const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTime, onReplace, onEditPersonal, onTrack, isToday, highlighted, current = false, readOnly, cascade = { index: 0, animate: false } }, ref) {
   const { t } = useTranslation();
   const { placeName } = usePlaceName();
   const place = step.place;
   const personal = step.type === 'personal';
-  const Icon = personal ? CATEGORY_ICONS.personal : place ? CATEGORY_ICONS[place.category] : Clock;
   const rain = day.weatherAvailable && day.weather ? averageRain(day.weather, step.start, step.end) : null;
   const outdoor = place ? place.indoor !== true : personal && step.indoor === false;
   const status = step.status ?? 'planned';
   const title = personal ? step.title : place ? placeName(place) : t('generation.freeTime');
+  // Toujours une image : photo du lieu, sinon illustration de sa catégorie (ou du type d'étape).
+  // Crédit écrit en clair sous la carte (maquette), pas derrière un bouton.
+  const photo = usePhoto({ image: personal ? null : place?.image, illustration: illustrationForStep(step), className: 'size-20 shrink-0 rounded-xl', credit: 'inline' });
 
   return (
-    <li
+    <m.li
+      {...cascadeProps(cascade.index, cascade.animate)}
       ref={ref}
       id={`step-${step.id}`}
       tabIndex={-1}
-      className={`space-y-3 rounded-2xl border bg-surface p-4 shadow-sm ${highlighted ? 'border-primary-strong ring-2 ring-primary-strong' : 'border-line'}`}
+      className={`space-y-3 rounded-3xl border-2 bg-surface p-3 shadow-sm ${highlighted ? 'border-primary-strong ring-2 ring-primary-strong' : current ? 'border-primary' : 'border-transparent'}`}
     >
-      {showTravel && step.travelFromPreviousMin > 0 && (
-        <p className="text-ink-muted">
-          <TravelTime minutes={step.travelFromPreviousMin} mode={trip.mode} label={t('planning.fromPrevious')} />
-        </p>
-      )}
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={personal ? onEditPersonal : onEditTime}
-          disabled={readOnly}
-          aria-label={t('planning.editTime', { start: step.start, end: step.end })}
-          className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-line px-3 text-lg font-bold hover:bg-subtle disabled:hover:bg-transparent"
-        >
-          {step.start} – {step.end}
-          {step.customTime && !personal && <UserPen aria-label={t('planning.customTime')} className="size-5 text-secondary-strong" />}
-        </button>
-        <span className="text-ink-muted">{t(`generation.stepTypes.${step.type}`)}</span>
-        <Badge tone={STATUS_TONES[status]}>{t(`tracking.status.${status}`)}</Badge>
-      </div>
-
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft">
-          <Icon aria-hidden="true" className="size-6 text-primary-strong" />
-        </span>
-        <div className="flex-1 space-y-1">
-          <h4 className="text-lg font-semibold">{title}</h4>
+        {photo.media}
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <button
+              type="button"
+              onClick={personal ? onEditPersonal : onEditTime}
+              disabled={readOnly}
+              aria-label={t('planning.editTime', { start: step.start, end: step.end })}
+              className="-ml-2 inline-flex min-h-12 items-center gap-2 rounded-xl px-2 font-bold text-ink-muted hover:bg-subtle disabled:hover:bg-transparent"
+            >
+              {step.start} – {step.end}
+              {step.customTime && !personal && <UserPen aria-label={t('planning.customTime')} className="size-5 text-secondary-strong" />}
+            </button>
+            <span className="inline-flex items-center gap-1">
+              {/* Validée pendant l'affichage : coche qui apparaît en pop et se dessine. */}
+              <ValidatedCheck status={status} />
+              <Badge tone={STATUS_TONES[status]}>{t(`tracking.status.${status}`)}</Badge>
+            </span>
+          </div>
+          <h4 className="text-lg leading-snug">{title}</h4>
+          <p className="text-ink-muted">
+            {t(`generation.stepTypes.${step.type}`)}
+            {!personal && place ? ` · ${t(`categories.${place.category}`)}` : ''}
+          </p>
           {personal && place?.address && <p className="text-ink-muted">{place.address}</p>}
-          {!personal && place && <p className="text-ink-muted">{t(`categories.${place.category}`)}</p>}
           <div className="flex flex-wrap gap-2">
             {step.conflicts?.length > 0 && (
               <Badge tone="danger" icon={TriangleAlert}>
@@ -75,7 +83,7 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
               </Badge>
             )}
             {place?.certified && place.certification && (
-              <Badge tone="secondary" icon={BadgeCheck}>
+              <Badge tone="accent" icon={BadgeCheck}>
                 {t(`certifications.${place.certification}`)}
               </Badge>
             )}
@@ -92,6 +100,7 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
           {step.specialties?.length > 0 && <p>{t('generation.specialties', { list: step.specialties.join(', ') })}</p>}
         </div>
       </div>
+      {photo.creditBlock}
 
       {place?.food && <RestaurantDetails place={place} date={day.date} countryCode={trip.destination.countryCode} badges={step.badges} />}
 
@@ -138,7 +147,7 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
             </Button>
           ))}
       </div>
-    </li>
+    </m.li>
   );
 });
 

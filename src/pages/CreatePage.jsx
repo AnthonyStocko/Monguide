@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarDays, CircleCheck, CirclePlus } from 'lucide-react';
+import { CalendarDays, CircleCheck, CirclePlus, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { setCurrentTripId } from '../services/tripsStore.js';
 import { useTranslation } from 'react-i18next';
@@ -9,11 +9,14 @@ import TripPreview from '../components/trip/TripPreview.jsx';
 import TripStepper from '../components/trip-form/TripStepper.jsx';
 import Button from '../components/ui/Button.jsx';
 import Card from '../components/ui/Card.jsx';
+import EmptyState from '../components/ui/EmptyState.jsx';
+import { useOnlineStatus } from '../hooks/useOnlineStatus.js';
 
 export default function CreatePage() {
   const { t } = useTranslation();
   const [created, setCreated] = useState(null);
   const navigate = useNavigate();
+  const online = useOnlineStatus();
   const openPlanning = async () => {
     await setCurrentTripId(created.trip.id);
     navigate(`/planning/${created.trip.id}`);
@@ -42,6 +45,21 @@ export default function CreatePage() {
 
   return (
     <Page>
+      {/* Hors ligne : le formulaire reste accessible (brouillon enregistré), la génération attendra le réseau. */}
+      {!online && (
+        <Card>
+          <EmptyState
+            illustration="offline"
+            title={t('tripForm.offlineTitle')}
+            description={t('tripForm.offlineText')}
+            action={
+              <Button variant="secondary" icon={Heart} onClick={() => navigate('/favorites')}>
+                {t('tripForm.offlineAction')}
+              </Button>
+            }
+          />
+        </Card>
+      )}
       <TripStepper onCreated={setCreated} />
     </Page>
   );

@@ -4,6 +4,9 @@ import { Link } from 'react-router';
 import DeleteAccountSection from '../components/account/DeleteAccountSection.jsx';
 import Page from '../components/layout/Page.jsx';
 import NotificationsSection from '../components/settings/NotificationsSection.jsx';
+import PhotosSection from '../components/settings/PhotosSection.jsx';
+import HapticsSwitch from '../components/settings/HapticsSwitch.jsx';
+import ReduceMotionSwitch from '../components/settings/ReduceMotionSwitch.jsx';
 import Card from '../components/ui/Card.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 import { setLanguage } from '../i18n/index.js';
@@ -46,7 +49,17 @@ export default function SettingsPage() {
         </fieldset>
       </Card>
 
+      <Card as="section" className="space-y-2">
+        <h2 className="text-xl">{t('motion.title')}</h2>
+        <p className="text-ink-muted">{t('motion.hint')}</p>
+        <ReduceMotionSwitch />
+        <HapticsSwitch />
+        <p className="text-ink-muted">{t('motion.hapticsHint')}</p>
+      </Card>
+
       <NotificationsSection />
+
+      <PhotosSection />
 
       <Card as="section" className="space-y-1 p-2">
         {link('/account', UserRound, session ? t('auth.myAccount') : t('auth.title'))}

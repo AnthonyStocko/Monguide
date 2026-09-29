@@ -27,6 +27,38 @@ export async function cacheLookup(key) {
 }
 
 /**
+ * Lit plusieurs entrées en une requête (même expirées).
+ * @param {string[]} keys
+ * @returns {Promise<Map<string, { value: unknown, fresh: boolean }>>} entrées trouvées ; vide si le cache est en panne
+ */
+export async function cacheLookupMany(keys) {
+  const found = new Map();
+  if (!keys.length) return found;
+  const { data, error } = await getAdminClient().from('api_cache').select('key, value, expires_at').in('key', keys);
+  if (error) {
+    log('warn', 'cache_read_failed', { code: error.code });
+    return found;
+  }
+  for (const row of data ?? []) found.set(row.key, { value: row.value, fresh: Date.parse(row.expires_at) > Date.now() });
+  return found;
+}
+
+/**
+ * Écrit plusieurs entrées d'une même source en une requête.
+ * @param {{ key: string, value: unknown }[]} entries
+ * @param {string} source
+ * @param {number} ttlSec
+ */
+export async function cacheSetMany(entries, source, ttlSec) {
+  if (!entries.length) return;
+  const expiresAt = new Date(Date.now() + ttlSec * 1000).toISOString();
+  const { error } = await getAdminClient()
+    .from('api_cache')
+    .upsert(entries.map(({ key, value }) => ({ key, source, value, expires_at: expiresAt })));
+  if (error) log('warn', 'cache_write_failed', { code: error.code, source });
+}
+
+/**
  * @param {string} key
  * @returns {Promise<unknown | undefined>} undefined si absente ou expirée
  */

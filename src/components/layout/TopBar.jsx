@@ -1,4 +1,4 @@
-import { ArrowLeft, Settings } from 'lucide-react';
+import { ArrowLeft, Leaf, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import Button from '../ui/Button.jsx';
@@ -13,13 +13,15 @@ const TITLES = {
   '/favorites': 'nav.favorites',
   '/settings': 'nav.settings',
   '/debug': 'debug.title',
+  '/debug/theme': 'debugTheme.title',
+  '/debug/illustrations': 'debugIllustrations.title',
   '/account': 'auth.title',
   '/privacy': 'privacy.title',
   '/about': 'about.title'
 };
 
 // Pages secondaires : bouton Retour au lieu du bouton Réglages.
-const SUB_PAGES = ['/settings', '/debug', '/account', '/privacy', '/about'];
+const SUB_PAGES = ['/settings', '/debug', '/debug/theme', '/debug/illustrations', '/account', '/privacy', '/about'];
 
 export default function TopBar() {
   const { t } = useTranslation();
@@ -34,6 +36,11 @@ export default function TopBar() {
     <header className="sticky top-0 z-[1100] border-b border-line bg-surface pt-safe">
       <div className="flex min-h-14 items-center gap-1 px-2">
         {isSubPage && <Button variant="ghost" icon={ArrowLeft} aria-label={t('common.back')} onClick={goBack} />}
+        {location.pathname === '/' && (
+          <span aria-hidden="true" className="ml-2 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-strong">
+            <Leaf className="size-5 text-white" />
+          </span>
+        )}
         <h1 className="flex-1 px-2 text-xl font-bold">{t(TITLES[location.pathname] ?? (location.pathname.startsWith('/planning/') ? 'nav.planning' : 'app.name'))}</h1>
         <SyncIndicator />
         {!isSubPage && (

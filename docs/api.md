@@ -251,6 +251,11 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
     dédoublonnés : même identifiant Wikidata (`wikidata`), puis même nom à
     moins de `places.dedupDistanceM` mètres ; le lieu certifié l'emporte.
     `source` indique l'origine : `merimee`, `museofile`, `wikidata`, `osm`.
+    France : les monuments Mérimée et les musées Muséofile reçoivent leur
+    `wikidata` par leur référence (propriétés P380 et P539, une requête
+    SPARQL groupée, mise en cache 30 jours par zone ; un échec laisse les
+    lieux sans identifiant, sans erreur). Un doublon écarté transmet son
+    `wikidata` au lieu gardé qui n'en a pas.
   - `appellations` : AOC/AOP de la commune de destination (`local: true`) et
     des communes voisines (`terroir.neighborRadiusKm`).
   - `sources[].status` : `ok` (réponse fraîche), `cache` (cache partagé, y
@@ -312,6 +317,81 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
   lues (`osm.tiles.memoryCacheMb`).
 - **Erreurs** : codes communs ; `400 unsupported_country` si `countryCode`
   n'est pas pris en charge.
+
+### `images` — photos des lieux (Wikimedia Commons)
+
+Photo principale (propriété Wikidata P18) de lieux et de la destination,
+avec son crédit. Seules les licences libres compatibles sont retenues :
+domaine public, CC0, CC BY et CC BY-SA (toutes versions et adaptations
+nationales). Autre licence, licence absente, ou CC BY sans auteur connu :
+pas d'image. La génération n'appelle jamais cette fonction (budget de
+20 s) : l'application l'appelle après avoir reçu le séjour.
+
+- **Méthode** : `POST`
+- **Entrée** (corps JSON) :
+
+  | Champ | Type | Description |
+  |---|---|---|
+  | `wikidataIds` | tableau de `Q…`, 30 au plus (`images.maxIds`), doublons ignorés | lieux dont on veut la photo (`Place.wikidata`) |
+  | `width` | `400` \| `800` | largeur d'affichage visée, en pixels |
+  | `destination` | objet facultatif `{ name, countryCode, lat, lon }` | ville de destination dont on veut l'identifiant Wikidata et la photo (voir ci-dessous) |
+
+  `wikidataIds` peut être vide si `destination` est fourni.
+
+- **Sortie** :
+
+  ```json
+  {
+    "images": {
+      "Q2983916": {
+        "thumbUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Katedra_w_Villefranche_-_panoramio.jpg/500px-Katedra_w_Villefranche_-_panoramio.jpg",
+        "width": 500,
+        "height": 666,
+        "credit": {
+          "author": "Andrzej Harassek",
+          "license": "CC BY-SA 3.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Katedra_w_Villefranche_-_panoramio.jpg"
+        }
+      },
+      "Q42": null
+    },
+    "destination": { "wikidata": "Q208770" }
+  }
+  ```
+
+  - `images[qid]` : format `PlaceImage` (`model.js`), ou `null` = pas
+    d'image utilisable (pas de P18, licence refusée, fichier introuvable).
+    Un identifiant **absent** de `images` n'a pas pu être vérifié (Wikidata
+    ou Commons indisponible) : l'application redemandera plus tard.
+  - `thumbUrl` : toujours sur `https://upload.wikimedia.org/` (seul domaine
+    d'images que l'application charge directement), sans paramètre. Commons
+    ne sert plus que des largeurs standard : le fichier fait au moins la
+    largeur demandée (500 px pour 400, 960 px pour 800), sauf si l'original
+    est plus petit (l'original est alors renvoyé). `width` et `height` sont
+    les dimensions réelles du fichier.
+  - `credit.author` : texte seul (le HTML des métadonnées Commons est
+    retiré), 120 caractères au plus ; absent si inconnu (domaine public ou
+    CC0 uniquement). `credit.licenseUrl` : absent pour le domaine public.
+  - `destination` (si demandé) : `wikidata` = identifiant de la ville, ou
+    `null` si aucun élément ne correspond. Photon ne fournit pas
+    l'identifiant Wikidata des communes (vérifié le 2026-09-29) : le serveur
+    le cherche par nom (`wbsearchentities`, en français puis en anglais),
+    en gardant le premier résultat, dans l'ordre de pertinence, situé à
+    moins de `images.cityMaxDistanceKm` (15 km) de la destination (position
+    lue par `prop=coordinates`). Sa photo figure dans `images` sous cet
+    identifiant. Wikidata indisponible : `destination` est omis.
+
+- **Sources** : API Wikidata (fichier P18 lu dans `pageprops.page_image_free`,
+  `wbsearchentities`, `prop=coordinates`) et API
+  Commons (`prop=imageinfo`, `iiprop=url|size|extmetadata`), requêtes
+  groupées (50 identifiants ou fichiers au plus par appel), User-Agent
+  Mon guide et `Api-User-Agent` (politique User-Agent de Wikimedia).
+- **Cache serveur** : `cacheTtlSec.images` (30 jours) par identifiant et
+  par largeur, y compris les `null` (pas redemandés pendant 30 jours) ;
+  recherche de la ville : même durée, clé nom + pays + position arrondie.
+- **Erreurs** : codes communs. Wikidata ou Commons indisponible : pas
+  d'erreur, les identifiants non vérifiés sont omis.
 
 ### `holidays` — jours fériés
 
@@ -384,6 +464,42 @@ rien n'est modifié.
   arrière-plan et remplissent le cache). L'application attend
   `api.generateTimeoutMs` (25 s). Limites Supabase vérifiées le 2026-09-24 :
   150 s de durée, 2 s de temps CPU par requête, 256 Mo.
+- **Progression en flux** (écran « Préparation du séjour ») : avec l'en-tête
+  `Accept: application/x-ndjson`, la réponse `200` est un flux NDJSON
+  (`Content-Type: application/x-ndjson`), un objet JSON par ligne, envoyé
+  au moment où l'événement réel se produit (fin d'une source, jamais une
+  minuterie) :
+
+  ```
+  {"event":"start","steps":["weather","heritage","places","restaurants","planning"]}
+  {"event":"step","step":"weather","status":"running"}
+  {"event":"step","step":"heritage","status":"running"}
+  …
+  {"event":"step","step":"places","status":"done"}
+  {"event":"step","step":"heritage","status":"failed","message":"timeout"}
+  {"event":"step","step":"planning","status":"running"}
+  {"event":"step","step":"planning","status":"done"}
+  {"event":"result","trip":Trip,"warnings":[…],"sources":[…]}
+  ```
+
+  - Étapes : `weather` (prévisions), `heritage` (monuments et musées),
+    `places` (lieux OpenStreetMap : marchés, nature, petit patrimoine),
+    `restaurants` (restaurants OpenStreetMap, lus dans la même source que
+    `places` : absente avec `lunch: "market"`), `planning` (organisation des
+    journées). Les sources partent en parallèle : toutes les étapes de
+    collecte sont `running` dès le début. Plusieurs zones de collecte : une
+    étape est finie quand toutes ses zones ont répondu, `failed` si toutes
+    ont échoué ; budget épuisé : `failed` avec `message: "timeout"` (ou
+    `done` si une zone a répondu).
+  - Dernière ligne : `{"event":"result", …}` (même contenu que la sortie
+    JSON), ou `{"event":"error","error":{"code","message"}}` si la génération
+    échoue après le début du flux. Les erreurs d'entrée, de version ou de
+    limite de requêtes restent des réponses JSON d'erreur ordinaires.
+  - Sans cet en-tête : réponse JSON unique (compatibilité). L'application lit
+    le flux avec `fetch` (`supabase.functions.invoke` ne le permet pas) ; si
+    la réponse arrive en JSON ou d'un seul bloc (flux indisponible ou mis en
+    mémoire tampon par un intermédiaire), elle affiche une progression
+    indéterminée, sans étapes cochées.
 - **Erreurs** : codes communs ; `400 unsupported_country`.
 
 ### Table `trips` — séjours des comptes (accès direct, RLS)
@@ -439,3 +555,5 @@ pg_cron `monguide-purge-deleted-trips` efface les marqueurs de plus de
 | 1 | 2026-09-25 | Ajouts compatibles : lieux OSM lus dans des tuiles statiques (réglage `osm.source`) ; source `osm` avec `source`, `dataDate`, `tilesRead`, `timings`, message `not_covered` ; `Place.unnamed` ; alerte `source_failed` avec `message` ; champ `osm` de `config`. |
 | 1 | 2026-09-28 | Ajout compatible : `Place.names` (variantes du nom par langue). `Place.name` d'un lieu OSM devient le `name` OSM tel quel (auparavant la variante de la langue demandée, désormais dans `names`). |
 | 1 | 2026-09-28 | Ajouts compatibles : lieux OSM de plusieurs pays (tuiles de tous les pays importés qui touchent la zone) ; source `osm` avec `status: "partial"`, `missingCountries`, `dataDates`, `tilesByCountry` ; alerte `places_partial` de `generate` ; `config.osm.countries` (date des données par pays importé). |
+| 1 | 2026-09-29 | Ajouts compatibles : fonction `images` (photos Wikimedia Commons et crédits) ; `Place.image`, `Trip.hero`, `Trip.destination.wikidata` ; `places` : `wikidata` des lieux Mérimée et Muséofile. |
+| 1 | 2026-09-29 | Ajout compatible : `generate` en flux NDJSON (`Accept: application/x-ndjson`), événements `start`, `step`, `result`, `error`. |

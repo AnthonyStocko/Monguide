@@ -1,7 +1,10 @@
 import { classifyIndoor } from '../../domain/classifyIndoor.js';
 import { distanceKm } from '../../domain/geo.js';
+import { log } from '../../log.js';
 import { cachedValue } from '../../services/cachedValue.js';
 import { runSource } from '../../services/sourceRunner.js';
+import { buildReferenceQuery, referenceBindingsToMap, runSparql } from '../../services/wikidata.js';
+import { P } from '../eu/wikidata-config.js';
 import { departmentsAround } from './admin.js';
 import { capitalize, fetchTabularRows, parseLatLon, resolveCsvResource } from './dataGouv.js';
 
@@ -128,5 +131,37 @@ export function heritage(point, radiusKm, ctx) {
     }
   });
 
-  return Promise.all([monuments, museums]);
+  return Promise.all([
+    monuments.then((o) => linkWikidata(o, { property: P.merimeeId, prefix: 'merimee:', cacheSource: 'merimee-wikidata' }, params, ctx)),
+    museums.then((o) => linkWikidata(o, { property: P.museofileId, prefix: 'musee:', cacheSource: 'museofile-wikidata' }, params, ctx))
+  ]);
+}
+
+/**
+ * Ajoute leur identifiant Wikidata aux lieux Mérimée ou Muséofile, retrouvé
+ * par leur référence (P380, P539) : c'est lui qui permet d'afficher leur
+ * photo (fonction images). Correspondances mises en cache par zone ; un
+ * échec laisse les lieux sans identifiant (jamais mis en cache), sans erreur.
+ * @param {{ data?: import('../../domain/model.js').Place[] }} outcome résultat de runSource
+ * @param {{ property: string, prefix: string, cacheSource: string }} source
+ */
+export async function linkWikidata(outcome, { property, prefix, cacheSource }, params, ctx) {
+  const places = outcome.data;
+  if (!places?.length) return outcome;
+  const { linkTimeoutSec, linkBatch } = ctx.rules.wikidata;
+  const refs = places.map((p) => p.id.slice(prefix.length));
+  try {
+    const map = await cachedValue(ctx.cache, cacheSource, params, ctx.rules.cacheTtlSec.heritage, async () => {
+      const found = {};
+      for (let i = 0; i < refs.length; i += linkBatch) {
+        const bindings = await runSparql(buildReferenceQuery(property, refs.slice(i, i + linkBatch)), linkTimeoutSec, { post: true });
+        Object.assign(found, referenceBindingsToMap(bindings));
+      }
+      return found;
+    });
+    return { ...outcome, data: places.map((p) => (!p.wikidata && map[p.id.slice(prefix.length)] ? { ...p, wikidata: map[p.id.slice(prefix.length)] } : p)) };
+  } catch (err) {
+    log('warn', 'heritage_wikidata_failed', { source: cacheSource, message: String(err?.message ?? err) });
+    return outcome;
+  }
 }

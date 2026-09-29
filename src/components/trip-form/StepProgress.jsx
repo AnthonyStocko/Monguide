@@ -19,7 +19,7 @@ export default function StepProgress({ index }) {
         aria-valuetext={label}
         className="h-3 w-full overflow-hidden rounded-full bg-subtle"
       >
-        <div className="h-full rounded-full bg-primary-strong transition-[width]" style={{ width: `${((index + 1) / STEPS.length) * 100}%` }} />
+        <div className="h-full rounded-full bg-primary-strong motion-ok:transition-transform motion-ok:duration-300" style={{ transform: `translateX(${((index + 1) / STEPS.length) * 100 - 100}%)` }} />
       </div>
     </div>
   );

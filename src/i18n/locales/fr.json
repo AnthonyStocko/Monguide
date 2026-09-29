@@ -30,7 +30,25 @@
     "today": "Nous sommes le {{date}}.",
     "emptyTitle": "Aucun séjour pour l'instant",
     "emptyText": "Créez votre premier séjour : Mon guide vous prépare un programme jour par jour.",
-    "createCta": "Créer un séjour"
+    "createCta": "Créer un séjour",
+    "createNew": "Créer un nouveau séjour",
+    "recentTitle": "Vos derniers séjours",
+    "seeAll": "Tout voir",
+    "enjoy": "Bonne visite à {{destination}} !",
+    "untilDeparture_one": "Départ demain.",
+    "untilDeparture_other": "Plus que {{count}} jours avant le départ.",
+    "untilDeparture_zero": "Départ aujourd’hui !",
+    "countdown": {
+      "current": "En cours · jour {{day}} sur {{total}}",
+      "upcoming_zero": "Prochain séjour · aujourd’hui",
+      "upcoming_one": "Prochain séjour · demain",
+      "upcoming_other": "Prochain séjour · dans {{count}} jours"
+    },
+    "weather": "{{temperature}}° · {{label}}",
+    "travelers_one": "{{count}} voyageur",
+    "travelers_other": "{{count}} voyageurs",
+    "tripLength_one": "{{count}} jour · {{month}}",
+    "tripLength_other": "{{count}} jours · {{month}}"
   },
   "planning": {
     "emptyTitle": "Aucun planning",
@@ -60,7 +78,8 @@
     "return": "Retour à {{place}} :",
     "lodgingTitle": "Hébergement",
     "readOnly": "Ce séjour a été créé avec une version plus récente de Mon guide. Mettez à jour l’application pour modifier ce séjour.",
-    "conflict": "Conflit d’horaire"
+    "conflict": "Conflit d’horaire",
+    "dayOf": "Jour {{day}} sur {{total}} · {{date}}"
   },
   "map": {
     "attribution": "contributeurs d'OpenStreetMap",
@@ -75,7 +94,12 @@
       "personal": "Étapes personnelles"
     },
     "lodging": "Hébergement",
-    "orderNotice": "Les lignes relient les étapes dans l’ordre de visite ; ce ne sont pas des itinéraires routiers."
+    "orderNotice": "Les lignes relient les étapes dans l’ordre de visite ; ce ne sont pas des itinéraires routiers.",
+    "sheetWhen": "Étape {{order}} · {{start}} – {{end}}",
+    "openInPlanning": "Voir dans le planning",
+    "markerLabel": "{{order}}. {{name}} : ouvrir la fiche",
+    "emptyTitle": "Aucun séjour à afficher",
+    "emptyText": "Créez un séjour : ses étapes apparaîtront ici, jour par jour."
   },
   "settings": {
     "language": "Langue",
@@ -172,7 +196,9 @@
       "date": "Prix du {{date}}",
       "perLitre": "{{price}} / litre",
       "source": "Source : {{source}}"
-    }
+    },
+    "themeLink": "Design system : composants et contrastes",
+    "illustrationsLink": "Illustrations maison"
   },
   "categories": {
     "museum": "Musée",
@@ -436,17 +462,13 @@
       "text": "Votre séjour à {{destination}} est enregistré sur ce téléphone.",
       "another": "Créer un autre séjour",
       "viewPlanning": "Voir le planning"
-    }
+    },
+    "offlineTitle": "Vous êtes hors ligne",
+    "offlineText": "Vous pouvez remplir le formulaire : votre brouillon est enregistré. La préparation du séjour demandera une connexion.",
+    "offlineAction": "Voir mes séjours enregistrés"
   },
   "generation": {
     "title": "Préparation de votre séjour",
-    "phases": {
-      "places": "Recherche des lieux autour de votre destination…",
-      "weather": "Météo, jours fériés et prix…",
-      "planning": "Construction du programme jour par jour…",
-      "finishing": "Encore quelques secondes…"
-    },
-    "elapsed": "{{seconds}} s écoulées",
     "failed": "La génération du séjour a échoué",
     "warningsTitle": "À savoir sur ce séjour",
     "warnings": {
@@ -852,11 +874,12 @@
       "culture": "monuments historiques et musées",
       "inao": "produits du terroir",
       "fuelFr": "prix des carburants",
-      "wikidata": "patrimoine et musées",
+      "wikidata": "patrimoine, musées et photos des lieux",
       "ember": "intensité carbone de l’électricité",
       "oilBulletin": "prix des carburants",
       "ecb": "taux de change",
-      "geoApi": "découpage administratif (départements)"
+      "geoApi": "découpage administratif (départements)",
+      "commons": "photos des lieux"
     }
   },
   "about": {
@@ -908,5 +931,217 @@
     "NO": "en Norvège",
     "IS": "en Islande",
     "LI": "au Liechtenstein"
+  },
+  "image": {
+    "byAuthor": "Photo : {{author}}",
+    "unknownAuthor": "auteur inconnu",
+    "source": "Source",
+    "licenseLabel": "Licence {{license}} : ouvrir le texte de la licence",
+    "sourceLabel": "Source de la photo : ouvrir sa page sur Wikimedia Commons",
+    "showCredit": "Afficher le crédit de la photo",
+    "hideCredit": "Masquer le crédit de la photo"
+  },
+  "debugTheme": {
+    "title": "Design system",
+    "intro": "Tous les composants dans leurs états, avec les polices et images embarquées : la page doit s’afficher à l’identique en mode avion.",
+    "typography": "Typographie",
+    "h1": "Titre 1 · Fraunces 600",
+    "h2": "Titre 2 · Carnet de voyage",
+    "h3": "Titre 3 · Journée à Lyon",
+    "h4": "Titre 4 · Musée des Confluences",
+    "sampleText": "Texte courant en Inter 16 px : une journée bien rythmée, des pauses à l’ombre et un déjeuner de spécialités locales.",
+    "bold": "Texte en gras (Inter 600)",
+    "muted": "Texte secondaire (ink-muted)",
+    "credit": "Crédit ou métadonnée secondaire, seule taille autorisée sous 16 px (13 px)",
+    "accent": "Texte d’accent (accent-rust)",
+    "colors": "Couleurs",
+    "contrast": "Contrastes (WCAG AA)",
+    "contrastOk": "Les {{count}} couples atteignent le seuil.",
+    "contrastFail": "{{count}} couple(s) sous le seuil.",
+    "buttons": "Boutons",
+    "variants": {
+      "primary": "Principal",
+      "secondary": "Secondaire",
+      "ghost": "Discret"
+    },
+    "action": "Continuer",
+    "withIcon": "Ajouter",
+    "iconOnly": "Ajouter aux favoris",
+    "disabled": "Indisponible",
+    "pressHint": "Appuyé, un bouton se réduit légèrement (sauf si les animations sont réduites).",
+    "chipsBadges": "Puces et badges",
+    "chips": "Puces (filtres)",
+    "badges": "Badges : catégorie, certification, météo, statut",
+    "certified": "Monument historique",
+    "cards": "Cartes",
+    "plainCard": "Carte simple",
+    "photoTop": "Photo en tête",
+    "noAuthor": "Crédit sans auteur connu",
+    "overlayWhite": "Titre sur photo blanche",
+    "overlayYellow": "Titre sur photo jaune vif",
+    "worstCase": "Pire cas : le voile garantit le contraste",
+    "noPhoto": "Sans photo",
+    "illustrationShown": "Illustration maison à la place",
+    "brokenPhoto": "Photo introuvable",
+    "forbiddenPhoto": "Domaine non autorisé",
+    "thumb": "Vignette",
+    "feedback": "Chargement et messages",
+    "skeleton": "Chargement (reflet animé)",
+    "toasts": "Toasts",
+    "toastInfo": "Les horaires de ce lieu ne sont pas confirmés.",
+    "toastSuccess": "Séjour enregistré.",
+    "toastUndo": "Journée réorganisée.",
+    "showToast": "Afficher un toast",
+    "modals": "Panneaux",
+    "openSheet": "Ouvrir la feuille du bas",
+    "openDialog": "Ouvrir la boîte de dialogue",
+    "sheetTitle": "Feuille du bas",
+    "dialogTitle": "Boîte de dialogue",
+    "forms": "Formulaires",
+    "switchLabel": "Interrupteur",
+    "choiceLegend": "Choix unique",
+    "choiceA": "À pied",
+    "choiceB": "En voiture",
+    "choiceHint": "Avec une description",
+    "choiceError": "Choix en erreur",
+    "errorText": "Un message d’erreur explique quoi faire.",
+    "states": "États vides et erreurs",
+    "emptyTitle": "Aucun séjour pour l’instant",
+    "emptyText": "Créez votre premier séjour : il apparaîtra ici.",
+    "emptyIconTitle": "Variante avec icône",
+    "navHint": "Barre d’onglets : voir en bas de l’écran (pastille derrière l’icône de l’onglet actif).",
+    "illustrationsLink": "Toutes les illustrations"
+  },
+  "photos": {
+    "title": "Photos",
+    "hint": "Les photos des lieux viennent de Wikimedia Commons. Celles de vos séjours sont enregistrées sur le téléphone pour rester visibles hors ligne (5 Mo au plus par séjour).",
+    "wifiOnlySetting": "Télécharger les images en Wi-Fi uniquement",
+    "wifiOnly": "Photos non enregistrées pour le hors ligne : vous êtes en données mobiles et le téléchargement des images est réservé au Wi-Fi. Elles le seront dès votre prochaine connexion Wi-Fi.",
+    "settingsLink": "Modifier ce réglage"
+  },
+  "motion": {
+    "title": "Affichage",
+    "hint": "Les animations sont aussi coupées si votre téléphone demande de les réduire.",
+    "reduce": "Réduire les animations",
+    "haptics": "Vibrations",
+    "hapticsHint": "Une vibration légère confirme une étape validée ou une action importante, et signale une erreur. Avec « Réduire les animations », seule celle des erreurs reste."
+  },
+  "debugIllustrations": {
+    "title": "Illustrations",
+    "intro": "Les {{count}} illustrations maison, décoratives et embarquées. Cochez « Réduire les animations » : soleil, nuages et repère s’immobilisent.",
+    "inWideFrame": "Vignettes dans un cadre large",
+    "formats": {
+      "square": "Vignettes de catégorie",
+      "wide": "Paysage de destination",
+      "empty": "États vides",
+      "onboarding": "Écrans d’accueil"
+    },
+    "names": {
+      "restaurant": "Restaurant",
+      "market": "Marché",
+      "farm": "Producteur",
+      "park": "Parc",
+      "nature": "Espace naturel",
+      "viewpoint": "Point de vue",
+      "smallHeritage": "Petit patrimoine",
+      "monument": "Monument sans photo",
+      "museum": "Musée sans photo",
+      "personal": "Étape personnelle",
+      "lodging": "Hébergement",
+      "landscape": "Paysage par défaut",
+      "noTrips": "Aucun séjour",
+      "offline": "Hors ligne",
+      "error": "Erreur",
+      "noResults": "Aucun résultat",
+      "onboardingPrepare": "Préparer",
+      "onboardingFollow": "Suivre sa journée",
+      "onboardingFree": "Partir l’esprit libre"
+    }
+  },
+  "preparation": {
+    "title": "Nous préparons votre séjour",
+    "subtitle_one": "{{destination}} · {{count}} jour",
+    "subtitle_other": "{{destination}} · {{count}} jours",
+    "progressLabel": "Préparation du séjour",
+    "progressText": "{{done}} étapes terminées sur {{total}}",
+    "indeterminate": "Préparation en cours",
+    "starting": "Préparation en cours…",
+    "tips": [
+      "Astuce : après la génération, vous pourrez remplacer une étape ou modifier ses horaires d’un simple toucher.",
+      "Astuce : votre séjour reste consultable hors ligne, photos comprises, une fois enregistré.",
+      "Astuce : ajoutez vos propres étapes (rendez-vous, visite réservée) : le planning s’organise autour.",
+      "Astuce : le jour même, validez chaque étape ; s’il pleut, Mon guide propose d’échanger les activités."
+    ],
+    "steps": {
+      "weather": {
+        "pending": "Météo",
+        "running": "Consultation de la météo…",
+        "done": "Météo consultée",
+        "failed": "Météo indisponible pour le moment",
+        "detail": "Pour chaque jour du séjour"
+      },
+      "heritage": {
+        "pending": "Monuments et musées",
+        "running": "Recherche des monuments et musées…",
+        "done": "Monuments et musées trouvés",
+        "failed": "Monuments et musées indisponibles",
+        "detail": "Dans un rayon de {{km}} km"
+      },
+      "places": {
+        "pending": "Marchés, balades et points de vue",
+        "running": "Recherche des marchés, balades et points de vue…",
+        "done": "Marchés, balades et points de vue trouvés",
+        "failed": "Marchés, balades et points de vue indisponibles",
+        "detail": "Données OpenStreetMap"
+      },
+      "restaurants": {
+        "pending": "Restaurants",
+        "running": "Recherche des restaurants…",
+        "done": "Restaurants trouvés",
+        "failed": "Restaurants indisponibles",
+        "detail": "Ouverts à midi, cuisine régionale en priorité"
+      },
+      "planning": {
+        "pending": "Organisation de vos journées",
+        "running": "Organisation de vos journées…",
+        "done": "Journées organisées",
+        "failed": "Organisation impossible",
+        "detail": "Trajets, horaires et météo"
+      }
+    }
+  },
+  "onboarding": {
+    "skip": "Passer",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "start": "Commencer",
+    "progress": "Écran {{current}} sur {{total}}",
+    "prepare": {
+      "title": "Préparez votre séjour en quelques minutes",
+      "text": "Choisissez une destination et des dates : Mon guide compose un programme jour par jour, avec monuments, marchés et bonnes tables."
+    },
+    "follow": {
+      "title": "Suivez votre journée pas à pas",
+      "text": "Horaires, trajets et météo sous les yeux. Validez chaque étape : s’il pleut, le programme s’adapte."
+    },
+    "free": {
+      "title": "Partez l’esprit libre",
+      "text": "Votre séjour reste consultable hors ligne, photos comprises, et un rappel vous prévient avant chaque étape."
+    }
+  },
+  "weatherKinds": {
+    "clear": "soleil",
+    "partly": "éclaircies",
+    "cloudy": "couvert",
+    "fog": "brouillard",
+    "drizzle": "bruine",
+    "rain": "pluie",
+    "snow": "neige",
+    "storm": "orages"
+  },
+  "tripStatus": {
+    "current": "En cours",
+    "upcoming": "À venir",
+    "past": "Terminé"
   }
 }

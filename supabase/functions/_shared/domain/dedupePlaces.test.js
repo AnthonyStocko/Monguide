@@ -59,3 +59,19 @@ describe('similarNames', () => {
     expect(dedupePlaces([osm, mf], 50)).toEqual([mf]);
   });
 });
+
+describe('dedupePlaces : identifiant Wikidata du doublon écarté', () => {
+  const merimee = { id: 'merimee:PA00118090', name: 'Église Notre-Dame-des-Marais', lat: 45.9876, lon: 4.7186, certified: true };
+  const osm = { id: 'osm:way/1', name: 'Collégiale Notre-Dame-des-Marais', lat: 45.9877, lon: 4.7187, certified: false, wikidata: 'Q2983916' };
+
+  it('le lieu certifié gardé reçoit le wikidata du lieu OSM écarté, sans modifier l’entrée', () => {
+    const result = dedupePlaces([osm, merimee], 150);
+    expect(result).toEqual([{ ...merimee, wikidata: 'Q2983916' }]);
+    expect(merimee.wikidata).toBeUndefined();
+  });
+
+  it('un lieu gardé qui a déjà un identifiant le garde', () => {
+    const kept = { ...merimee, wikidata: 'Q1' };
+    expect(dedupePlaces([kept, osm], 150)).toEqual([kept]);
+  });
+});

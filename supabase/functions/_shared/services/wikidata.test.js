@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isPlace } from '../domain/model.js';
-import { bindingsToPlaces, buildMonumentsQuery, buildMuseumsQuery, labelLanguages, parseWktPoint, runSparql } from './wikidata.js';
+import { bindingsToPlaces, buildMonumentsQuery, buildMuseumsQuery, buildReferenceQuery, labelLanguages, parseWktPoint, referenceBindingsToMap, runSparql } from './wikidata.js';
 
 const BARCELONA = { lat: 41.39, lon: 2.17 };
 const LANGS = labelLanguages('fr', ['es', 'ca']);
@@ -104,6 +104,16 @@ describe('runSparql', () => {
     expect(init.headers.Accept).toBe('application/sparql-results+json');
   });
 
+  it('en POST pour les longues listes : requête dans le corps', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ results: { bindings: [] } })));
+    await runSparql('SELECT 2', 6, { post: true });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://query.wikidata.org/sparql');
+    expect(init.method).toBe('POST');
+    expect(init.headers['Content-Type']).toBe('application/x-www-form-urlencoded');
+    expect(new URLSearchParams(init.body).get('query')).toBe('SELECT 2');
+  });
+
   it('un 429 ne déclenche aucune nouvelle requête', async () => {
     fetchMock.mockResolvedValue(new Response('slow down', { status: 429 }));
     await expect(runSparql('SELECT 1', 15)).rejects.toMatchObject({ upstreamStatus: 429 });
@@ -114,5 +124,20 @@ describe('runSparql', () => {
     fetchMock.mockResolvedValue(new Response('', { status: 503 }));
     await expect(runSparql('SELECT 1', 15)).rejects.toMatchObject({ status: 502 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('références (Mérimée, Muséofile)', () => {
+  it('requête VALUES sur la propriété, références nettoyées', () => {
+    const q = buildReferenceQuery('P380', ['PA00118090', 'PA0011"} DELETE', 'M1041']);
+    expect(q).toBe('SELECT ?item ?ref WHERE { VALUES ?ref { "PA00118090" "M1041" } ?item wdt:P380 ?ref . }');
+  });
+
+  it('référence -> Q…, premier élément gardé', () => {
+    const b = (q, ref) => ({ item: { value: `http://www.wikidata.org/entity/${q}` }, ref: { value: ref } });
+    expect(referenceBindingsToMap([b('Q2983916', 'PA00118090'), b('Q5', 'PA00118090'), b('Q16335746', 'M1041')])).toEqual({
+      PA00118090: 'Q2983916',
+      M1041: 'Q16335746'
+    });
   });
 });

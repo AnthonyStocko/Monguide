@@ -18,7 +18,8 @@ export const DATA_SOURCES = Object.freeze([
   { id: 'geoApi', name: 'API Géo', holder: 'Etalab (geo.api.gouv.fr)', license: 'Licence Ouverte (Etalab)', url: 'https://geo.api.gouv.fr', scope: 'fr' },
   { id: 'inao', name: 'Aires géographiques des AOC/AOP', holder: 'INAO', license: 'Licence Ouverte (Etalab)', url: 'https://www.data.gouv.fr', scope: 'fr' },
   { id: 'fuelFr', name: 'Prix des carburants', holder: 'Ministère de l’Économie', license: 'Licence Ouverte (Etalab)', url: 'https://www.data.gouv.fr', scope: 'fr', carOnly: true },
-  { id: 'wikidata', name: 'Wikidata', holder: 'Wikimedia Foundation', license: 'CC0 1.0', url: 'https://www.wikidata.org', scope: 'eu' },
+  { id: 'wikidata', name: 'Wikidata', holder: 'Wikimedia Foundation', license: 'CC0 1.0', url: 'https://www.wikidata.org', scope: 'all' },
+  { id: 'commons', name: 'Wikimedia Commons', holder: 'auteur de chaque photo, crédité avec elle', license: 'CC BY, CC BY-SA, CC0 ou domaine public selon la photo', url: 'https://commons.wikimedia.org', scope: 'all' },
   { id: 'ember', name: 'Ember, Yearly electricity data', holder: 'Ember', license: 'CC BY 4.0', url: 'https://ember-energy.org', scope: 'eu' },
   { id: 'oilBulletin', name: 'Weekly Oil Bulletin', holder: 'Commission européenne', license: 'Décision 2011/833/UE (réutilisation)', url: 'https://energy.ec.europa.eu', scope: 'eu-members', carOnly: true },
   { id: 'ecb', name: 'Taux de change de référence', holder: 'Banque centrale européenne', license: 'Réutilisation avec mention de la source', url: 'https://www.ecb.europa.eu', scope: 'eu', carOnly: true }
