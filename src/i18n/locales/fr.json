@@ -49,6 +49,7 @@
     "customTime": "Horaire personnalisé",
     "rain": "Pluie {{pct}} %",
     "directions": "Itinéraire",
+    "website": "Accéder au site",
     "replace": "Remplacer cette étape",
     "holiday": "Jour férié ({{name}}) : horaires susceptibles de changer.",
     "weatherLater": "Météo à réévaluer : la prévision n’est pas encore disponible pour ce jour.",

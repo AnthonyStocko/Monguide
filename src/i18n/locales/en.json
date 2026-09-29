@@ -49,6 +49,7 @@
     "customTime": "Custom time",
     "rain": "Rain {{pct}}%",
     "directions": "Directions",
+    "website": "Visit website",
     "replace": "Replace this stop",
     "holiday": "Public holiday ({{name}}): opening hours may change.",
     "weatherLater": "Weather to be reassessed: no forecast yet for this day.",

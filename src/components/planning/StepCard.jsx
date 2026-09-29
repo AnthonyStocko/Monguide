@@ -1,9 +1,9 @@
 import { forwardRef } from 'react';
-import { BadgeCheck, CircleCheck, Clock, CloudRain, Navigation, Pencil, Replace, SkipForward, TriangleAlert, UserPen } from 'lucide-react';
+import { BadgeCheck, CircleCheck, Clock, CloudRain, Globe, Navigation, Pencil, Replace, SkipForward, TriangleAlert, UserPen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { averageRain } from '@domain/weatherArbitration.js';
 import { usePlaceName } from '../../i18n/usePlaceName.js';
-import { geoUrl } from '../../utils/navigation.js';
+import { geoUrl, webUrl } from '../../utils/navigation.js';
 import Badge from '../ui/Badge.jsx';
 import Button from '../ui/Button.jsx';
 import { CATEGORY_ICONS } from './categories.js';
@@ -14,9 +14,9 @@ const STATUS_TONES = { planned: 'neutral', done: 'primary', skipped: 'warning' }
 
 /**
  * Carte d'une étape du planning : horaire (bouton de réglage), statut
- * (prévue, terminée, passée), lieu, badges, trajet estimé, itinéraire et
- * remplacement. Jour en cours : "Valider cette étape" et "Passer cette
- * étape". Étape personnelle : modifier ou supprimer (jamais remplacée).
+ * (prévue, terminée, passée), lieu, badges, trajet estimé, itinéraire, site
+ * du lieu (hors restaurant, qui a le sien) et remplacement. Jour en cours :
+ * "Valider cette étape" et "Passer cette étape". Étape personnelle : modifier ou supprimer (jamais remplacée).
  * @param {{
  *   step: object, day: object, trip: object, rules: any, showTravel: boolean, isToday: boolean, highlighted?: boolean, readOnly?: boolean,
  *   onEditTime: () => void, onReplace: () => void, onEditPersonal: () => void, onTrack: (status: 'done' | 'skipped') => void
@@ -114,6 +114,17 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
           >
             <Navigation aria-hidden="true" className="size-5" />
             {t('planning.directions')}
+          </a>
+        )}
+        {place?.url && !place.food && (
+          <a
+            href={webUrl(place.url)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-secondary-strong px-4 font-semibold text-secondary-strong hover:bg-secondary-soft"
+          >
+            <Globe aria-hidden="true" className="size-5" />
+            {t('planning.website')}
           </a>
         )}
         {!readOnly &&
