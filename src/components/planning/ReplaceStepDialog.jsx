@@ -21,7 +21,8 @@ import { cascadeProps, useFirstShow, useMotionAllowed } from '../../ui/motion.js
  * ligne, sinon illustration de sa catégorie) à côté du bouton de choix.
  */
 function Candidate({ place, image, label, detail, badge, onPick, index, animate }) {
-  const { media, creditBlock } = usePhoto({ image, illustration: illustrationForCategory(place.category), className: 'size-20 shrink-0 rounded-xl' });
+  const { t } = useTranslation();
+  const { media, creditBlock } = usePhoto({ image, illustration: illustrationForCategory(place.category), alt: t('image.alt', { name: label }), className: 'size-20 shrink-0 rounded-xl' });
   return (
     <m.li {...cascadeProps(index, animate)} className="rounded-xl border-2 border-line p-2">
       <div className="flex items-stretch gap-2">

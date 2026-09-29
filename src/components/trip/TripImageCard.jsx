@@ -19,7 +19,7 @@ export default function TripImageCard({ trip, showStatus = false, headingLevel =
   const format = useFormat();
   const Heading = `h${headingLevel}`;
   const info = tripStatus(trip);
-  const { media, creditBlock } = usePhoto({ image: trip.hero, illustration: 'landscape', className: compact ? 'aspect-[16/9] w-full' : 'aspect-[2/1] w-full' });
+  const { media, creditBlock } = usePhoto({ image: trip.hero, illustration: 'landscape', alt: t('image.alt', { name: trip.title }), className: compact ? 'aspect-[16/9] w-full' : 'aspect-[2/1] w-full' });
   const month = format.date(`${trip.startDate}T12:00:00Z`, { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
   return (

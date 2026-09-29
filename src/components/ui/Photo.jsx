@@ -17,6 +17,8 @@ const loadedUrls = new Set();
  * L'illustration reste dessous pendant le chargement ; la photo apparaît en
  * fondu. Copie hors ligne utilisée si elle existe (useImageSrc).
  *
+ * alt : description de la photo (nom du lieu ou de la destination, lu par
+ * TalkBack) ; l'illustration de repli reste décorative (aria-hidden).
  * Crédit : "button" (défaut) = bouton "i" discret sur la photo (zone de
  * 48 px) qui affiche le crédit et ses liens ; "inline" = crédit écrit en
  * clair (fiches de lieu).

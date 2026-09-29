@@ -939,7 +939,8 @@
     "licenseLabel": "Licence {{license}} : ouvrir le texte de la licence",
     "sourceLabel": "Source de la photo : ouvrir sa page sur Wikimedia Commons",
     "showCredit": "Afficher le crédit de la photo",
-    "hideCredit": "Masquer le crédit de la photo"
+    "hideCredit": "Masquer le crédit de la photo",
+    "alt": "Photo : {{name}}"
   },
   "debugTheme": {
     "title": "Design system",

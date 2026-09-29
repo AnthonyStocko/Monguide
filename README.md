@@ -195,7 +195,9 @@ npx supabase functions serve
 ## API et données utilisées
 
 Toutes les API externes sont appelées par le serveur (module
-`_shared/http.js`), sauf les tuiles de carte. Les conditions marquées « à
+`_shared/http.js`), sauf les tuiles de carte et les miniatures des photos
+(`https://upload.wikimedia.org/`, seul autre domaine chargé directement par
+l'application). Les conditions marquées « à
 vérifier » doivent être confirmées avant une diffusion publique, et a
 fortiori commerciale.
 
@@ -205,7 +207,8 @@ fortiori commerciale.
 | Tuiles tile.openstreetmap.org | fond de carte | ODbL ; politique d'usage de la fondation OSM : pas d'usage intensif, prévoir un fournisseur de tuiles pour une diffusion large |
 | Photon (komoot) | recherche d'adresses et de communes | données OpenStreetMap, ODbL 1.0 ; instance publique à usage raisonnable |
 | Open-Meteo | prévisions météo | données CC BY 4.0 ; API gratuite pour un usage **non commercial** (abonnement payant sinon) |
-| Wikidata | patrimoine et musées hors de France | CC0 1.0 |
+| Wikidata | patrimoine et musées hors de France ; identifiant et photo principale (P18) des lieux et des villes | CC0 1.0 |
+| Wikimedia Commons | photos des lieux et des destinations (miniatures) | licence propre à chaque photo, seules CC0, domaine public, CC BY et CC BY-SA sont retenues ; auteur et licence affichés avec chaque photo |
 | Ministère de la Culture (Mérimée, Muséofile), via data.gouv.fr | monuments historiques et musées en France | Licence Ouverte (Etalab) 2.0 |
 | INAO (aires AOC/AOP), via data.gouv.fr | produits du terroir en France | Licence Ouverte (Etalab) 2.0 |
 | Prix des carburants (ministère de l'Économie), via data.gouv.fr | prix en France | Licence Ouverte (Etalab) 2.0 |
@@ -223,6 +226,80 @@ dans l'export PDF de chaque séjour
 Police de l'export PDF : DejaVu Sans (licence Bitstream Vera et domaine
 public pour les modifications DejaVu), choisie pour couvrir toutes les
 langues des pays pris en charge (latin étendu, grec, cyrillique).
+
+## Photos, illustrations et affichage
+
+### Photos : sources et licences
+
+- Source unique : Wikimedia Commons, par la photo principale (propriété
+  P18) de l'élément Wikidata du lieu ou de la ville. Les lieux Mérimée et
+  Muséofile retrouvent leur élément par leur référence (P380, P539) ; la
+  ville, par une recherche Wikidata contrôlée par la distance (Photon ne
+  fournit pas l'identifiant). Détail : fonction `images`, `docs/api.md`.
+- Licences retenues : domaine public, CC0, CC BY et CC BY-SA (toutes
+  versions). Toute autre licence, ou une CC BY sans auteur connu : pas de
+  photo, l'illustration de la catégorie est affichée à la place.
+- Crédit toujours accessible : « Photo : Auteur · Licence · Source », avec
+  les liens vers la licence et la page Commons ; en clair sur les cartes
+  d'étape et les fiches de lieu, derrière un bouton « i » (48 px) sur les
+  grandes photos. Une photo sans crédit n'est jamais affichée
+  (`isPlaceImage`, `model.js`).
+- Photos décrites pour TalkBack par le nom du lieu (« Photo : Musée Paul
+  Dini ») ; les illustrations sont décoratives (ignorées).
+- Hors ligne : les photos d'un séjour sont enregistrées sur le téléphone à
+  son ouverture (5 Mo au plus par séjour, les plus petites d'abord) et
+  supprimées avec lui.
+
+### Ajouter une illustration
+
+Les illustrations sont des composants React SVG dans `src/illustrations/`
+(vitrine : page `/debug/illustrations`).
+
+1. Dessin à plat, formes simples, **aucun texte** dans l'image.
+2. **3 à 5 couleurs**, toutes prises dans `src/illustrations/palette.js`
+   (couleurs du design system) ; fond compris.
+3. Format : vignette carrée `0 0 96 96` (catégorie de lieu, fond `sky`),
+   large `0 0 320 180` (paysage), `0 0 240 180` (état vide) ou `0 0 320 240`
+   (écran d'accueil).
+4. L'enregistrer dans `ILLUSTRATIONS` (`src/illustrations/index.jsx`) avec
+   son format ; une catégorie de lieu : aussi dans `BY_CATEGORY`.
+5. Toujours décorative (le composant `Illustration` pose `aria-hidden`) : le
+   sens est porté par le texte voisin.
+6. Animation facultative : seulement les classes `ill-spin`, `ill-drift`,
+   `ill-hop` (`index.css`), coupées avec les autres animations.
+7. `npx vitest run src/illustrations` vérifie les points 1, 2 et 5 pour
+   chaque illustration.
+
+### Réglages d'affichage
+
+Dans Réglages :
+
+- **Affichage** : « Réduire les animations » (toutes les animations et
+  les vibrations non essentielles sont coupées ; elles le sont aussi quand
+  le téléphone le demande, réglage Android « Supprimer les animations ») et
+  « Vibrations » (validation d'une étape, action importante, erreur).
+- **Photos** : « Télécharger les images en Wi-Fi uniquement » (activé par
+  défaut) : en données mobiles, les photos ne sont pas enregistrées pour le
+  hors ligne et le planning l'explique.
+
+Design system, contrastes et animations : `docs/design-system.md`.
+
+### Mesures (2026-09-29)
+
+| Mesure | Avant la refonte | Après | Écart | Objectif |
+|---|---|---|---|---|
+| APK debug (workflow `android.yml`) | 6,80 Mo (`506edb7`) | 6,98 Mo (`e2603ab`) | **+173 Ko** : police Fraunces 92 Ko, JavaScript 65 Ko (illustrations, animations, écrans), code Android 7 Ko (plugins réseau et vibrations), CSS 3 Ko | < 3 Mo |
+| Données à l'ouverture d'un séjour de 3 jours avec photos, en données mobiles (« Wi-Fi uniquement ») | — | **0,70 Mo** : 7 photos 716 Ko, serveur 6 Ko | — | < 2 Mo |
+| Même séjour en Wi-Fi, avec la copie hors ligne des photos | — | **0,71 Mo** (copie hors ligne : 7 photos, 702 Ko, reprises du cache) | — | < 2 Mo |
+
+Méthode : APK des workflows avant et après la refonte, comparés fichier par
+fichier ; données : séjour réel de 3 jours à Villefranche-sur-Saône
+(9 lieux, 6 avec photo, plus la photo de la destination), les 3 journées
+parcourues jusqu'en bas dans Chrome (écran de téléphone), octets reçus
+d'Internet (serveur Mon guide et Wikimedia) comptés par le protocole de
+débogage ; les fichiers de l'application sont dans l'APK et ne comptent pas.
+Les miniatures demandées en 400 px sont servies en 500 px (largeurs
+standard de Wikimedia), environ 100 Ko en moyenne (716 Ko pour 7 photos).
 
 ## Lieux OpenStreetMap (import mensuel)
 

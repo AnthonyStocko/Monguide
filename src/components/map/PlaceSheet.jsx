@@ -25,7 +25,7 @@ export default function PlaceSheet({ step, order, date, onClose }) {
 
   return (
     <BottomSheet title={name} onClose={onClose}>
-      <Photo image={place.image} illustration={illustrationForStep(step)} credit="inline" className="aspect-[16/9] w-full rounded-2xl" />
+      <Photo image={place.image} illustration={illustrationForStep(step)} alt={t('image.alt', { name })} credit="inline" className="aspect-[16/9] w-full rounded-2xl" />
       <p className="text-lg">
         {t('map.sheetWhen', { order, start: step.start, end: step.end })} · {t(`categories.${place.category}`)}
       </p>

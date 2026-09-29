@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { usePhoto } from '../ui/Photo.jsx';
 
 /**
@@ -8,8 +9,10 @@ import { usePhoto } from '../ui/Photo.jsx';
  * @param {{ trip: object, kicker: string, children?: import('react').ReactNode }} props
  */
 export default function TripHero({ trip, kicker, children }) {
+  const { t } = useTranslation();
   const { media, creditBlock } = usePhoto({
     image: trip.hero,
+    alt: t('image.alt', { name: trip.title }),
     illustration: 'landscape',
     className: 'aspect-[16/9] max-h-64 w-full',
     overlay: (

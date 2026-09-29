@@ -42,6 +42,7 @@ export default function NextTripCard({ trip, status }) {
 
   const { media, creditBlock } = usePhoto({
     image: trip.hero,
+    alt: t('image.alt', { name: trip.title }),
     illustration: 'landscape',
     className: 'aspect-[4/3] w-full',
     overlay: (

@@ -40,7 +40,7 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
   const title = personal ? step.title : place ? placeName(place) : t('generation.freeTime');
   // Toujours une image : photo du lieu, sinon illustration de sa catégorie (ou du type d'étape).
   // Crédit écrit en clair sous la carte (maquette), pas derrière un bouton.
-  const photo = usePhoto({ image: personal ? null : place?.image, illustration: illustrationForStep(step), className: 'size-20 shrink-0 rounded-xl', credit: 'inline' });
+  const photo = usePhoto({ image: personal ? null : place?.image, illustration: illustrationForStep(step), alt: t('image.alt', { name: title }), className: 'size-20 shrink-0 rounded-xl', credit: 'inline' });
 
   return (
     <m.li
