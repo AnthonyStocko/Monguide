@@ -8,8 +8,19 @@ describe('migrate', () => {
     expect(migrate(trip)).toEqual({ trip, readOnly: false });
   });
 
-  it('considère un séjour sans version comme version 1', () => {
-    expect(migrate({ id: 't' }).trip.schemaVersion).toBe(1);
+  it('considère un séjour sans version comme version 1 (et le migre)', () => {
+    expect(migrate({ id: 't' }, 1).trip.schemaVersion).toBe(1);
+    expect(migrate({ id: 't' }).trip).toEqual({ id: 't', schemaVersion: 2, dinner: 'free' });
+  });
+
+  it("v1 -> v2 : dîner « libre », journées intactes, sans modifier l'original", () => {
+    const day = { date: '2026-10-06', weatherAvailable: false, steps: [{ id: 's1', type: 'culture', start: '10:00', end: '11:30', badges: [] }] };
+    const v1 = { schemaVersion: 1, id: 't', lunch: 'both', days: [day], candidates: [] };
+    const { trip, readOnly } = migrate(v1);
+    expect(readOnly).toBe(false);
+    expect(trip).toEqual({ ...v1, schemaVersion: 2, dinner: 'free' });
+    expect(trip.days[0]).toBe(day);
+    expect(v1).not.toHaveProperty('dinner');
   });
 
   it('rend en lecture seule un séjour d\'une version plus récente', () => {

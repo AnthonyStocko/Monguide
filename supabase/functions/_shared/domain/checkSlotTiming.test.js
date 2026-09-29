@@ -57,6 +57,30 @@ describe('checkSlotTiming', () => {
   });
 
   it('fin après 21h00 : LATE', () => {
-    expect(codes(check(day([step('c', 'relax', park, '19:30', '20:30')]), 0, '20:00', '21:30'))).toContain('LATE');
+    expect(check(day([step('c', 'relax', park, '19:30', '20:30')]), 0, '20:00', '21:30').warnings).toContainEqual({ code: 'LATE', lateEnd: '21:00' });
+  });
+
+  describe('dîner : seuils et durées propres', () => {
+    const bistro = { ...restaurant, id: 'd', food: { regional: false, openingHours: 'Mo-Su 19:00-23:30' } };
+    const evening = day([step('c', 'relax', park, '17:30', '18:30'), step('d', 'dinner', bistro, '19:30', '21:00')]);
+
+    it('dîner de 21:00 à 22:30 : aucun avertissement (seuil 23:00)', () => {
+      expect(check(evening, 1, '21:00', '22:30').warnings).toEqual([]);
+    });
+
+    it('dîner finissant après 23:00 : LATE avec le seuil du dîner', () => {
+      expect(check(evening, 1, '21:45', '23:15').warnings).toContainEqual({ code: 'LATE', lateEnd: '23:00' });
+    });
+
+    it('durées du dîner : minimum 60 min, conseillé 90 min', () => {
+      expect(check(evening, 1, '19:30', '20:15').warnings).toContainEqual({ code: 'TOO_SHORT', activity: 'dinner', minimumMin: 60, durationMin: 45 });
+      expect(check(evening, 1, '19:30', '20:40').belowRecommended).toBe(true);
+    });
+
+    it('soirée libre (sans lieu) : mêmes seuils', () => {
+      const free = day([step('d', 'dinner', undefined, '19:30', '21:00')]);
+      expect(check(free, 0, '21:30', '22:30').warnings).toEqual([]);
+      expect(codes(check(free, 0, '22:30', '23:30'))).toEqual(['LATE']);
+    });
   });
 });

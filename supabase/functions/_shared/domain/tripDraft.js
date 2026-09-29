@@ -1,7 +1,7 @@
 import { countryInfo } from './config/countries.js';
 import { addDays, daysBetween, eachDate, isValidDate, isValidTimeZone } from './dates.js';
 import { distanceKm } from './geo.js';
-import { FUEL_TYPES, LUNCH_OPTIONS, PROFILES, SCHEMA_VERSION, TRAVEL_MODES } from './model.js';
+import { DINNER_OPTIONS, FUEL_TYPES, LUNCH_OPTIONS, PROFILES, SCHEMA_VERSION, TRAVEL_MODES } from './model.js';
 
 /**
  * Brouillon du formulaire de création de séjour (6 étapes) : validation par
@@ -38,6 +38,7 @@ export const LODGING_MODES = Object.freeze(['same', 'multiple', 'unknown']);
  * @property {string | null} fuelType
  * @property {string} profile
  * @property {string} lunch
+ * @property {'restaurant' | 'free'} dinner
  * @property {{ vegetarian: boolean, wheelchair: boolean }} prefs
  */
 
@@ -57,6 +58,7 @@ export function emptyDraft(rules) {
     fuelType: null,
     profile: 'balanced',
     lunch: 'both',
+    dinner: 'restaurant',
     prefs: { vegetarian: false, wheelchair: false }
   };
 }
@@ -72,9 +74,15 @@ export function tripNights(startDate, endDate) {
   return eachDate(startDate, addDays(endDate, -1));
 }
 
-/** Les restaurants font-ils partie du déjeuner ? (préférences affichées) */
-export function includesRestaurants(lunch) {
-  return lunch === 'restaurant' || lunch === 'both';
+/**
+ * Les restaurants font-ils partie du séjour ? (préférences affichées,
+ * restaurants collectés) : déjeuner au restaurant (ou "Les deux"), ou dîner
+ * au restaurant proposé.
+ * @param {string} lunch
+ * @param {string} [dinner] absent : dîner non proposé (demande d'une application antérieure)
+ */
+export function includesRestaurants(lunch, dinner) {
+  return lunch === 'restaurant' || lunch === 'both' || dinner === 'restaurant';
 }
 
 /**
@@ -201,6 +209,7 @@ export function validateStep(step, draft, { rules, today }) {
   if (step === 'profile') {
     if (!PROFILES.includes(draft.profile)) errors.profile = 'profileRequired';
     if (!LUNCH_OPTIONS.includes(draft.lunch)) errors.lunch = 'lunchRequired';
+    if (!DINNER_OPTIONS.includes(draft.dinner)) errors.dinner = 'dinnerRequired';
   }
   if (step === 'summary') {
     for (const s of STEPS.slice(0, -1)) {
@@ -244,8 +253,9 @@ export function buildTrip(draft, { id, now, makeId }) {
     mode: draft.mode,
     profile: draft.profile,
     lunch: draft.lunch,
+    dinner: draft.dinner,
     // Les préférences ne portent que sur les restaurants.
-    prefs: includesRestaurants(draft.lunch) ? { ...draft.prefs } : { vegetarian: false, wheelchair: false },
+    prefs: includesRestaurants(draft.lunch, draft.dinner) ? { ...draft.prefs } : { vegetarian: false, wheelchair: false },
     lodgings: lodgingsFromDraft(draft, makeId),
     days: [],
     candidates: []

@@ -7,7 +7,9 @@
  * - provider : fournisseur de données ("fr" pour la France, "eu" pour les
  *   autres pays) ;
  * - languages : langues locales, pour les noms de lieux quand ils n'existent
- *   pas dans la langue de l'interface ni en anglais.
+ *   pas dans la langue de l'interface ni en anglais ;
+ * - dinnerTime (facultatif) : heure habituelle du dîner "HH:mm", à la place
+ *   de rules.dayTemplate.dinner (19:30). Valeurs modifiables ici.
  *
  * Aucun fuseau horaire ici : il est déterminé par le serveur pour chaque
  * destination (plusieurs pays en ont plusieurs : Portugal, Espagne…).
@@ -22,21 +24,21 @@ export const SUPPORTED_COUNTRIES = Object.freeze({
   DE: { currency: 'EUR', provider: 'eu', languages: ['de'] },
   DK: { currency: 'DKK', provider: 'eu', languages: ['da'] },
   EE: { currency: 'EUR', provider: 'eu', languages: ['et'] },
-  ES: { currency: 'EUR', provider: 'eu', languages: ['es', 'ca', 'eu', 'gl'] },
+  ES: { currency: 'EUR', provider: 'eu', languages: ['es', 'ca', 'eu', 'gl'], dinnerTime: '21:00' },
   FI: { currency: 'EUR', provider: 'eu', languages: ['fi', 'sv'] },
   FR: { currency: 'EUR', provider: 'fr', languages: ['fr'] },
   GR: { currency: 'EUR', provider: 'eu', languages: ['el'] },
   HR: { currency: 'EUR', provider: 'eu', languages: ['hr'] },
   HU: { currency: 'HUF', provider: 'eu', languages: ['hu'] },
   IE: { currency: 'EUR', provider: 'eu', languages: ['en', 'ga'] },
-  IT: { currency: 'EUR', provider: 'eu', languages: ['it'] },
+  IT: { currency: 'EUR', provider: 'eu', languages: ['it'], dinnerTime: '20:00' },
   LT: { currency: 'EUR', provider: 'eu', languages: ['lt'] },
   LU: { currency: 'EUR', provider: 'eu', languages: ['lb', 'fr', 'de'] },
   LV: { currency: 'EUR', provider: 'eu', languages: ['lv'] },
   MT: { currency: 'EUR', provider: 'eu', languages: ['mt', 'en'] },
   NL: { currency: 'EUR', provider: 'eu', languages: ['nl'] },
   PL: { currency: 'PLN', provider: 'eu', languages: ['pl'] },
-  PT: { currency: 'EUR', provider: 'eu', languages: ['pt'] },
+  PT: { currency: 'EUR', provider: 'eu', languages: ['pt'], dinnerTime: '20:00' },
   RO: { currency: 'RON', provider: 'eu', languages: ['ro'] },
   SE: { currency: 'SEK', provider: 'eu', languages: ['sv'] },
   SI: { currency: 'EUR', provider: 'eu', languages: ['sl'] },
@@ -76,13 +78,23 @@ export function nameLanguages(countryCodes) {
 
 /**
  * @param {string} countryCode code ISO 3166-1 alpha-2, casse indifférente
- * @returns {{ code: string, currency: string, provider: string, languages: string[] } | null}
+ * @returns {{ code: string, currency: string, provider: string, languages: string[], dinnerTime?: string } | null}
  */
 export function countryInfo(countryCode) {
   if (typeof countryCode !== 'string') return null;
   const code = countryCode.toUpperCase();
   const info = SUPPORTED_COUNTRIES[code];
   return info ? { code, ...info } : null;
+}
+
+/**
+ * Heure du dîner proposée dans un pays : dinnerTime du pays, sinon
+ * rules.dayTemplate.dinner.
+ * @param {string} countryCode
+ * @returns {string} "HH:mm"
+ */
+export function dinnerTimeFor(countryCode, rules) {
+  return countryInfo(countryCode)?.dinnerTime ?? rules.dayTemplate.dinner;
 }
 
 /** @param {string} countryCode */

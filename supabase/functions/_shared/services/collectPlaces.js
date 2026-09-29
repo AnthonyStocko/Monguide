@@ -1,5 +1,6 @@
 import { dedupePlaces } from '../domain/dedupePlaces.js';
 import { isPlace } from '../domain/model.js';
+import { includesRestaurants } from '../domain/tripDraft.js';
 import { osmPlacesSource } from './osmSource.js';
 
 /**
@@ -11,12 +12,13 @@ import { osmPlacesSource } from './osmSource.js';
  * @param {import('../providers/types.js').CountryProvider} provider
  * @param {import('../providers/types.js').Point} point position arrondie
  * @param {number} radiusKm
- * @param {{ lunch: 'market' | 'restaurant' | 'both' }} options
+ * @param {{ lunch: 'market' | 'restaurant' | 'both', dinner?: 'restaurant' | 'free' }} options restaurants
+ *   collectés si le déjeuner ou le dîner en propose (includesRestaurants)
  * @param {import('../providers/types.js').ProviderContext} ctx
  * @param {(step: 'heritage' | 'places' | 'restaurants', status: 'done' | 'failed') => void} [onProgress]
  */
-export async function collectPlaces(provider, point, radiusKm, { lunch }, ctx, onProgress = () => {}) {
-  const includeRestaurants = lunch !== 'market';
+export async function collectPlaces(provider, point, radiusKm, { lunch, dinner }, ctx, onProgress = () => {}) {
+  const includeRestaurants = includesRestaurants(lunch, dinner);
   // Progression réelle (fonction generate en flux) : chaque source signale sa fin dès qu'elle arrive.
   const ok = (outcomes) => (outcomes.every((o) => o.status === 'failed') ? 'failed' : 'done');
   const [heritage, osm, terroir] = await Promise.all([

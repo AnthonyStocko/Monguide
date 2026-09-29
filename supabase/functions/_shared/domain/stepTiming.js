@@ -1,4 +1,4 @@
-import { activityType, durationsFor, fitsSlot, isMarket } from './activity.js';
+import { activityType, fitsSlot, isMarket, scheduleLimits, stepDurations } from './activity.js';
 import { openingState, placeOpeningHours } from './openingHours.js';
 import { fromMinutes, toMinutes } from './time.js';
 import { travelMinutes } from './travel.js';
@@ -37,29 +37,36 @@ export const durationOf = (step) => endOf(step) - startOf(step);
 /** Durée minimale d'une étape (minutes) ; une étape personnelle n'en a pas. */
 export function minimumFor(step, rules) {
   if (isPersonal(step)) return 1;
-  return durationsFor(step.place, rules).minimumMin;
+  return stepDurations(step, rules).minimumMin;
 }
 
 /** Durée conseillée d'une étape (minutes). */
 export function recommendedFor(step, rules) {
   if (isPersonal(step)) return durationOf(step);
-  return durationsFor(step.place, rules).recommendedMin;
+  return stepDurations(step, rules).recommendedMin;
 }
+
+/** Heure de début au plus tard d'une étape (minutes), selon son type (rules.schedule.latestStart). */
+export const latestStartFor = (step, rules) => toMinutes(scheduleLimits(step, rules).latestStart);
+
+/** Heure au-delà de laquelle une étape finit tard (minutes), selon son type (rules.schedule.lateEnd). */
+export const lateEndFor = (step, rules) => toMinutes(scheduleLimits(step, rules).lateEnd);
 
 /** Copie de l'étape avec de nouveaux horaires (minutes). */
 export const withTimes = (step, start, end) => ({ ...step, start: fromMinutes(start), end: fromMinutes(end) });
 
-/** Le lieu convient-il à ce type d'étape ? (déjeuner : restaurant ou marché) */
+/** Le lieu convient-il à ce type d'étape ? (déjeuner : restaurant ou marché ; dîner : restaurant) */
 export function fitsStepType(place, type) {
   if (type === 'lunch') return place.category === 'restaurant' || isMarket(place);
+  if (type === 'dinner') return place.category === 'restaurant';
   return fitsSlot(place, type);
 }
 
 /**
  * Raisons pour lesquelles un créneau n'est pas faisable (liste vide :
  * faisable). Codes : LATE_START (commence après
- * rules.schedule.lastStepLatestStart), LATE_END (finit après
- * rules.schedule.lateEnd), TOO_SHORT, CLOSED (horaires d'ouverture connus),
+ * rules.schedule.latestStart du type d'étape), LATE_END (finit après
+ * rules.schedule.lateEnd du type d'étape), TOO_SHORT, CLOSED (horaires d'ouverture connus),
  * RAIN (lieu extérieur, pluie au-delà du seuil, météo connue).
  * @param {object} step étape (lieu, type)
  * @param {number} start minutes
@@ -69,8 +76,8 @@ export function fitsStepType(place, type) {
  */
 export function infeasibility(step, start, end, { day, countryCode }, rules) {
   const reasons = [];
-  if (start > toMinutes(rules.schedule.lastStepLatestStart)) reasons.push('LATE_START');
-  if (end > toMinutes(rules.schedule.lateEnd)) reasons.push('LATE_END');
+  if (start > latestStartFor(step, rules)) reasons.push('LATE_START');
+  if (end > lateEndFor(step, rules)) reasons.push('LATE_END');
   if (end - start < minimumFor(step, rules)) reasons.push('TOO_SHORT');
   const place = step.place;
   if (place && !isPersonal(step) && end > start) {
@@ -87,5 +94,5 @@ export function infeasibility(step, start, end, { day, countryCode }, rules) {
 /** Nom lisible d'une étape pour les panneaux (lieu, titre, sinon null = temps libre). */
 export const stepName = (step) => step.place?.name ?? step.title ?? null;
 
-/** Type d'activité (pour les messages) d'une étape. */
-export const stepActivity = (step) => (step.place && !isPersonal(step) ? activityType(step.place) : 'relax');
+/** Type d'activité (pour les messages) d'une étape : "dinner" pour un dîner. */
+export const stepActivity = (step) => (step.type === 'dinner' ? 'dinner' : step.place && !isPersonal(step) ? activityType(step.place) : 'relax');

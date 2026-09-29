@@ -320,6 +320,10 @@
     "restaurant": "Restaurant",
     "both": "Les deux"
   },
+  "dinner": {
+    "restaurant": "Restaurant proposé",
+    "free": "Libre"
+  },
   "profiles": {
     "certified": {
       "label": "Patrimoine certifié",
@@ -416,6 +420,8 @@
       "question": "Profil d’exploration",
       "dataVaries": "Hors de France, la richesse des données sur le patrimoine varie selon les pays.",
       "lunch": "Pause déjeuner",
+      "dinner": "Dîner",
+      "dinnerHint": "Libre : aucune proposition, le créneau reste une « Soirée libre ».",
       "prefs": "Préférences pour les restaurants",
       "vegetarian": "Options végétariennes",
       "wheelchair": "Accessible en fauteuil roulant",
@@ -434,7 +440,8 @@
       "travelers_other": "{{count}} voyageurs",
       "nights_one": "{{count}} nuit, le {{first}}",
       "nights_other": "{{count}} nuits à partir du {{first}}",
-      "lunch": "Déjeuner : {{value}}"
+      "lunch": "Déjeuner : {{value}}",
+      "dinner": "Dîner : {{value}}"
     },
     "errors": {
       "summary_one": "{{count}} information à corriger avant de continuer.",
@@ -455,6 +462,7 @@
       "fuelTypeRequired": "Choisissez le carburant de la voiture.",
       "profileRequired": "Choisissez un profil.",
       "lunchRequired": "Choisissez une pause déjeuner.",
+      "dinnerRequired": "Choisissez une option pour le dîner.",
       "stepIncomplete": "Cette étape est incomplète."
     },
     "created": {
@@ -476,7 +484,7 @@
       "free_time_one": "{{count}} créneau sans lieu trouvé : il est laissé en temps libre.",
       "free_time_other": "{{count}} créneaux sans lieu trouvé : ils sont laissés en temps libre.",
       "weather_later": "La météo de certains jours sera prise en compte à l’approche du départ.",
-      "no_restaurants": "Aucun restaurant trouvé pour les pauses déjeuner.",
+      "no_restaurants": "Aucun restaurant trouvé pour les repas.",
       "no_fuel_price": "Prix du carburant indisponible : coût non estimé.",
       "no_carbon_factors": "Bilan carbone indisponible pour ce séjour."
     },
@@ -489,9 +497,11 @@
       "lunch": "Pause gourmande",
       "outdoor": "Plein air",
       "relax": "Détente",
+      "dinner": "Dîner",
       "personal": "Étape personnelle"
     },
     "freeTime": "Temps libre",
+    "freeEvening": "Soirée libre",
     "specialties": "Spécialités locales : {{list}}",
     "carbonTitle": "Bilan carbone des déplacements",
     "carbonTotal": "{{value}} kg CO₂e pour {{km}} km de trajets estimés.",
@@ -540,6 +550,7 @@
       "trail": "Une randonnée",
       "market": "Un passage au marché",
       "restaurant": "Un repas au restaurant",
+      "dinner": "Un dîner",
       "relax": "Une pause détente"
     },
     "TOO_SHORT": "{{activity}} dure en général au moins {{minimum}}. Vous avez prévu {{duration}}.",
@@ -723,7 +734,8 @@
     "dropped": "{{name}} ({{start}}) : {{reason}}",
     "reasons": {
       "LUNCH_COVERED": "votre étape couvre la pause déjeuner.",
-      "LATE_START": "commencerait après 19h00.",
+      "DINNER_COVERED": "votre étape couvre le dîner.",
+      "LATE_START": "commencerait trop tard.",
       "LATE_END": "finirait trop tard.",
       "TOO_SHORT": "plus assez de temps.",
       "CLOSED": "fermé à ce moment-là.",
@@ -805,10 +817,13 @@
     "channel": "Rappels du séjour",
     "summary": {
       "title": "Demain, {{date}}",
-      "departure": "Départ conseillé à {{time}} de {{lodgingName}}"
+      "departure": "Départ conseillé à {{time}} de {{lodgingName}}",
+      "dinner": "{{start}} Dîner : {{name}}",
+      "freeEvening": "{{start}} Soirée libre"
     },
     "reminder": {
       "title": "Dans une heure : {{name}}",
+      "dinnerTitle": "Dîner dans une heure : {{name}}",
       "body": "De {{start}} à {{end}} · {{trip}}"
     },
     "explainer": {

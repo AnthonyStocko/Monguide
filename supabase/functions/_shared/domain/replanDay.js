@@ -5,8 +5,8 @@ import { usedPlaceIds } from './replaceStep.js';
 import { resolveInfeasible } from './resolveInfeasible.js';
 import { shiftFollowing } from './shiftFollowing.js';
 import { shrinkPrevious } from './shrinkPrevious.js';
-import { endOf, infeasibility, isFixed, startOf } from './stepTiming.js';
-import { toMinutes } from './time.js';
+import { scheduleLimits } from './activity.js';
+import { endOf, infeasibility, isFixed, lateEndFor, startOf } from './stepTiming.js';
 import { clearResolvedConflicts, markConflicts } from './conflicts.js';
 
 /** Nombre maximal de passes de stabilisation (chaque passe écarte au moins une étape). */
@@ -17,11 +17,12 @@ const MAX_PASSES = 20;
  * personnelle (exécuté sur le téléphone, disponible hors ligne). Enchaîne :
  *  1. insertStep : insertion à l'horaire choisi ; chevauchement d'un point
  *     fixe = erreur, aucun recalcul ;
- *  2. handleLunchOverlap : déjeuner couvert proposé à la suppression ;
+ *  2. handleLunchOverlap : déjeuner ou dîner couvert proposé à la suppression ;
  *  3. shrinkPrevious : étapes d'avant raccourcies ;
  *  4. shiftFollowing : étapes d'après décalées ;
  *  5. faisabilité des étapes touchées (horaires d'ouverture, pluie, fin
- *     tardive, règle des 19h00) puis resolveInfeasible (raccourcir,
+ *     tardive, début au plus tard : 19h00 pour les activités, 21h30 pour le
+ *     dîner) puis resolveInfeasible (raccourcir,
  *     remplacer, reporter, supprimer), jusqu'à stabilité.
  * Rien n'est appliqué : le résultat est présenté dans le panneau
  * "Planning réajusté" puis appliqué par applyChanges.
@@ -87,16 +88,20 @@ export function replanDay(trip, dayIndex, personal, rules, { today } = {}) {
 
 /**
  * Avertissements d'une journée recalculée : TRAVEL_UNKNOWN (étape
- * personnelle sans lieu), LATE (retour ou fin après rules.schedule.lateEnd).
+ * personnelle sans lieu), LATE (une étape finit après rules.schedule.lateEnd
+ * de son type : 23:00 pour un dîner, 21:00 sinon ; pour la dernière étape
+ * hors dîner, retour à l'hébergement compris).
  */
 export function dayWarnings(day, personal, rules) {
   const warnings = [];
   if (personal && !personal.place) warnings.push({ code: 'TRAVEL_UNKNOWN' });
-  const last = day.steps[day.steps.length - 1];
-  if (last) {
-    const back = endOf(last) + (day.returnTravelMin ?? 0);
-    if (back > toMinutes(rules.schedule.lateEnd)) warnings.push({ code: 'LATE', lateEnd: rules.schedule.lateEnd });
-  }
+  const lastIndex = day.steps.length - 1;
+  const late = day.steps.find((s, i) => {
+    // Le dîner est suivi du retour : seule sa fin compte (seuil du dîner).
+    const back = i === lastIndex && s.type !== 'dinner' ? (day.returnTravelMin ?? 0) : 0;
+    return endOf(s) + back > lateEndFor(s, rules);
+  });
+  if (late) warnings.push({ code: 'LATE', lateEnd: scheduleLimits(late, rules).lateEnd });
   return warnings;
 }
 

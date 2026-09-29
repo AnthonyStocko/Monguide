@@ -12,7 +12,9 @@ import { SCHEMA_VERSION } from './model.js';
  * transformé (sans modifier l'objet reçu), puis incrémenter SCHEMA_VERSION.
  */
 export const MIGRATIONS = Object.freeze({
-  // Version 1 : version initiale, aucune migration.
+  // Version 1 -> 2 : dîner. Un séjour existant n'a aucune étape de dîner ; il
+  // devient "libre" (aucune proposition), sans toucher à ses journées.
+  1: (trip) => ({ ...trip, dinner: trip.dinner ?? 'free' })
 });
 
 /**

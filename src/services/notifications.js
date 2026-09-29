@@ -7,6 +7,7 @@ import { formatDate } from '../i18n/format.js';
 import { getRules } from './rules.js';
 import * as settings from './settings.js';
 import { getTrip, listTrips, onTripsChanged } from './tripsStore.js';
+import { freeLabelKey } from '../utils/freeLabel.js';
 
 /**
  * Notifications locales des séjours (@capacitor/local-notifications) :
@@ -123,12 +124,16 @@ function render(n) {
   const locale = i18n.resolvedLanguage;
   const day = formatDate(`${n.date}T12:00:00Z`, locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   if (n.kind === 'summary') {
-    const lines = n.data.steps.map((s) => `${s.start} ${s.name ?? t('generation.freeTime')}`);
+    const lines = n.data.steps.map((s) => {
+      // Dîner mis en avant : « 19:30 Dîner : … », ou « 19:30 Soirée libre ».
+      if (s.type === 'dinner') return s.name ? t('notifications.summary.dinner', { start: s.start, name: s.name }) : t('notifications.summary.freeEvening', { start: s.start });
+      return `${s.start} ${s.name ?? t(freeLabelKey(s))}`;
+    });
     if (n.data.departure) lines.unshift(t('notifications.summary.departure', n.data.departure));
     return { title: t('notifications.summary.title', { date: day }), body: lines.join('\n') };
   }
   return {
-    title: t('notifications.reminder.title', { name: n.data.name ?? t('generation.freeTime') }),
+    title: t(n.data.type === 'dinner' ? 'notifications.reminder.dinnerTitle' : 'notifications.reminder.title', { name: n.data.name ?? t(freeLabelKey(n.data)) }),
     body: t('notifications.reminder.body', { start: n.data.start, end: n.data.end, trip: n.data.tripTitle })
   };
 }

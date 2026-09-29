@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RULES } from './config/rules.js';
-import { lunchKindForDay, lunchOpeningState, pickRestaurant } from './pickRestaurant.js';
+import { dinnerWindow, lunchKindForDay, lunchOpeningState, mealOpeningState, pickRestaurant } from './pickRestaurant.js';
 
 const HERE = { lat: 45.99, lon: 4.72 };
 const MONDAY = '2026-10-05';
@@ -81,6 +81,31 @@ describe('pickRestaurant', () => {
     const far = resto('far', { openingHours: 'Mo-Su 12:00-14:00', regional: true }, { lat: 46.07, lon: 4.72 });
     expect(pickRestaurant([plain, far, regional], ctx(), RULES).place.id).toBe('regional');
     expect(pickRestaurant([plain, regional], ctx({ usedIds: new Set(['regional']) }), RULES).place.id).toBe('plain');
+  });
+});
+
+describe('dîner', () => {
+  const where = { ...HERE, countryCode: 'FR', date: TUESDAY };
+  const window = dinnerWindow('19:30', RULES);
+
+  it('plage du dîner : heure du dîner + durée conseillée (90 min)', () => {
+    expect(dinnerWindow('19:30', RULES)).toEqual({ start: '19:30', end: '21:00' });
+    expect(dinnerWindow('21:00', RULES)).toEqual({ start: '21:00', end: '22:30' });
+  });
+
+  it('ouverture exigée sur toute la plage du dîner', () => {
+    expect(mealOpeningState('Mo-Su 19:00-22:00', { ...where, meal: 'dinner', window }, RULES)).toBe('open');
+    expect(mealOpeningState('Mo-Su 19:00-20:30', { ...where, meal: 'dinner', window }, RULES)).toBe('closed');
+    expect(mealOpeningState('Mo-Su 12:00-14:00', { ...where, meal: 'dinner', window }, RULES)).toBe('closed');
+    expect(mealOpeningState(undefined, { ...where, meal: 'dinner', window }, RULES)).toBe('unknown');
+  });
+
+  it('choisit un restaurant ouvert le soir, jamais celui du déjeuner', () => {
+    const noon = resto('noon', { openingHours: 'Mo-Su 12:00-14:00', regional: true });
+    const lunch = resto('lunch', { openingHours: 'Mo-Su 12:00-14:00,19:00-22:00', regional: true });
+    const night = resto('night', { openingHours: 'Mo-Su 19:00-22:00' });
+    const dinner = ctx({ meal: 'dinner', window, usedIds: new Set(['lunch']) });
+    expect(pickRestaurant([noon, lunch, night], dinner, RULES).place.id).toBe('night');
   });
 });
 

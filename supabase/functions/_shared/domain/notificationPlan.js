@@ -6,9 +6,11 @@ import { slotToInstant } from './time.js';
  * Notifications locales attendues pour un séjour (fonctions pures) :
  *  - résumé de la veille : une par jour de séjour, la veille à l'heure
  *    choisie (rules.notifications.eveningSummaryTime par défaut), avec les
- *    étapes du lendemain et le départ conseillé si l'hébergement est connu ;
+ *    étapes du lendemain, le dîner (restaurant ou soirée libre) et le départ
+ *    conseillé si l'hébergement est connu ;
  *  - rappel : rules.notifications.reminderLeadMin avant chaque créneau
- *    qui contient un lieu, ou étape personnelle (aucun pour un temps libre).
+ *    qui contient un lieu (dîner au restaurant compris : rappel H-1), ou
+ *    étape personnelle (aucun pour un temps libre ni une soirée libre).
  * Toutes les heures sont celles de la destination, converties en instants
  * par slotToInstant. Rien dans le passé ; rien pour une étape terminée ou passée.
  */
@@ -62,6 +64,7 @@ export function planTripNotifications(trip, { now, summaries, reminders, summary
     if (summaries && planned.length) {
       const at = slotToInstant(addDays(day.date, -1), summaryTime ?? rules.notifications.eveningSummaryTime, trip.timezone);
       const start = lodging(day.startLodgingId);
+      const dinner = planned.find((s) => s.type === 'dinner');
       if (at.getTime() > now) {
         out.push({
           id: notificationId(trip.id, day.date, 'summary', 'summary'),
@@ -73,7 +76,9 @@ export function planTripNotifications(trip, { now, summaries, reminders, summary
             tripTitle: trip.title,
             date: day.date,
             steps: planned.map((s) => ({ id: s.id, start: s.start, name: nameOf(s), type: s.type })),
-            departure: start && day.departure ? { time: day.departure.time, lodgingName: start.name ?? start.address } : null
+            departure: start && day.departure ? { time: day.departure.time, lodgingName: start.name ?? start.address } : null,
+            // Dîner du lendemain : name null = soirée libre.
+            dinner: dinner ? { start: dinner.start, name: nameOf(dinner) } : null
           }
         });
       }

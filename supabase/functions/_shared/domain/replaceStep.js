@@ -1,6 +1,7 @@
-import { fitsSlot, isMarket } from './activity.js';
+import { isMarket } from './activity.js';
 import { recomputeTravel } from './dayEdits.js';
 import { distanceKm } from './geo.js';
+import { fitsStepType } from './stepTiming.js';
 
 /**
  * Remplacement d'une étape par un autre lieu, sans réseau à partir de la
@@ -13,15 +14,10 @@ export function usedPlaceIds(trip) {
   return new Set(trip.days.flatMap((d) => d.steps.filter((s) => s.place).map((s) => s.place.id)));
 }
 
-/** Le lieu convient-il à ce type d'étape ? */
-function fitsStep(place, step) {
-  if (step.type === 'lunch') return place.category === 'restaurant' || isMarket(place);
-  return fitsSlot(place, step.type);
-}
 
 /**
  * Meilleures alternatives pour une étape : lieux non utilisés convenant au
- * créneau, les plus proches des étapes voisines d'abord. Pour la pause
+ * créneau (dîner : restaurants), les plus proches des étapes voisines d'abord. Pour la pause
  * déjeuner en mode "Les deux", l'autre type (restaurant ou marché) est
  * toujours proposé en premier.
  * @param {import('./model.js').Trip} trip
@@ -38,7 +34,7 @@ export function alternativesFor(trip, dayIndex, stepIndex, { limit = 3, extraPla
   const closeness = (p) => (neighbours.length ? neighbours.reduce((sum, n) => sum + distanceKm(n, p), 0) / neighbours.length : 0);
   const seen = new Set();
   const pool = [...trip.candidates, ...extraPlaces].filter((p) => {
-    if (seen.has(p.id) || used.has(p.id) || !fitsStep(p, step)) return false;
+    if (seen.has(p.id) || used.has(p.id) || !fitsStepType(p, step.type)) return false;
     seen.add(p.id);
     return true;
   });

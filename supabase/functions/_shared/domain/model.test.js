@@ -15,7 +15,7 @@ const valid = {
 
 describe('model', () => {
   it('expose la version du schéma et les catégories', () => {
-    expect(SCHEMA_VERSION).toBe(1);
+    expect(SCHEMA_VERSION).toBe(2);
     expect(PLACE_CATEGORIES).toContain('museum');
     expect(Object.isFrozen(PLACE_CATEGORIES)).toBe(true);
   });

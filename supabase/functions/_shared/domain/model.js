@@ -4,8 +4,11 @@
  * Heures "HH:mm" et dates "YYYY-MM-DD" : toujours dans le fuseau du séjour.
  */
 
-/** Version courante du schéma des séjours (voir migrations.js, phase 5). */
-export const SCHEMA_VERSION = 1;
+/**
+ * Version courante du schéma des séjours (voir migrations.js, phase 5).
+ * 2 : dîner (Trip.dinner, étapes de type "dinner").
+ */
+export const SCHEMA_VERSION = 2;
 
 /**
  * @typedef {object} PlaceFood Renseigné uniquement pour les restaurants.
@@ -99,6 +102,12 @@ export const PROFILES = Object.freeze(['certified', 'balanced', 'explorer']);
 export const LUNCH_OPTIONS = Object.freeze(['market', 'restaurant', 'both']);
 
 /**
+ * Choix du dîner (Trip.dinner) : restaurant proposé, ou libre (aucune
+ * proposition : créneau "Soirée libre").
+ */
+export const DINNER_OPTIONS = Object.freeze(['restaurant', 'free']);
+
+/**
  * @typedef {object} Lodging
  * @property {string} id
  * @property {string} [name]
@@ -111,7 +120,8 @@ export const LUNCH_OPTIONS = Object.freeze(['market', 'restaurant', 'both']);
 /**
  * @typedef {object} Step
  * @property {string} id
- * @property {'culture' | 'lunch' | 'outdoor' | 'relax' | 'personal'} type
+ * @property {'culture' | 'lunch' | 'outdoor' | 'relax' | 'dinner' | 'personal'} type
+ *   dinner sans lieu : "Soirée libre" (dîner libre, ou aucun restaurant trouvé : badge free_time)
  * @property {string} start "HH:mm"
  * @property {string} end "HH:mm"
  * @property {Place} [place] étape personnelle : lieu facultatif (category "personal", source "user", champ address)
@@ -172,6 +182,7 @@ export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed'
  * @property {number} [fuelConsumption] L/100 km (défaut rules.fuel.defaultConsumptionL100)
  * @property {'certified' | 'balanced' | 'explorer'} profile
  * @property {'market' | 'restaurant' | 'both'} lunch
+ * @property {'restaurant' | 'free'} dinner voir DINNER_OPTIONS (séjour migré de la version 1 : "free", sans étape de dîner)
  * @property {{ vegetarian: boolean, wheelchair: boolean }} prefs
  * @property {Lodging[]} lodgings
  * @property {Day[]} days

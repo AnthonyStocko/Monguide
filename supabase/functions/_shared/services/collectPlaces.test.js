@@ -73,6 +73,12 @@ describe('collectPlaces', () => {
     expect(new URLSearchParams(fetchMock.mock.calls[0][1].body).get('data')).not.toContain('restaurant');
   });
 
+  it('cherche les restaurants pour le dîner, même avec un déjeuner au marché', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ elements: [] })));
+    await collectPlaces(provider(), POINT, 20, { lunch: 'market', dinner: 'restaurant' }, ctx());
+    expect(new URLSearchParams(fetchMock.mock.calls[0][1].body).get('data')).toContain('restaurant');
+  });
+
   it('progression réelle : une source ralentie volontairement termine son étape en dernier', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ elements: [restaurant] })));
     const slow = provider();

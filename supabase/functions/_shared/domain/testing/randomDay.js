@@ -8,14 +8,15 @@ export const TYPES = {
   culture: ['museum', 'monument'],
   lunch: ['restaurant', 'market'],
   outdoor: ['park', 'nature', 'viewpoint'],
-  relax: ['park', 'viewpoint']
+  relax: ['park', 'viewpoint'],
+  dinner: ['restaurant']
 };
 export const HOURS = [undefined, 'Mo-Su 09:00-18:00', 'Mo-Su 12:00-14:30,19:00-22:00', 'Mo-Fr 10:00-12:00', 'Mo-Su 11:00-23:00'];
 
 export const rawStep = fc.record({
   gap: fc.integer({ min: 0, max: 90 }),
   duration: fc.integer({ min: 15, max: 150 }),
-  type: fc.constantFrom('culture', 'lunch', 'outdoor', 'relax'),
+  type: fc.constantFrom('culture', 'lunch', 'outdoor', 'relax', 'dinner'),
   km: fc.option(fc.integer({ min: -30, max: 30 }), { nil: null, freq: 6 }),
   cat: fc.nat(10),
   hours: fc.nat(HOURS.length - 1),

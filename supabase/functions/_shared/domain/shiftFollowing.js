@@ -1,11 +1,11 @@
-import { toMinutes } from './time.js';
-import { durationOf, endOf, isFixed, legMinutes, minimumFor, startOf, stepName, withTimes } from './stepTiming.js';
+import { durationOf, endOf, isFixed, latestStartFor, legMinutes, minimumFor, startOf, stepName, withTimes } from './stepTiming.js';
 
 /**
  * Étapes APRÈS une étape (insérée, ou validée lors du suivi) : décalées au
  * plus tôt après sa fin + trajet, dans l'ordre, sans jamais chevaucher un
  * point fixe (l'étape est alors raccourcie jusqu'à son minimum). Une étape
- * qui commencerait après rules.schedule.lastStepLatestStart, ou qui ne
+ * qui commencerait après rules.schedule.latestStart de son type (dîner
+ * 21:30, activités 19:00), ou qui ne
  * tient plus avant le point fixe suivant, est déclarée infaisable (voir
  * resolveInfeasible). Une étape n'est jamais avancée.
  * @param {object[]} steps étapes de la journée, dans l'ordre
@@ -21,7 +21,6 @@ export function shiftFollowing(steps, index, { mode }, rules, { fixed = isFixed,
   const out = [...steps];
   const changes = [];
   const infeasible = [];
-  const latest = toMinutes(rules.schedule.lastStepLatestStart);
   let prev = cursor ? { end: cursor.end, step: cursor.step } : { end: endOf(out[index]), step: out[index] };
   const skipped = new Set(ignore);
 
@@ -43,7 +42,7 @@ export function shiftFollowing(steps, index, { mode }, rules, { fixed = isFixed,
       continue;
     }
     const reasons = [];
-    if (start > latest) reasons.push('LATE_START');
+    if (start > latestStartFor(s, rules)) reasons.push('LATE_START');
     if (end - start < minimumFor(s, rules)) reasons.push('TOO_SHORT');
     if (reasons.length) {
       infeasible.push({ stepId: s.id, reasons });

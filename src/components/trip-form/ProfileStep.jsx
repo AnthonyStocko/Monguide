@@ -1,14 +1,14 @@
 import { Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { countryInfo } from '@domain/config/countries.js';
-import { LUNCH_OPTIONS, PROFILES } from '@domain/model.js';
+import { DINNER_OPTIONS, LUNCH_OPTIONS, PROFILES } from '@domain/model.js';
 import { includesRestaurants } from '@domain/tripDraft.js';
 import ChoiceGroup from '../ui/ChoiceGroup.jsx';
 import Switch from '../ui/Switch.jsx';
 
 /**
- * Étape 5 : profil d'exploration, pause déjeuner et préférences (si les
- * restaurants sont inclus).
+ * Étape 5 : profil d'exploration, pause déjeuner, dîner (restaurant proposé
+ * ou libre) et préférences (si les restaurants sont inclus).
  * @param {{ draft: object, update: (patch: object) => void, errors: Record<string, string> }} props
  */
 export default function ProfileStep({ draft, update, errors }) {
@@ -50,7 +50,16 @@ export default function ProfileStep({ draft, update, errors }) {
         error={errors.lunch && t(`tripForm.errors.${errors.lunch}`)}
       />
 
-      {includesRestaurants(draft.lunch) && (
+      <ChoiceGroup
+        name="dinner"
+        legend={t('tripForm.profile.dinner')}
+        options={DINNER_OPTIONS.map((d) => ({ value: d, label: t(`dinner.${d}`), ...(d === 'free' ? { description: t('tripForm.profile.dinnerHint') } : {}) }))}
+        value={draft.dinner}
+        onChange={(dinner) => update({ dinner })}
+        error={errors.dinner && t(`tripForm.errors.${errors.dinner}`)}
+      />
+
+      {includesRestaurants(draft.lunch, draft.dinner) && (
         <fieldset className="space-y-1">
           <legend className="text-lg font-semibold">{t('tripForm.profile.prefs')}</legend>
           <Switch id="pref-vegetarian" label={t('tripForm.profile.vegetarian')} checked={draft.prefs.vegetarian} onChange={setPref('vegetarian')} />

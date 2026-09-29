@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { BASE_NAME_LANGUAGES, EU_MEMBERS, SUPPORTED_COUNTRIES, countryInfo, isSupportedCountry, nameLanguages } from './countries.js';
+import { BASE_NAME_LANGUAGES, EU_MEMBERS, SUPPORTED_COUNTRIES, countryInfo, dinnerTimeFor, isSupportedCountry, nameLanguages } from './countries.js';
+import { RULES } from './rules.js';
 
 describe('countries', () => {
   it('couvre les 27 pays de l\'UE et 5 pays hors UE', () => {
@@ -23,6 +24,15 @@ describe('countries', () => {
     for (const { currency } of Object.values(SUPPORTED_COUNTRIES)) {
       expect(() => new Intl.NumberFormat('fr', { style: 'currency', currency })).not.toThrow();
     }
+  });
+
+  it("heure du dîner : 21:00 en Espagne, 20:00 au Portugal et en Italie, 19:30 ailleurs", () => {
+    expect(dinnerTimeFor('ES', RULES)).toBe('21:00');
+    expect(dinnerTimeFor('pt', RULES)).toBe('20:00');
+    expect(dinnerTimeFor('IT', RULES)).toBe('20:00');
+    expect(dinnerTimeFor('FR', RULES)).toBe('19:30');
+    expect(dinnerTimeFor('XX', RULES)).toBe('19:30');
+    for (const { dinnerTime } of Object.values(SUPPORTED_COUNTRIES)) if (dinnerTime) expect(dinnerTime).toMatch(/^\d{2}:\d{2}$/);
   });
 
   it('donne au moins une langue locale par pays', () => {

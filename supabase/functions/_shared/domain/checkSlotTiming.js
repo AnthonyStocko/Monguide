@@ -1,7 +1,8 @@
-import { activityType, durationsFor } from './activity.js';
+import { scheduleLimits, stepDurations } from './activity.js';
 import { openingState, placeOpeningHours } from './openingHours.js';
 import { toMinutes } from './time.js';
 import { travelMinutes } from './travel.js';
+import { stepActivity } from './stepTiming.js';
 import { averageRain } from './weatherArbitration.js';
 
 /**
@@ -10,6 +11,8 @@ import { averageRain } from './weatherArbitration.js';
  * bloquant (fin avant ou égale au début).
  *
  * Codes : TOO_SHORT, OVERLAP_PREVIOUS, OVERLAP_NEXT, CLOSED, RAIN, LATE, INVALID.
+ * Durées et fin tardive dépendent du type d'étape (dîner : rules.durations.dinner,
+ * rules.schedule.lateEnd.dinner).
  * Une durée inférieure à la durée conseillée mais au-dessus du minimum n'est
  * pas un avertissement : simple indication (belowRecommended).
  *
@@ -32,10 +35,10 @@ export function checkSlotTiming({ day, index, start, end, mode, countryCode }, r
 
   const warnings = [];
   const place = step.place;
-  const { recommendedMin, minimumMin } = durationsFor(place, rules);
+  const { recommendedMin, minimumMin } = stepDurations(step, rules);
   // Étape personnelle : ni durée minimale ni horaires d'ouverture.
   const personal = step.type === 'personal';
-  if (!personal && durationMin < minimumMin) warnings.push({ code: 'TOO_SHORT', activity: place ? activityType(place) : 'relax', minimumMin, durationMin });
+  if (!personal && durationMin < minimumMin) warnings.push({ code: 'TOO_SHORT', activity: stepActivity(step), minimumMin, durationMin });
 
   const prev = day.steps[index - 1];
   if (prev) {
@@ -57,7 +60,9 @@ export function checkSlotTiming({ day, index, start, end, mode, countryCode }, r
     if (rain !== null && rain > rules.weather.rainThresholdPct) warnings.push({ code: 'RAIN', pct: Math.round(rain) });
   }
 
-  if (to > toMinutes(rules.schedule.lateEnd)) warnings.push({ code: 'LATE', lateEnd: rules.schedule.lateEnd });
+  // Fin tardive : seuil propre au type d'étape (dîner 23:00, activités 21:00).
+  const { lateEnd } = scheduleLimits(step, rules);
+  if (to > toMinutes(lateEnd)) warnings.push({ code: 'LATE', lateEnd });
 
   return { warnings, blocking: false, belowRecommended: !personal && durationMin >= minimumMin && durationMin < recommendedMin, durationMin };
 }

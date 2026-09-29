@@ -35,6 +35,15 @@ export const restaurant = place('restaurant', 'restaurant', 0.3, { name: 'Le Bou
 export const park = place('park', 'park', 1.52, { name: 'Parc Vermorel' });
 export const garden = place('garden', 'park', 1.82, { name: 'Jardin de la Garenne' });
 export const FRIEND_KM = 0.9;
+// Restaurant du soir à 2 km, ouvert tard.
+export const bistro = place('bistro', 'restaurant', 2, { name: 'Le Bistrot du soir', food: { regional: false, openingHours: 'Mo-Su 19:00-23:30' } });
+
+/** Journée type suivie d'un dîner 19:30-21:00. */
+export function dayWithDinner(date = '2026-10-06') {
+  const day = standardDay(date);
+  day.steps.push(step('dinner', 'dinner', '19:30', '21:00', bistro));
+  return day;
+}
 
 export function standardDay(date = '2026-10-06') {
   return {

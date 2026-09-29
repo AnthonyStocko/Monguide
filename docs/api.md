@@ -437,17 +437,25 @@ rien n'est modifié.
 - **Entrée** : `{ "tripRequest": Trip, "lang": "fr" | "en" }` : séjour issu du
   formulaire (`domain/tripDraft.js`, `buildTrip`), `days` et `candidates`
   vides. Vérifié par `domain/validateTripRequest.js` (`400 invalid_input`
-  en listant les champs invalides).
+  en listant les champs invalides). `dinner` (`restaurant` | `free`) est
+  facultatif : absent (application antérieure), aucun dîner n'est généré.
 - **Sortie** : `{ "trip": Trip, "warnings": Warning[], "sources": Source[] }`
   - `trip.days` : une journée par date, étapes `culture` (10h00), `lunch`
-    (12h30), `outdoor` (14h30), `relax` (17h30) avec `start`/`end`
+    (12h30), `outdoor` (14h30), `relax` (17h30), puis `dinner` (19h30 ;
+    21h00 en Espagne, 20h00 au Portugal et en Italie : `dinnerTime` de
+    `config/countries.js`) avec `start`/`end`
     ("HH:mm", fuseau du séjour), `travelFromPreviousMin`, `badges`
     (`weather_adapted`, `hours_unconfirmed`, `info_missing`,
-    `free_time`), `specialties` (appellations, pause au marché) ;
+    `free_time`), `specialties` (appellations, pause au marché) ; dîner :
+    restaurant ouvert sur toute la plage du dîner (90 min), jamais déjà
+    proposé dans le séjour, près de la dernière étape et de l'hébergement du
+    soir ; sans lieu = « Soirée libre » (`dinner: "free"`, sans badge ; ou
+    aucun restaurant trouvé, badge `free_time`) ;
     `departure` et `returnTravelMin` si un hébergement est connu ;
     `weatherAvailable`, `weather` (`{ "HH": % }`), `holiday`.
   - `trip.candidates` : les 60 meilleurs lieux non utilisés (remplacement et
-    recalcul sans réseau).
+    recalcul sans réseau), dont au moins 10 restaurants ouverts le soir
+    (`places.minDinnerCandidates`) quand le séjour a un dîner.
   - `trip.carbon` : `{ totalKgCo2e, byDay, byMode, distanceKm }` ;
     `trip.fuelCost` : `{ amount, currency }` (voiture, monnaie du pays).
   - `warnings[].code` : `source_failed` (+ `source`, une fois par source ;
@@ -485,7 +493,7 @@ rien n'est modifié.
   - Étapes : `weather` (prévisions), `heritage` (monuments et musées),
     `places` (lieux OpenStreetMap : marchés, nature, petit patrimoine),
     `restaurants` (restaurants OpenStreetMap, lus dans la même source que
-    `places` : absente avec `lunch: "market"`), `planning` (organisation des
+    `places` : absente avec `lunch: "market"` sans `dinner: "restaurant"`), `planning` (organisation des
     journées). Les sources partent en parallèle : toutes les étapes de
     collecte sont `running` dès le début. Plusieurs zones de collecte : une
     étape est finie quand toutes ses zones ont répondu, `failed` si toutes

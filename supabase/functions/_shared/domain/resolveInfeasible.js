@@ -1,10 +1,11 @@
-import { toMinutes } from './time.js';
 import {
   durationOf,
   endOf,
   fitsStepType,
   infeasibility,
   isPersonal,
+  lateEndFor,
+  latestStartFor,
   legMinutes,
   minimumFor,
   recommendedFor,
@@ -42,7 +43,7 @@ export function resolveInfeasible(steps, { stepId, reasons }, ctx, rules) {
   const ignore = ctx.ignore ?? new Set();
   const prev = [...steps.slice(0, index)].reverse().find((n) => !ignore.has(n.id)) ?? null;
   const next = steps.slice(index + 1).find((n) => !ignore.has(n.id)) ?? null;
-  const lateEnd = toMinutes(rules.schedule.lateEnd);
+  const lateEnd = lateEndFor(s, rules);
 
   /** Plage [début, fin max] d'une étape candidate à cette position. */
   const range = (candidate) => {
@@ -84,13 +85,13 @@ export function resolveInfeasible(steps, { stepId, reasons }, ctx, rules) {
 
 /**
  * Jour de report d'une étape : un "Temps libre" du même type, ou (hors
- * déjeuner) une plage libre suffisante entre deux étapes ou en fin de
+ * repas : déjeuner, dîner) une plage libre suffisante entre deux étapes ou en fin de
  * journée, sur un autre jour du séjour postérieur à aujourd'hui.
  * @returns {{ key: string, dayIndex: number, date: string, start: string, end: string, freeStepId?: string } | null}
  */
 export function findPostponeTarget(step, ctx, rules) {
-  const latest = toMinutes(rules.schedule.lastStepLatestStart);
-  const lateEnd = toMinutes(rules.schedule.lateEnd);
+  const latest = latestStartFor(step, rules);
+  const lateEnd = lateEndFor(step, rules);
   const minimum = minimumFor(step, rules);
   const wanted = recommendedFor(step, rules);
   const fmt = (m) => withTimes(step, m, m).start;
@@ -109,7 +110,7 @@ export function findPostponeTarget(step, ctx, rules) {
       const end = Math.min(start + wanted, endOf(free));
       if (ok(start, end)) return { key, dayIndex: d, date: day.date, start: fmt(start), end: fmt(end), freeStepId: free.id };
     }
-    if (step.type === 'lunch') continue;
+    if (step.type === 'lunch' || step.type === 'dinner') continue;
 
     // Plage libre entre deux étapes, ou après la dernière.
     const steps = day.steps;
@@ -145,10 +146,10 @@ export function findReplacement(steps, stepId, reasons, ctx, rules) {
   const ignore = ctx.ignore ?? new Set();
   const prev = ctx.from ?? ([...steps.slice(0, index)].reverse().find((n) => !ignore.has(n.id)) ?? null);
   const next = steps.slice(index + 1).find((n) => !ignore.has(n.id)) ?? null;
-  const lateEnd = toMinutes(rules.schedule.lateEnd);
+  const lateEnd = lateEndFor(s, rules);
   const maxTravel = rules.travel.maxTravelMin;
   // Pluie : comme l'arbitrage météo de la génération, un musée ou monument intérieur remplace une visite extérieure.
-  const rainShelter = (p) => reasons[0] === 'RAIN' && s.type !== 'lunch' && p.indoor === true && (p.category === 'museum' || p.category === 'monument');
+  const rainShelter = (p) => reasons[0] === 'RAIN' && s.type !== 'lunch' && s.type !== 'dinner' && p.indoor === true && (p.category === 'museum' || p.category === 'monument');
   const options = (ctx.trip.candidates ?? [])
     .filter((p) => !ctx.used.has(p.id) && (fitsStepType(p, s.type) || rainShelter(p)))
     .map((p) => {

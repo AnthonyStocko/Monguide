@@ -2,6 +2,7 @@ import { EU_MEMBERS } from '@domain/config/countries.js';
 import { sourcesFor } from '@domain/config/dataSources.js';
 import { displayName } from '@domain/displayName.js';
 import { formatDate, formatNumber } from '../../i18n/format.js';
+import { freeLabelKey } from '../../utils/freeLabel.js';
 
 /**
  * Contenu de l'export PDF d'un séjour (fonction pure, sans jsPDF) : titre,
@@ -54,7 +55,7 @@ export function buildTripDocument(trip, { t, locale, includeAddresses, generated
       if (s.customTime && !personal) details.push(t('planning.customTime'));
       if (s.specialties?.length) details.push(t('generation.specialties', { list: s.specialties.join(', ') }));
       if (s.note) details.push(s.note);
-      blocks.push({ kind: 'step', time: `${s.start} – ${s.end}`, title: personal ? s.title : s.place ? displayName(s.place, locale) : t('generation.freeTime'), details });
+      blocks.push({ kind: 'step', time: `${s.start} – ${s.end}`, title: personal ? s.title : s.place ? displayName(s.place, locale) : t(freeLabelKey(s)), details });
     });
     if (end && d.returnTravelMin !== undefined) push('text', `${t('planning.return', { place: lodgingLabel(end) })} ${travel(d.returnTravelMin)}`);
   }

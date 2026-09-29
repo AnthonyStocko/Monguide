@@ -5,6 +5,7 @@ import { useFormat } from '../../i18n/useFormat.js';
 import { usePlaceName } from '../../i18n/usePlaceName.js';
 import Button from '../ui/Button.jsx';
 import Dialog from '../ui/Dialog.jsx';
+import { freeLabelKey } from '../../utils/freeLabel.js';
 
 /**
  * Panneau "Planning réajusté" : liste chaque changement proposé avec son
@@ -33,7 +34,7 @@ export default function ReplanPanel({ proposal, trip, onApply, onDismiss, dismis
   // Étape du changement (c.step), sinon celle du séjour ; à défaut, le nom calculé par le domaine.
   const name = (c) => {
     const step = c.step ?? steps.get(c.stepId);
-    return (step ? stepName(step) : c.name) ?? t('generation.freeTime');
+    return (step ? stepName(step) : c.name) ?? t(freeLabelKey(step));
   };
 
   const describe = (c) => {

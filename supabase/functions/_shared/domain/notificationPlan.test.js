@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { Settings } from 'luxon';
 import { notificationId, planTripNotifications, reconcilePlan } from './notificationPlan.js';
-import { personal, rules, standardDay, step, trip } from './testing/dayFixture.js';
+import { dayWithDinner, personal, rules, standardDay, step, trip } from './testing/dayFixture.js';
 
 const threeDays = () => {
   const days = ['2026-10-06', '2026-10-07', '2026-10-08'].map((date, d) => {
@@ -89,6 +89,37 @@ describe('planTripNotifications', () => {
     t.days[0].steps.splice(2, 0, personal('p', '14:00', '14:20', { title: 'Rendez-vous' }));
     const plan = planTripNotifications(t, { now: Date.UTC(2026, 9, 1), summaries: false, reminders: true }, rules);
     expect(plan.find((n) => n.stepId === 'p')).toMatchObject({ at: new Date('2026-10-06T11:00:00.000Z'), data: { name: 'Rendez-vous' } });
+  });
+});
+
+describe('planTripNotifications : dîner', () => {
+  const withDinner = () => {
+    const days = ['2026-10-06', '2026-10-07'].map((date, d) => {
+      const day = dayWithDinner(date);
+      day.steps = day.steps.map((s) => ({ ...s, id: `${d}-${s.id}` }));
+      return day;
+    });
+    // Deuxième soir : soirée libre (dîner sans lieu).
+    days[1].steps[4] = step('1-evening', 'dinner', '19:30', '21:00', null, { badges: [] });
+    return trip(days);
+  };
+  const now = Date.UTC(2026, 9, 1);
+
+  it('rappel H-1 du dîner au restaurant, aucun pour une soirée libre', () => {
+    const plan = planTripNotifications(withDinner(), { now, summaries: false, reminders: true }, rules);
+    expect(plan.find((n) => n.stepId === '0-dinner')).toMatchObject({ at: new Date('2026-10-06T16:30:00.000Z'), data: { name: 'Le Bistrot du soir', type: 'dinner', start: '19:30' } });
+    expect(plan.some((n) => n.stepId === '1-evening')).toBe(false);
+  });
+
+  it('le résumé de la veille mentionne le dîner (restaurant, ou soirée libre)', () => {
+    const summaries = planTripNotifications(withDinner(), { now, summaries: true, reminders: false }, rules);
+    expect(summaries.map((n) => n.data.dinner)).toEqual([
+      { start: '19:30', name: 'Le Bistrot du soir' },
+      { start: '19:30', name: null }
+    ]);
+    expect(summaries[0].data.steps.at(-1)).toMatchObject({ type: 'dinner', name: 'Le Bistrot du soir' });
+    // Séjour sans dîner (version 1) : rien à mentionner.
+    expect(planTripNotifications(trip(), { now, summaries: true, reminders: false }, rules)[0].data.dinner).toBeNull();
   });
 });
 

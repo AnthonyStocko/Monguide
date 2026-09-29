@@ -13,15 +13,18 @@
  */
 export const RULES = Object.freeze({
   /**
-   * Gabarit de journée : horaires de la génération initiale. departure sert
-   * aussi de départ conseillé quand une journée commence par un temps libre.
+   * Gabarit de journée : horaires de la génération initiale, puis retour à
+   * l'hébergement. departure sert aussi de départ conseillé quand une journée
+   * commence par un temps libre. dinner : heure par défaut du dîner, sauf pays
+   * qui ont la leur (dinnerTime dans config/countries.js).
    */
   dayTemplate: {
     departure: '09:00',
     culture: '10:00',
     lunch: '12:30',
     outdoor: '14:30',
-    relax: '17:30'
+    relax: '17:30',
+    dinner: '19:30'
   },
 
   /** Plage horaire dans laquelle le déjeuner doit commencer. */
@@ -48,6 +51,8 @@ export const RULES = Object.freeze({
     /** marché, producteur */
     market: { recommendedMin: 45, minimumMin: 30 },
     restaurant: { recommendedMin: 75, minimumMin: 60 },
+    /** dîner (restaurant ou soirée libre), quel que soit le lieu */
+    dinner: { recommendedMin: 90, minimumMin: 60 },
     /** détente, temps libre */
     relax: { recommendedMin: 60, minimumMin: 30 }
   },
@@ -135,11 +140,15 @@ export const RULES = Object.freeze({
     maxTravelers: 20
   },
 
+  /**
+   * Seuils horaires, propres à chaque type d'étape : dinner pour le dîner,
+   * activity pour toutes les autres (visites, déjeuner, étapes personnelles).
+   */
   schedule: {
-    /** La dernière étape de la journée doit commencer au plus tard à cette heure. */
-    lastStepLatestStart: '19:00',
-    /** Au-delà, la journée est signalée comme finissant tard. */
-    lateEnd: '21:00'
+    /** Une étape doit commencer au plus tard à cette heure. */
+    latestStart: { activity: '19:00', dinner: '21:30' },
+    /** Une étape qui finit après cette heure est signalée (avertissement LATE). */
+    lateEnd: { activity: '21:00', dinner: '23:00' }
   },
 
   places: {
@@ -147,6 +156,8 @@ export const RULES = Object.freeze({
     dedupDistanceM: 50,
     /** Taille maximale de la réserve de lieux non utilisés d'un séjour (Trip.candidates). */
     maxCandidates: 60,
+    /** Restaurants ouverts le soir gardés au moins dans la réserve, pour remplacer un dîner sans réseau. */
+    minDinnerCandidates: 10,
     /** Rayon de recherche maximal accepté par la fonction places, en km. */
     maxRadiusKm: 50,
     /** Valeurs OSM "cuisine" qui rendent un restaurant "régional". */

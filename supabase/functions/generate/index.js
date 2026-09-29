@@ -3,6 +3,7 @@ import { daysBetween, eachDate } from '../_shared/domain/dates.js';
 import { distanceKm, roundCoord } from '../_shared/domain/geo.js';
 import { generateTrip } from '../_shared/domain/generateTrip.js';
 import { validateTripRequest } from '../_shared/domain/validateTripRequest.js';
+import { includesRestaurants } from '../_shared/domain/tripDraft.js';
 import { buildWeatherDays } from '../_shared/domain/weatherDays.js';
 import { AppError } from '../_shared/errors.js';
 import { fuelPricesEu } from '../_shared/fuelPricesEu.js';
@@ -55,7 +56,7 @@ async function generate({ trip, lang, countryCode, provider, appConfig }, progre
   // Collecte en parallèle ; chaque source a son délai, et l'ensemble un budget global.
   const zones = collectionZones(trip);
   progress.start();
-  const placeJobs = zones.map((z) => collectPlaces(provider, z, trip.destination.radiusKm, { lunch: trip.lunch }, ctx, progress.report));
+  const placeJobs = zones.map((z) => collectPlaces(provider, z, trip.destination.radiusKm, { lunch: trip.lunch, dinner: trip.dinner }, ctx, progress.report));
   const weatherJob = (
     daysBetween(trip.startDate, trip.endDate) >= 0
       ? cached('weather', { ...point, timezone: trip.timezone }, rules.cacheTtlSec.weather, () => fetchHourlyForecast(point, trip.timezone))
@@ -146,7 +147,7 @@ serveFunction({
     if (!provider) throw new AppError(400, 'unsupported_country', `Country not supported: ${countryCode}`);
     const lang = ['fr', 'en'].includes(body.lang) ? body.lang : 'fr';
     const input = { trip, lang, countryCode, provider, appConfig };
-    const restaurants = trip.lunch !== 'market';
+    const restaurants = includesRestaurants(trip.lunch, trip.dinner);
     const zones = collectionZones(trip).length;
 
     if ((req.headers.get('accept') ?? '').includes('application/x-ndjson')) {

@@ -91,7 +91,7 @@ describe('validateStep', () => {
   });
 
   it('valide le profil et la pause déjeuner', () => {
-    expect(validateStep('profile', validDraft({ profile: 'x', lunch: 'y' }), ctx)).toEqual({ profile: 'profileRequired', lunch: 'lunchRequired' });
+    expect(validateStep('profile', validDraft({ profile: 'x', lunch: 'y', dinner: 'z' }), ctx)).toEqual({ profile: 'profileRequired', lunch: 'lunchRequired', dinner: 'dinnerRequired' });
   });
 
   it('au récapitulatif, signale les étapes incomplètes', () => {
@@ -145,7 +145,9 @@ describe('buildTrip', () => {
   it('construit un Trip complet : pays, fuseau, monnaie, préférences', () => {
     const trip = buildTrip(validDraft({ lunch: 'both', prefs: { vegetarian: true, wheelchair: false } }), { id: 'trip-9', now: '2026-09-24T10:00:00.000Z', makeId });
     expect(trip).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
+      lunch: 'both',
+      dinner: 'restaurant',
       id: 'trip-9',
       title: 'Annecy',
       deleted: false,
@@ -165,7 +167,7 @@ describe('buildTrip', () => {
 
   it('prend la monnaie du pays et ignore carburant et préférences inutiles', () => {
     const krakow = { name: 'Cracovie', country: 'Pologne', countryCode: 'PL', lat: 50.06, lon: 19.94, timezone: 'Europe/Warsaw' };
-    const trip = buildTrip(validDraft({ destination: krakow, mode: 'walk', lunch: 'market', prefs: { vegetarian: true, wheelchair: true } }), {
+    const trip = buildTrip(validDraft({ destination: krakow, mode: 'walk', lunch: 'market', dinner: 'free', prefs: { vegetarian: true, wheelchair: true } }), {
       id: 't',
       now: 'n',
       makeId
@@ -173,6 +175,12 @@ describe('buildTrip', () => {
     expect(trip.currency).toBe('PLN');
     expect(trip).not.toHaveProperty('fuelType');
     expect(trip.prefs).toEqual({ vegetarian: false, wheelchair: false });
+    expect(trip.dinner).toBe('free');
+  });
+
+  it('garde les préférences quand seul le dîner est au restaurant', () => {
+    const trip = buildTrip(validDraft({ lunch: 'market', dinner: 'restaurant', prefs: { vegetarian: true, wheelchair: false } }), { id: 't', now: 'n', makeId });
+    expect(trip.prefs).toEqual({ vegetarian: true, wheelchair: false });
   });
 });
 
@@ -185,5 +193,7 @@ describe('divers', () => {
   it('sait si les restaurants sont inclus', () => {
     expect(includesRestaurants('both')).toBe(true);
     expect(includesRestaurants('market')).toBe(false);
+    expect(includesRestaurants('market', 'free')).toBe(false);
+    expect(includesRestaurants('market', 'restaurant')).toBe(true);
   });
 });

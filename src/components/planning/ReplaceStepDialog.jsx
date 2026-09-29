@@ -15,6 +15,7 @@ import Button from '../ui/Button.jsx';
 import Dialog from '../ui/Dialog.jsx';
 import { usePhoto } from '../ui/Photo.jsx';
 import { cascadeProps, useFirstShow, useMotionAllowed } from '../../ui/motion.js';
+import { freeLabelKey } from '../../utils/freeLabel.js';
 
 /**
  * Candidat : vignette (photo, crédit derrière le bouton "i" affiché sous la
@@ -87,7 +88,8 @@ export default function ReplaceStepDialog({ trip, dayIndex, stepIndex, onPick, o
         radiusKm: trip.destination.radiusKm,
         countryCode: trip.destination.countryCode,
         profile: trip.profile,
-        lunch: trip.lunch,
+        // Dîner : restaurants uniquement, quel que soit le choix du déjeuner.
+        lunch: step.type === 'dinner' ? 'restaurant' : trip.lunch,
         lang: i18n.resolvedLanguage
       });
       setExtra({ status: 'ok', places: data.places });
@@ -97,7 +99,7 @@ export default function ReplaceStepDialog({ trip, dayIndex, stepIndex, onPick, o
   };
 
   return (
-    <Dialog title={t('replace.title', { name: stepName(step) ?? t('generation.freeTime') })} onClose={onClose}>
+    <Dialog title={t('replace.title', { name: stepName(step) ?? t(freeLabelKey(step)) })} onClose={onClose}>
       {options.length === 0 && (
         <div className="flex flex-col items-center gap-2 text-center">
           <Illustration name="noResults" className="aspect-[4/3] w-full max-w-48 rounded-3xl" />

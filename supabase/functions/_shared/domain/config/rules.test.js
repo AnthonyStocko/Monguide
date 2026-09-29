@@ -20,7 +20,7 @@ describe('RULES', () => {
 
   it('a un gabarit de journée dans l\'ordre chronologique', () => {
     const t = RULES.dayTemplate;
-    const order = [t.departure, t.culture, t.lunch, t.outdoor, t.relax].map(toMin);
+    const order = [t.departure, t.culture, t.lunch, t.outdoor, t.relax, t.dinner].map(toMin);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
@@ -57,7 +57,9 @@ describe('RULES', () => {
     expect(RULES.weather.forecastDays).toBe(16);
     expect(RULES.trip).toMatchObject({ radiusOptionsKm: [5, 10, 20, 40], maxDays: 7 });
     expect(RULES.trip.radiusOptionsKm).toContain(RULES.trip.defaultRadiusKm);
-    expect(RULES.schedule).toEqual({ lastStepLatestStart: '19:00', lateEnd: '21:00' });
+    expect(RULES.schedule).toEqual({ latestStart: { activity: '19:00', dinner: '21:30' }, lateEnd: { activity: '21:00', dinner: '23:00' } });
+    expect(RULES.durations.dinner).toEqual({ recommendedMin: 90, minimumMin: 60 });
+    expect(RULES.places.minDinnerCandidates).toBe(10);
     expect(RULES.places.dedupDistanceM).toBe(50);
     expect(RULES.lodging.farFactor).toBe(1.5);
     expect(RULES.notifications).toEqual({ eveningSummaryTime: '19:00', reminderLeadMin: 60 });

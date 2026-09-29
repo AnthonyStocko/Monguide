@@ -2,10 +2,12 @@ import { allowedByProfile, fitsSlot, isMarket } from './activity.js';
 import { eachDate } from './dates.js';
 import { dedupePlaces } from './dedupePlaces.js';
 import { distanceKm } from './geo.js';
-import { lunchKindForDay, pickRestaurant } from './pickRestaurant.js';
+import { dinnerTimeFor } from './config/countries.js';
+import { dinnerWindow, evaluateRestaurant, lunchKindForDay, pickRestaurant } from './pickRestaurant.js';
 import { scheduleDay } from './scheduleDay.js';
 import { detourKm, scorePlace } from './scorePlace.js';
 import { effectiveRadiusKm, travelMinutes } from './travel.js';
+import { includesRestaurants } from './tripDraft.js';
 import { arbitrateWeather, dayWeather } from './weatherArbitration.js';
 import { computeCarbon, computeFuelCost } from './carbon.js';
 
@@ -13,8 +15,11 @@ import { computeCarbon, computeFuelCost } from './carbon.js';
  * Moteur de génération d'un séjour (fonction pure, exécutée par la fonction
  * serveur generate). Construit chaque journée à partir du gabarit
  * (rules.dayTemplate) : départ, visite culturelle, pause gourmande, plein
- * air, détente. Aucun lieu n'est répété ; un créneau sans candidat devient
- * un "temps libre" (badge free_time) plutôt qu'un lieu inventé.
+ * air, détente, dîner (heure du pays : dinnerTimeFor), puis retour à
+ * l'hébergement. Aucun lieu n'est répété ; un créneau sans candidat devient
+ * un "temps libre" (badge free_time) plutôt qu'un lieu inventé. Dîner
+ * "libre" : créneau sans lieu ni badge ("Soirée libre") ; trip.dinner absent
+ * (demande d'une application antérieure) : aucun dîner.
  */
 
 /** Hébergement d'une nuit, ou null. */
@@ -32,6 +37,26 @@ export function dayLodgings(lodgings, dates, i) {
   const start = night(dates[i - 1]) ?? night(dates[i]);
   const end = night(dates[i]) ?? night(dates[i - 1]);
   return { start, end };
+}
+
+/**
+ * Restaurants ouverts le soir (plage du dîner) d'au moins un jour du séjour,
+ * compatibles avec les préférences : horaires confirmés d'abord, puis
+ * horaires inconnus (acceptés comme pour le choix du dîner) ; meilleur score
+ * de base d'abord.
+ * @param {import('./model.js').Place[]} restaurants
+ * @param {{ dates: string[], countryCode: string, window: { start: string, end: string }, prefs: { vegetarian: boolean, wheelchair: boolean } }} ctx
+ * @returns {import('./model.js').Place[]}
+ */
+export function eveningRestaurants(restaurants, { dates, countryCode, window, prefs }, rules) {
+  const out = [];
+  for (const place of restaurants) {
+    const verdicts = dates.map((date) => evaluateRestaurant(place, { date, countryCode, prefs, meal: 'dinner', window }, rules)).filter(Boolean);
+    if (!verdicts.length) continue;
+    const best = verdicts.find((v) => v.hours === 'open') ?? verdicts[0];
+    out.push({ place, known: best.hours === 'open', score: best.score });
+  }
+  return out.sort((a, b) => Number(b.known) - Number(a.known) || b.score - a.score).map((o) => o.place);
 }
 
 /**
@@ -61,7 +86,10 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
   const used = new Set();
   const categoryUses = {};
   const specialties = appellations.slice(0, 3).map((a) => a.name);
-  const tmpl = rules.dayTemplate;
+  const countryCode = trip.destination.countryCode;
+  // Heures de gabarit par type d'étape, dîner à l'heure du pays.
+  const slots = { ...rules.dayTemplate, dinner: dinnerTimeFor(countryCode, rules) };
+  const dinnerSlot = dinnerWindow(slots.dinner, rules);
 
   const days = [];
   const legsKmByDay = [];
@@ -101,7 +129,7 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
       if (k === 'restaurant') {
         const r = pickRestaurant(
           restaurants,
-          { date, countryCode: trip.destination.countryCode, near: near.length ? near : [anchor ?? center], effectiveRadiusKm: radius, prefs: trip.prefs, usedIds: used, accept: (p) => reachable(culture ?? startLodging, p) },
+          { date, countryCode, near: near.length ? near : [anchor ?? center], effectiveRadiusKm: radius, prefs: trip.prefs, usedIds: used, accept: (p) => reachable(culture ?? startLodging, p) },
           rules
         );
         return r ? { place: take(r.place), badges: r.badges } : null;
@@ -110,6 +138,30 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
       return m ? { place: m, badges: [], specialties } : null;
     };
     const lunch = pickLunch(kind) ?? (trip.lunch === 'both' ? pickLunch(kind === 'restaurant' ? 'market' : 'restaurant') : null);
+
+    // Dîner : restaurant ouvert sur la plage du dîner, jamais déjà proposé (déjeuner compris),
+    // près de la dernière étape du jour et de l'hébergement du soir.
+    let dinner = null;
+    if (trip.dinner === 'restaurant') {
+      const last = relax ?? outdoor ?? lunch?.place ?? culture;
+      const dinnerNear = [last, endLodging].filter(Boolean);
+      const r = pickRestaurant(
+        restaurants,
+        {
+          date,
+          countryCode,
+          meal: 'dinner',
+          window: dinnerSlot,
+          near: dinnerNear.length ? dinnerNear : [anchor ?? center],
+          effectiveRadiusKm: radius,
+          prefs: trip.prefs,
+          usedIds: used,
+          accept: (p) => reachable(last ?? startLodging, p)
+        },
+        rules
+      );
+      dinner = r ? { place: take(r.place), badges: r.badges } : null;
+    }
 
     const step = (type, slotStart, place, extra = {}) => {
       const s = { id: makeId(), type, slotStart, indoor: place ? place.indoor : null, status: 'planned', customTime: false, locked: false, badges: [], ...extra };
@@ -120,14 +172,18 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
       }
       return s;
     };
+    // Soirée libre choisie : aucune proposition, et ce n'est pas un créneau "sans lieu trouvé".
+    const freeEvening = () => ({ id: makeId(), type: 'dinner', slotStart: slots.dinner, indoor: null, status: 'planned', customTime: false, locked: false, badges: [] });
     const lunchExtra = lunch ? { badges: lunch.badges, ...(lunch.specialties?.length ? { specialties: lunch.specialties } : {}) } : {};
     const raw = [
-      step('culture', tmpl.culture, culture),
-      step('lunch', tmpl.lunch, lunch?.place ?? null, lunchExtra),
-      step('outdoor', tmpl.outdoor, outdoor),
-      step('relax', tmpl.relax, relax)
+      step('culture', slots.culture, culture),
+      step('lunch', slots.lunch, lunch?.place ?? null, lunchExtra),
+      step('outdoor', slots.outdoor, outdoor),
+      step('relax', slots.relax, relax)
     ];
     if (!lunch) raw[1].badges = ['free_time'];
+    if (trip.dinner === 'restaurant') raw.push(step('dinner', slots.dinner, dinner?.place ?? null, dinner ? { badges: dinner.badges } : {}));
+    else if (trip.dinner === 'free') raw.push(freeEvening());
 
     const from = startLodging ? { lat: startLodging.lat, lon: startLodging.lon } : null;
     const to = endLodging ? { lat: endLodging.lat, lon: endLodging.lon } : null;
@@ -148,7 +204,7 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
     const arbitrated = arbitrateWeather(day, indoor, used, rules);
     if (arbitrated.swapped) {
       const rescheduled = scheduleDay(
-        arbitrated.steps.map((s) => ({ ...s, slotStart: tmpl[s.type] })),
+        arbitrated.steps.map((s) => ({ ...s, slotStart: slots[s.type] })),
         { from, to, mode: trip.mode },
         rules
       );
@@ -163,15 +219,19 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
 
   if (freeSlots) warnings.push({ code: 'free_time', count: freeSlots });
   if (days.some((d) => !d.weatherAvailable)) warnings.push({ code: 'weather_later' });
-  if (!restaurants.length && trip.lunch !== 'market') warnings.push({ code: 'no_restaurants' });
+  if (!restaurants.length && includesRestaurants(trip.lunch, trip.dinner)) warnings.push({ code: 'no_restaurants' });
 
-  // Réserve : les meilleurs lieux non utilisés, pour remplacer une étape sans réseau.
-  const candidates = [...visits, ...markets, ...restaurants]
+  // Réserve : les meilleurs lieux non utilisés, pour remplacer une étape sans réseau,
+  // dont au moins rules.places.minDinnerCandidates restaurants ouverts le soir (dîner hors ligne).
+  const ranked = [...visits, ...markets, ...restaurants]
     .filter((p) => !used.has(p.id))
     .map((p) => ({ p, s: scorePlace(p, { distanceKm: distanceKm(center, p), effectiveRadiusKm: radius, categoryUses: 0 }, rules) }))
     .sort((a, b) => b.s - a.s)
-    .slice(0, rules.places.maxCandidates)
     .map(({ p }) => p);
+  const evening = trip.dinner ? eveningRestaurants(restaurants.filter((p) => !used.has(p.id)), { dates, countryCode, window: dinnerSlot, prefs: trip.prefs }, rules) : [];
+  const reserved = new Set(evening.slice(0, rules.places.minDinnerCandidates).map((p) => p.id));
+  const others = new Set(ranked.filter((p) => !reserved.has(p.id)).slice(0, Math.max(0, rules.places.maxCandidates - reserved.size)).map((p) => p.id));
+  const candidates = ranked.filter((p) => reserved.has(p.id) || others.has(p.id));
 
   const result = { ...trip, days, candidates };
   const carbon = computeCarbon(legsKmByDay, trip, co2Factors, rules);

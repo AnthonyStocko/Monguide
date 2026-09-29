@@ -12,6 +12,7 @@ const valid = () => ({
   fuelType: 'sp95',
   profile: 'balanced',
   lunch: 'both',
+  dinner: 'restaurant',
   prefs: { vegetarian: false, wheelchair: false },
   lodgings: [{ id: 'l1', address: 'Rua Augusta', lat: 38.71, lon: -9.14, nights: ['2026-10-06'] }]
 });
@@ -31,6 +32,7 @@ describe('validateTripRequest', () => {
     ['fuelType', (t) => (t.fuelType = 'kerosene')],
     ['profile', (t) => (t.profile = 'x')],
     ['lunch', (t) => (t.lunch = 'x')],
+    ['dinner', (t) => (t.dinner = 'x')],
     ['prefs', (t) => (t.prefs = null)],
     ['lodgings', (t) => (t.lodgings[0].nights = ['2026-10-09'])],
     ['fuelConsumption', (t) => (t.fuelConsumption = -1)]
@@ -38,6 +40,12 @@ describe('validateTripRequest', () => {
     const t = valid();
     mutate(t);
     expect(validateTripRequest(t, RULES)).toContain(field);
+  });
+
+  it("accepte une demande sans dîner (application antérieure)", () => {
+    const t = valid();
+    delete t.dinner;
+    expect(validateTripRequest(t, RULES)).toEqual([]);
   });
 
   it('refuse deux hébergements pour la même nuit', () => {

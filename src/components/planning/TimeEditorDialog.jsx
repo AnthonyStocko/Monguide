@@ -9,6 +9,7 @@ import { usePlaceName } from '../../i18n/usePlaceName.js';
 import Button from '../ui/Button.jsx';
 import Dialog from '../ui/Dialog.jsx';
 import TravelTime from './TravelTime.jsx';
+import { freeLabelKey } from '../../utils/freeLabel.js';
 
 /** Heures proposées : de 06:00 à 23:55 par pas de 5 minutes (plus l'heure actuelle si hors pas). */
 function timeOptions(current) {
@@ -94,7 +95,7 @@ export default function TimeEditorDialog({ trip, dayIndex, stepIndex, rules, onS
 
   return (
     <Dialog
-      title={t('timing.title', { name: step.place ? placeName(step.place) : t('generation.freeTime') })}
+      title={t('timing.title', { name: step.place ? placeName(step.place) : t(freeLabelKey(step)) })}
       onClose={onClose}
       footer={
         <>
@@ -139,7 +140,7 @@ export default function TimeEditorDialog({ trip, dayIndex, stepIndex, rules, onS
         {shiftedWarnings.map((w) => (
           <p key={`${w.step.id}-${w.code}`} className="flex items-start gap-2 rounded-xl bg-warning-soft px-3 py-2 font-medium text-warning-on-soft">
             <TriangleAlert aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
-            {t('timing.forStep', { name: w.step.place ? placeName(w.step.place) : t('generation.freeTime'), text: warningText(w) })}
+            {t('timing.forStep', { name: w.step.place ? placeName(w.step.place) : t(freeLabelKey(w.step)), text: warningText(w) })}
           </p>
         ))}
       </div>

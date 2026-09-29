@@ -45,6 +45,26 @@ export function durationsFor(place, rules) {
 }
 
 /**
+ * Durées d'une étape : celles du dîner pour un dîner (restaurant ou soirée
+ * libre), sinon celles de son lieu (durationsFor).
+ * @param {{ type: string, place?: object }} step
+ */
+export function stepDurations(step, rules) {
+  return step.type === 'dinner' ? rules.durations.dinner : durationsFor(step.place, rules);
+}
+
+/**
+ * Seuils horaires d'une étape (rules.schedule) : ceux du dîner, ou ceux des
+ * activités pour tout autre type d'étape.
+ * @param {{ type: string }} step
+ * @returns {{ latestStart: string, lateEnd: string }} "HH:mm"
+ */
+export function scheduleLimits(step, rules) {
+  const kind = step.type === 'dinner' ? 'dinner' : 'activity';
+  return { latestStart: rules.schedule.latestStart[kind], lateEnd: rules.schedule.lateEnd[kind] };
+}
+
+/**
  * Catégories de lieux autorisées par profil pour les visites (hors déjeuner).
  *  - certified : patrimoine certifié uniquement ;
  *  - balanced : + parcs, espaces naturels, marchés ;

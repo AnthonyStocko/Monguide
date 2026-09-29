@@ -1,3 +1,4 @@
+import { scheduleLimits } from './activity.js';
 import { checkSlotTiming } from './checkSlotTiming.js';
 import { adviseDeparture } from './departure.js';
 import { fromMinutes, toMinutes } from './time.js';
@@ -64,15 +65,16 @@ export function applyTiming(day, index, { start, end, shiftFollowing = false }) 
 
 /**
  * Avertissements de chaque étape d'une journée (horaires actuels), plus
- * STARTS_TOO_LATE pour une étape commençant après rules.schedule.lastStepLatestStart.
+ * STARTS_TOO_LATE pour une étape commençant après rules.schedule.latestStart
+ * de son type (dîner 21:30, activités 19:00).
  * @returns {Record<string, { code: string, [k: string]: any }[]>} par identifiant d'étape
  */
 export function checkDay(day, { mode, countryCode }, rules) {
-  const latest = toMinutes(rules.schedule.lastStepLatestStart);
   const out = {};
   day.steps.forEach((s, index) => {
     const { warnings } = checkSlotTiming({ day, index, start: s.start, end: s.end, mode, countryCode }, rules);
-    if (toMinutes(s.start) > latest) warnings.push({ code: 'STARTS_TOO_LATE', latest: rules.schedule.lastStepLatestStart });
+    const { latestStart } = scheduleLimits(s, rules);
+    if (toMinutes(s.start) > toMinutes(latestStart)) warnings.push({ code: 'STARTS_TOO_LATE', latest: latestStart });
     if (warnings.length) out[s.id] = warnings;
   });
   return out;

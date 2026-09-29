@@ -320,6 +320,10 @@
     "restaurant": "Restaurant",
     "both": "Both"
   },
+  "dinner": {
+    "restaurant": "Suggested restaurant",
+    "free": "Free"
+  },
   "profiles": {
     "certified": {
       "label": "Certified heritage",
@@ -416,6 +420,8 @@
       "question": "Exploration profile",
       "dataVaries": "Outside France, the richness of heritage data varies by country.",
       "lunch": "Lunch break",
+      "dinner": "Dinner",
+      "dinnerHint": "Free: no suggestion, the slot stays a “Free evening”.",
       "prefs": "Restaurant preferences",
       "vegetarian": "Vegetarian options",
       "wheelchair": "Wheelchair accessible",
@@ -434,7 +440,8 @@
       "travelers_other": "{{count}} travellers",
       "nights_one": "{{count}} night, on {{first}}",
       "nights_other": "{{count}} nights from {{first}}",
-      "lunch": "Lunch: {{value}}"
+      "lunch": "Lunch: {{value}}",
+      "dinner": "Dinner: {{value}}"
     },
     "errors": {
       "summary_one": "{{count}} item to fix before continuing.",
@@ -455,6 +462,7 @@
       "fuelTypeRequired": "Choose the car’s fuel.",
       "profileRequired": "Choose a profile.",
       "lunchRequired": "Choose a lunch option.",
+      "dinnerRequired": "Choose a dinner option.",
       "stepIncomplete": "This step is incomplete."
     },
     "created": {
@@ -476,7 +484,7 @@
       "free_time_one": "{{count}} slot without a place found: left as free time.",
       "free_time_other": "{{count}} slots without a place found: left as free time.",
       "weather_later": "The weather for some days will be taken into account as your departure approaches.",
-      "no_restaurants": "No restaurants found for lunch breaks.",
+      "no_restaurants": "No restaurants found for meals.",
       "no_fuel_price": "Fuel price unavailable: cost not estimated.",
       "no_carbon_factors": "Carbon footprint unavailable for this trip."
     },
@@ -489,9 +497,11 @@
       "lunch": "Food break",
       "outdoor": "Outdoors",
       "relax": "Relax",
+      "dinner": "Dinner",
       "personal": "Personal stop"
     },
     "freeTime": "Free time",
+    "freeEvening": "Free evening",
     "specialties": "Local specialties: {{list}}",
     "carbonTitle": "Travel carbon footprint",
     "carbonTotal": "{{value}} kg CO₂e for {{km}} km of estimated travel.",
@@ -540,6 +550,7 @@
       "trail": "A hike",
       "market": "A market visit",
       "restaurant": "A restaurant meal",
+      "dinner": "A dinner",
       "relax": "A relaxing break"
     },
     "TOO_SHORT": "{{activity}} usually takes at least {{minimum}}. You planned {{duration}}.",
@@ -723,7 +734,8 @@
     "dropped": "{{name}} ({{start}}): {{reason}}",
     "reasons": {
       "LUNCH_COVERED": "your stop covers the lunch break.",
-      "LATE_START": "would start after 7 pm.",
+      "DINNER_COVERED": "your stop covers dinner.",
+      "LATE_START": "would start too late.",
       "LATE_END": "would end too late.",
       "TOO_SHORT": "not enough time left.",
       "CLOSED": "closed at that time.",
@@ -805,10 +817,13 @@
     "channel": "Trip reminders",
     "summary": {
       "title": "Tomorrow, {{date}}",
-      "departure": "Suggested departure at {{time}} from {{lodgingName}}"
+      "departure": "Suggested departure at {{time}} from {{lodgingName}}",
+      "dinner": "{{start}} Dinner: {{name}}",
+      "freeEvening": "{{start}} Free evening"
     },
     "reminder": {
       "title": "In one hour: {{name}}",
+      "dinnerTitle": "Dinner in one hour: {{name}}",
       "body": "From {{start}} to {{end}} · {{trip}}"
     },
     "explainer": {

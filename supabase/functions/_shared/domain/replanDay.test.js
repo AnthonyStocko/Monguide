@@ -6,7 +6,8 @@ import { checkDayInvariants } from './checkDayInvariants.js';
 import { insertWithoutReplan, removePersonalStep, replanDay } from './replanDay.js';
 import { fromMinutes } from './time.js';
 import { travelMinutes } from './travel.js';
-import { FRIEND_KM, garden, park, personal, place, rules, standardDay, step, trip } from './testing/dayFixture.js';
+import { FRIEND_KM, bistro, dayWithDinner, garden, park, personal, place, rules, standardDay, step, trip } from './testing/dayFixture.js';
+import { applyTiming, checkDay } from './dayEdits.js';
 
 const ids = (day) => day.steps.map((s) => s.id);
 const byId = (day, id) => day.steps.find((s) => s.id === id);
@@ -116,6 +117,66 @@ describe('replanDay — journée type 10h00 / 12h30 / 14h30 / 17h30', () => {
     const applied = applyChanges(t, r, {}, rules);
     const removed = removePersonalStep(applied, 0, 'p', rules);
     expect(removed.day.steps.some((s) => s.conflicts)).toBe(false);
+  });
+});
+
+describe('replanDay — dîner', () => {
+  it('journée retardée de 1h30 : le dîner est décalé sans déclencher la règle des 19h00', () => {
+    // Visite culturelle repoussée de 1h30, étapes suivantes décalées d'autant (réglage de l'horaire).
+    const day = applyTiming(dayWithDinner(), 0, { start: '11:30', end: '13:00', shiftFollowing: true });
+    expect(byId(day, 'relax')).toMatchObject({ start: '19:00', end: '20:30' });
+    expect(byId(day, 'dinner')).toMatchObject({ start: '21:00', end: '22:30' });
+    const warnings = checkDay(day, { mode: 'walk', countryCode: 'FR' }, rules);
+    expect(warnings.dinner).toBeUndefined();
+    expect(warnings.relax).toBeUndefined();
+  });
+
+  it("étape personnelle avant le dîner : dîner décalé après 19h00 sans être écarté, la détente l'est", () => {
+    const t = trip([dayWithDinner()]);
+    // Au restaurant du soir de 17:30 à 20:25 (chevauchement du dîner < 60 min : pas « couvert »).
+    const r = replanDay(t, 0, personal('p', '17:30', '20:25', { km: 2, title: 'Spectacle' }), rules);
+    expect(byId(r.day, 'dinner')).toMatchObject({ start: '20:25', end: '21:55', place: { id: 'bistro' } });
+    expect(r.changes.find((c) => c.stepId === 'dinner')).toMatchObject({ kind: 'shifted', from: { start: '19:30', end: '21:00' }, to: { start: '20:25', end: '21:55' } });
+    // La détente (activité) repoussée après 19h00 est, elle, proposée au report ou à la suppression.
+    expect(r.changes.find((c) => c.stepId === 'relax')).toMatchObject({ reason: 'LATE_START' });
+    expect(r.warnings).toEqual([]);
+    expect(invariantsOf(t, applyChanges(t, r, {}, rules))).toEqual([]);
+  });
+
+  it('dîner qui commencerait après 21h30 : proposé à la suppression', () => {
+    const day = dayWithDinner();
+    day.steps[4] = { ...day.steps[4], start: '21:00', end: '22:30' };
+    const r = replanDay(trip([day]), 0, personal('p', '19:00', '21:55', { km: 2 }), rules);
+    expect(r.changes.find((c) => c.stepId === 'dinner')).toMatchObject({ kind: 'removed', reason: 'LATE_START' });
+  });
+
+  it('dîner finissant après 23h00 : avertissement LATE (seuil du dîner)', () => {
+    const day = dayWithDinner();
+    day.steps[4] = { ...day.steps[4], start: '21:30', end: '23:15', customTime: true };
+    const r = replanDay(trip([day]), 0, personal('p', '14:00', '16:00', { km: FRIEND_KM }), rules);
+    expect(r.warnings).toContainEqual({ code: 'LATE', lateEnd: '23:00' });
+  });
+
+  it("dîner jusqu'à 22h30 : pas d'avertissement LATE, retour compris", () => {
+    const day = dayWithDinner();
+    day.steps[4] = { ...day.steps[4], start: '21:00', end: '22:30', customTime: true };
+    const r = replanDay(trip([day]), 0, personal('p', '14:00', '16:00', { km: FRIEND_KM }), rules);
+    expect(r.warnings).toEqual([]);
+  });
+
+  it('étape personnelle couvrant le dîner : dîner proposé à la suppression', () => {
+    const r = replanDay(trip([dayWithDinner()]), 0, personal('p', '19:15', '22:00', { km: 1.9, title: 'Dîner chez des amis' }), rules);
+    expect(r.changes.find((c) => c.stepId === 'dinner')).toMatchObject({ kind: 'removed', reason: 'DINNER_COVERED' });
+  });
+
+  it('restaurant du soir fermé après décalage : remplacé par un restaurant de la réserve ouvert le soir', () => {
+    const early = { ...bistro, food: { ...bistro.food, openingHours: 'Mo-Su 19:00-21:30' } };
+    const day = dayWithDinner();
+    day.steps[4] = { ...day.steps[4], place: early };
+    const late = place('late', 'restaurant', 2.1, { name: 'Tardif', food: { regional: false, openingHours: 'Mo-Su 18:00-23:59' } });
+    const lunchOnly = place('noon', 'restaurant', 2.05, { name: 'Midi', food: { regional: false, openingHours: 'Mo-Su 12:00-14:00' } });
+    const r = replanDay(trip([day], [lunchOnly, late]), 0, personal('p', '17:30', '20:25', { km: 2 }), rules);
+    expect(r.changes.find((c) => c.stepId === 'dinner')).toMatchObject({ kind: 'replaced', reason: 'CLOSED', name: 'Tardif' });
   });
 });
 

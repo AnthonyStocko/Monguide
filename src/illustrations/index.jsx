@@ -49,7 +49,7 @@ const BY_CATEGORY = {
 };
 
 // Étape sans lieu (temps libre) : selon le type de l'étape.
-const BY_STEP_TYPE = { culture: 'museum', lunch: 'restaurant', outdoor: 'nature', relax: 'park', personal: 'personal' };
+const BY_STEP_TYPE = { culture: 'museum', lunch: 'restaurant', outdoor: 'nature', relax: 'park', dinner: 'restaurant', personal: 'personal' };
 
 /**
  * Vignette d'un lieu (catégorie) ; paysage si la catégorie est inconnue.

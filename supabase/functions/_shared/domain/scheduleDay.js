@@ -1,4 +1,4 @@
-import { durationsFor } from './activity.js';
+import { scheduleLimits, stepDurations } from './activity.js';
 import { adviseDeparture } from './departure.js';
 import { fromMinutes, toMinutes } from './time.js';
 import { routeKm, travelMinutes } from './travel.js';
@@ -19,7 +19,6 @@ import { routeKm, travelMinutes } from './travel.js';
  * @returns {{ steps: object[], departure?: { time: string, travelMin: number }, returnTravelMin?: number, legsKm: number[] }}
  */
 export function scheduleDay(steps, { from, to, mode }, rules) {
-  const latest = toMinutes(rules.schedule.lastStepLatestStart);
   const travels = [];
   const legsKm = [];
   let prev = from;
@@ -36,14 +35,14 @@ export function scheduleDay(steps, { from, to, mode }, rules) {
   steps.forEach((step, i) => {
     const template = toMinutes(step.slotStart);
     const start = previousEnd === null ? template : Math.max(template, previousEnd + travels[i]);
-    const { recommendedMin, minimumMin } = durationsFor(step.place, rules);
+    const { recommendedMin, minimumMin } = stepDurations(step, rules);
     let end = start + recommendedMin;
     if (i + 1 < steps.length) {
       const limit = toMinutes(steps[i + 1].slotStart) - travels[i + 1];
       if (end > limit) end = Math.max(start + minimumMin, limit);
     }
-    // Dernière étape commençant trop tard (rules.schedule.lastStepLatestStart) : abandonnée.
-    if (start > latest) return;
+    // Étape commençant trop tard (rules.schedule.latestStart de son type) : abandonnée.
+    if (start > toMinutes(scheduleLimits(step, rules).latestStart)) return;
     const { slotStart, ...rest } = step;
     const scheduled = { ...rest, start: fromMinutes(start), end: fromMinutes(end) };
     if (previousEnd !== null || from) scheduled.travelFromPreviousMin = travels[i];

@@ -44,10 +44,10 @@ export function setStepStatus(trip, dayIndex, stepId, status, completedAt) {
  *     (trajet depuis le lieu validé compris), les étapes restantes sont
  *     décalées ; un horaire personnalisé peut l'être, en le signalant
  *     (changement customTime) ; une étape verrouillée ne bouge jamais ;
- *  b) une étape qui commencerait après rules.schedule.lastStepLatestStart
- *     est proposée au report ou à la suppression ; un déjeuner au
- *     restaurant décalé hors de ses horaires : autre restaurant ouvert,
- *     marché, sinon report ou suppression ;
+ *  b) une étape qui commencerait après rules.schedule.latestStart de son
+ *     type est proposée au report ou à la suppression ; un repas (déjeuner,
+ *     dîner) au restaurant décalé hors de ses horaires : autre restaurant
+ *     ouvert (ou marché pour le déjeuner), sinon report ou suppression ;
  *  c) météo (en ligne seulement, day.weather à jour) : sur les heures
  *     restantes, lieu extérieur sous la pluie -> lieu intérieur de la
  *     réserve à au plus rules.travel.maxTravelMin ;
@@ -85,10 +85,10 @@ export function reevaluatePlanning(trip, dayIndex, stepId, { now, online, today 
     const base = rebuild();
     const shifted = shiftFollowing(base, base.findIndex((s) => s.id === stepId), ctx, rules, { fixed: isFixedForTracking, cursor });
     steps = shifted.steps;
-    // Étapes trop tardives, et déjeuner au restaurant décalé hors de ses horaires.
+    // Étapes trop tardives, et repas au restaurant décalé hors de ses horaires.
     const closedLunch = shifted.changes
       .map((c) => steps.find((s) => s.id === c.stepId))
-      .filter((s) => s.type === 'lunch' && s.place?.category === 'restaurant' && infeasibility(s, startOf(s), endOf(s), ctx, rules).includes('CLOSED'))
+      .filter((s) => (s.type === 'lunch' || s.type === 'dinner') && s.place?.category === 'restaurant' && infeasibility(s, startOf(s), endOf(s), ctx, rules).includes('CLOSED'))
       .map((s) => ({ stepId: s.id, reasons: ['CLOSED'] }));
     const pending = [...shifted.infeasible, ...closedLunch].filter((i) => !decisions.has(i.stepId) || decisions.get(i.stepId).step);
     if (!pending.length) break;

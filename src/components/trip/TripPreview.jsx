@@ -5,6 +5,7 @@ import { usePartialCoverage } from '../../i18n/usePartialCoverage.js';
 import { usePlaceName } from '../../i18n/usePlaceName.js';
 import Badge from '../ui/Badge.jsx';
 import Card from '../ui/Card.jsx';
+import { freeLabelKey } from '../../utils/freeLabel.js';
 
 const BADGE_TONES = { weather_adapted: 'secondary', hours_unconfirmed: 'warning', info_missing: 'warning', free_time: 'neutral' };
 
@@ -78,7 +79,7 @@ export default function TripPreview({ trip, warnings }) {
                   </span>
                   <span className="text-ink-muted">{t(`generation.stepTypes.${step.type}`)}</span>
                 </p>
-                <p className="font-medium">{step.place ? placeName(step.place) : t('generation.freeTime')}</p>
+                <p className="font-medium">{step.place ? placeName(step.place) : t(freeLabelKey(step))}</p>
                 {step.specialties?.length > 0 && <p className="text-ink-muted">{t('generation.specialties', { list: step.specialties.join(', ') })}</p>}
                 {step.badges.filter((b) => b !== 'free_time').length > 0 && (
                   <span className="mt-1 flex flex-wrap gap-2">
