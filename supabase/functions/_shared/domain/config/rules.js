@@ -312,7 +312,11 @@ export const RULES = Object.freeze({
     /** Relectures par jour (UTC) et par client (utilisateur, sinon empreinte d'IP). */
     userDailyLimit: 5,
     /** Relectures par jour (UTC), tous clients confondus. */
-    globalDailyLimit: 500
+    globalDailyLimit: 500,
+    /** Candidats envoyés au plus (les plus pertinents, types variés). */
+    maxCandidates: 80,
+    /** Longueur maximale du texte « Vos envies » envoyé (proposition). */
+    wishesMaxLength: 300
   },
 
   /** Appels du serveur vers les API externes (module _shared/http.js). */

@@ -1,5 +1,5 @@
 import { log } from '../log.js';
-import { parseJsonResponse } from './jsonSchema.js';
+import { parseJsonResponse } from '../domain/jsonSchema.js';
 import { AI_PROVIDERS } from './providers/index.js';
 
 /**

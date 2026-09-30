@@ -3,6 +3,7 @@ import { ChevronRight, Image, Palette, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { API_VERSION } from '@domain/version.js';
+import AiReviewDebug from '../components/debug/AiReviewDebug.jsx';
 import FuelDebug from '../components/debug/FuelDebug.jsx';
 import GeocodeDebug from '../components/debug/GeocodeDebug.jsx';
 import HolidaysDebug from '../components/debug/HolidaysDebug.jsx';
@@ -117,6 +118,7 @@ export default function DebugPage() {
       <PlacesDebug destination={destination} />
       <HolidaysDebug destination={destination} />
       <FuelDebug destination={destination} />
+      <AiReviewDebug />
 
       <Card as="section">
         <details>

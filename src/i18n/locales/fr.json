@@ -198,7 +198,22 @@
       "source": "Source : {{source}}"
     },
     "themeLink": "Design system : composants et contrastes",
-    "illustrationsLink": "Illustrations maison"
+    "illustrationsLink": "Illustrations maison",
+    "aiReview": {
+      "title": "Relecture par l’IA : taille du résumé",
+      "noTrip": "Aucun séjour généré sur cet appareil.",
+      "trip": "Séjour",
+      "tripOption_one": "{{title}} ({{count}} jour)",
+      "tripOption_other": "{{title}} ({{count}} jours)",
+      "content": "Contenu",
+      "counts": "{{days}} jours, {{steps}} étapes ({{editable}} modifiables), {{candidates}} candidats",
+      "summary": "Résumé envoyé",
+      "size": "{{chars}} caractères, {{bytes}} octets, ≈ {{tokens}} jetons",
+      "prompt": "Instructions (v1)",
+      "schema": "Schéma de réponse",
+      "sizeShort": "{{chars}} caractères, ≈ {{tokens}} jetons",
+      "show": "Voir le résumé envoyé (anonymisé)"
+    }
   },
   "categories": {
     "museum": "Musée",

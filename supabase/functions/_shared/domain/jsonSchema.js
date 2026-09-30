@@ -1,7 +1,7 @@
 /**
  * Vérification d'une valeur contre un schéma JSON, sous-ensemble suffisant
  * pour les réponses de l'IA (aucune dépendance) : type (ou liste de types),
- * enum, const, properties, required, additionalProperties (booléen ou
+ * anyOf, enum, const, properties, required, additionalProperties (booléen ou
  * schéma), items, minItems, maxItems, minLength, maxLength, minimum,
  * maximum, pattern. Un mot-clé non pris en charge est ignoré : les schémas
  * de Mon guide n'utilisent que ceux-ci.
@@ -19,6 +19,14 @@ const matchesType = (v, t) => t === typeOf(v) || (t === 'number' && typeof v ===
 export function validateJson(value, schema, path = '$') {
   const errors = [];
   if (!schema || typeof schema !== 'object') return errors;
+  if (Array.isArray(schema.anyOf)) {
+    const branches = schema.anyOf.map((s) => validateJson(value, s, path));
+    if (!branches.some((b) => b.length === 0)) {
+      // Écarts de la variante la plus proche (moins d'écarts), pour un message utile.
+      const closest = branches.reduce((a, b) => (b.length < a.length ? b : a));
+      return [`${path}: aucune variante ne convient`, ...closest];
+    }
+  }
   if (schema.type) {
     const types = Array.isArray(schema.type) ? schema.type : [schema.type];
     if (!types.some((t) => matchesType(value, t))) return [`${path}: type ${types.join('|')} attendu`];

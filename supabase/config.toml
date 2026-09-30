@@ -457,6 +457,8 @@ entrypoint = "./functions/fuel-eu-refresh/index.js"
 verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/generate/index.js"
+# Instructions système de la relecture par une IA (lues par _shared/ai/prompts/index.js).
+static_files = ["./functions/_shared/ai/prompts/*.md"]
 
 [functions.images]
 verify_jwt = true

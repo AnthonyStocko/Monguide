@@ -198,7 +198,22 @@
       "source": "Source: {{source}}"
     },
     "themeLink": "Design system: components and contrast",
-    "illustrationsLink": "House illustrations"
+    "illustrationsLink": "House illustrations",
+    "aiReview": {
+      "title": "AI review: summary size",
+      "noTrip": "No generated trip on this device.",
+      "trip": "Trip",
+      "tripOption_one": "{{title}} ({{count}} day)",
+      "tripOption_other": "{{title}} ({{count}} days)",
+      "content": "Content",
+      "counts": "{{days}} days, {{steps}} stops ({{editable}} editable), {{candidates}} candidates",
+      "summary": "Summary sent",
+      "size": "{{chars}} characters, {{bytes}} bytes, ≈ {{tokens}} tokens",
+      "prompt": "Instructions (v1)",
+      "schema": "Response schema",
+      "sizeShort": "{{chars}} characters, ≈ {{tokens}} tokens",
+      "show": "Show the summary sent (anonymised)"
+    }
   },
   "categories": {
     "museum": "Museum",
