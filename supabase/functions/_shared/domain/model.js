@@ -190,9 +190,28 @@ export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed'
  * @property {{ totalKgCo2e: number, byDay: number[], byMode: Record<'walk' | 'transit' | 'bike' | 'car', number>, distanceKm: number }} [carbon]
  *   émissions estimées des déplacements (mode choisi, par jour, et comparaison des 4 modes)
  * @property {{ amount: number, currency: string }} [fuelCost]
+ * @property {TripReview} [review] relecture du planning par une IA (applyReview.js, docs/ai-review.md). Champ
+ *   facultatif, rétrocompatible, sans changement de schemaVersion : un séjour sans ce champ n'a pas été relu.
  * @property {PlaceImage} [hero] photo de la destination (fonction images). Champ facultatif, rétrocompatible,
  *   sans changement de schemaVersion (comme destination.wikidata) : sans lui, l'application affiche
  *   l'illustration de paysage par défaut.
+ */
+
+/**
+ * @typedef {object} TripReview Relecture du planning par une IA (applyReview.js).
+ * @property {'applied' | 'unchanged' | 'skipped' | 'reverted'} status applied : au moins une opération retenue ;
+ *   unchanged : aucune ; skipped : pas de relecture (reason) ; reverted : retour à la version d'origine (revertReview)
+ * @property {string} [reason] relecture non faite : "timeout", "quota", "invalid_json", "error", "disabled"…
+ * @property {string | null} provider fournisseur d'IA
+ * @property {string | null} model
+ * @property {{ op: 'swap' | 'replace' | 'shift', dayIndex: number, reason: string | null, [k: string]: any }[]} appliedOps
+ *   opérations retenues, avec les identifiants réels et le motif (texte brut)
+ * @property {{ index: number, op: string | null, rejection: string }[]} rejectedOps opérations refusées et raison technique
+ * @property {Record<string, string>} dayTitles titre de chaque jour ("YYYY-MM-DD" -> texte brut, 40 caractères au plus)
+ * @property {string | null} summary résumé du séjour (texte brut, 280 caractères au plus)
+ * @property {Day[] | null} originalDays jours avant relecture (seulement si status "applied")
+ * @property {Place[]} [originalCandidates] réserve avant relecture (seulement si status "applied")
+ * @property {string} reviewedAt date ISO
  */
 
 const isFiniteNumber = (v) => typeof v === 'number' && Number.isFinite(v);

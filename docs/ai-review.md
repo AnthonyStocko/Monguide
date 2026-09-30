@@ -172,3 +172,41 @@ Les alias acceptés sont ceux du résumé : étapes modifiables seulement,
 candidats envoyés seulement. Aucune étape modifiable : pas de schéma, l'IA
 n'est pas appelée. Le schéma ne contrôle que la forme ; le sens des
 opérations est vérifié par le code (bloc suivant).
+
+## Bloc C : application de la réponse (`domain/applyReview.js`)
+
+`applyReview(trip, response, rules)` : `response` est le résultat de
+`complete` (`ai/complete.js`) avec `ids` (alias du résumé). Fonction pure,
+sur une copie du séjour ; opérations appliquées une par une, dans l'ordre
+reçu, `ai.maxOpsPerTrip` au plus (au-delà : refus `max_ops`).
+
+Contrôles de chaque opération (refus = opération annulée, notée dans
+`rejectedOps` avec sa raison technique) :
+
+| Contrôle | Refus |
+|---|---|
+| opération connue et bien formée | `malformed` |
+| étape et candidat existants (alias du résumé) | `unknown_step`, `unknown_candidate` |
+| étape non fixe (personnelle, horaire choisi, terminée ou passée) | `locked_step` |
+| échange : deux étapes différentes du même jour, repas avec repas | `same_step`, `different_days`, `meal_mismatch` |
+| remplacement : candidat jamais déjà utilisé, de type compatible (un restaurant ne remplace qu'un repas ; profil du séjour), ouvert sur la plage, à au plus `travel.maxTravelMin` des voisins | `candidate_used`, `candidate_type`, `closed`, `travel` |
+| décalage : heure "HH:mm" différente, même durée, avant minuit | `invalid_time` |
+| après application, étapes touchées (`checkSlotTiming`) : pas de chevauchement, lieu ouvert, durée minimale, fin tardive et début au plus tard selon le type ; pluie refusée si elle n'était pas déjà prévue sur l'étape | `overlap`, `closed`, `too_short`, `late`, `rain` |
+| après application, `checkDayInvariants` sur la journée ; étapes fixes inchangées | `invariants` |
+
+Titres des jours et résumé : texte brut (balises HTML, liens et caractères
+de contrôle retirés), longueurs vérifiées ; titre d'une date inconnue ignoré.
+
+Résultat : `trip.review` (modèle `TripReview`, champ facultatif et
+rétrocompatible, sans changement de `schemaVersion`) :
+`{ status: "applied" | "unchanged" | "skipped", reason?, provider, model,
+appliedOps, rejectedOps, dayTitles, summary, originalDays, reviewedAt }`,
+plus `originalCandidates` (réserve d'avant, un remplacement la modifiant).
+`originalDays` n'est gardé que si au moins une opération a été appliquée.
+`revertReview(trip)` redonne exactement les jours et la réserve d'avant
+relecture (status `reverted`).
+
+Tests : cas précis (échange valide, restaurant fermé, étape verrouillée,
+identifiant inventé, réponse vide, textes piégés, retour à l'origine) et
+500 réponses aléatoires fast-check, absurdes comprises : `checkDayInvariants`
+toujours tenu, étapes fixes jamais modifiées, retour exact à l'origine.
