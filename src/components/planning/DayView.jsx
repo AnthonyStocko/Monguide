@@ -2,6 +2,7 @@ import { Fragment } from 'react';
 import { Bike, BusFront, CalendarHeart, Car, CloudSun, Footprints, House, Pencil, Plus } from 'lucide-react';
 import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { reviewReasons } from '@domain/applyReview.js';
 import Illustration from '../../illustrations/index.jsx';
 import { cascadeProps, useFirstShow, useMotionAllowed } from '../../ui/motion.js';
 import { geoUrl } from '../../utils/navigation.js';
@@ -36,6 +37,10 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
   // Prochaine étape du jour en cours : bordure verte.
   const currentIndex = isToday ? day.steps.findIndex((st) => (st.status ?? 'planned') === 'planned') : -1;
   const ModeIcon = MODE_ICONS[trip.mode] ?? Footprints;
+  // Relecture par l'assistant IA : titre du jour (version relue affichée) et raison de chaque étape modifiée.
+  const reviewShown = trip.review?.status === 'applied' || trip.review?.status === 'unchanged';
+  const dayTitle = reviewShown ? trip.review.dayTitles?.[day.date] : null;
+  const reasons = reviewReasons(trip);
   const addButton = (afterIndex, label) =>
     !readOnly && (
       <m.li {...cascadeProps(afterIndex + 1, animate)} className="flex justify-center">
@@ -47,6 +52,7 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
 
   return (
     <div className="space-y-3">
+      {dayTitle && <h2 className="font-display text-2xl leading-tight">{dayTitle}</h2>}
       {day.holiday && (
         <p className="flex items-start gap-2 rounded-xl bg-warning-soft px-3 py-2 font-medium text-warning-on-soft">
           <CalendarHeart aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
@@ -106,6 +112,7 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
               readOnly={readOnly}
               highlighted={highlightId === step.id}
               current={i === currentIndex}
+              reviewReason={reasons.has(step.id) ? (reasons.get(step.id) ?? '') : undefined}
               onEditTime={() => onEditTime(i)}
               onReplace={() => onReplace(i)}
               onEditPersonal={() => onEditPersonal(i)}

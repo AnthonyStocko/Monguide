@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { countryInfo } from '@domain/config/countries.js';
 import { DINNER_OPTIONS, LUNCH_OPTIONS, PROFILES } from '@domain/model.js';
 import { includesRestaurants } from '@domain/tripDraft.js';
-import { aiReviewAvailable, hasWish, toggleWish, WISH_SUGGESTIONS } from '@domain/wishes.js';
+import { hasWish, toggleWish, WISH_SUGGESTIONS } from '@domain/wishes.js';
 import { useConfig } from '../../hooks/useConfig.js';
+import { useAiConsent, useAiReviewAvailable } from '../../services/aiConsent.js';
 import ChoiceGroup from '../ui/ChoiceGroup.jsx';
 import Chip from '../ui/Chip.jsx';
 import FieldError from '../ui/FieldError.jsx';
@@ -24,6 +25,10 @@ export default function ProfileStep({ draft, update, errors }) {
   const { rules } = useConfig().config;
   const max = rules.ai.wishesMaxLength;
   const wishes = draft.wishes ?? '';
+  // Masqué si la relecture est désactivée ou refusée (consentement ; encore demandé : affiché).
+  const aiConsent = useAiConsent();
+  const aiAvailable = useAiReviewAvailable(rules);
+  const showWishes = aiAvailable === true && aiConsent !== false;
 
   return (
     <div className="space-y-6">
@@ -76,7 +81,7 @@ export default function ProfileStep({ draft, update, errors }) {
         </fieldset>
       )}
 
-      {aiReviewAvailable(rules) && (
+      {showWishes && (
         <div className="space-y-2">
           <label htmlFor="trip-wishes" className="block text-lg font-semibold">
             {t('tripForm.profile.wishes')}

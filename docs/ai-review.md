@@ -16,10 +16,11 @@ ajustements. Les principes :
   sans erreur.
 - **Aucune donnée personnelle envoyée** : ni e-mail, ni hébergement, ni
   titre ou note d'étape personnelle, ni coordonnées précises.
-- **Intégration directe** (décision du 2026-09-30) : les ajustements
-  retenus sont intégrés au planning, sans mention dans l'interface ni
-  retour à la version d'origine. Seuls les journaux du serveur en gardent
-  la trace. La politique de confidentialité mentionne le sous-traitant.
+- **Consentement et transparence** (Bloc F ; remplace la décision
+  d'« intégration directe » prise en début de journée le 2026-09-30) :
+  relecture facultative, demandée à la première génération et modifiable
+  dans les réglages ; l'utilisateur voit les changements, leur raison, et
+  peut revenir à la version d'origine (puis à la version relue).
 
 ## Bloc A : accès aux modèles (`supabase/functions/_shared/ai/`)
 
@@ -203,8 +204,9 @@ rétrocompatible, sans changement de `schemaVersion`) :
 appliedOps, rejectedOps, dayTitles, summary, originalDays, reviewedAt }`,
 plus `originalCandidates` (réserve d'avant, un remplacement la modifiant).
 `originalDays` n'est gardé que si au moins une opération a été appliquée.
-`revertReview(trip)` redonne exactement les jours et la réserve d'avant
-relecture (status `reverted`).
+`switchToOriginal(trip)` redonne exactement les jours et la réserve d'avant
+relecture (status `reverted`, version relue gardée dans `reviewedDays`) ;
+`switchToReviewed(trip)` revient à la version relue (Bloc F).
 
 Tests : cas précis (échange valide, restaurant fermé, étape verrouillée,
 identifiant inventé, réponse vide, textes piégés, retour à l'origine) et
@@ -255,3 +257,66 @@ l'appel, 8 s au plus) -> `applyReview` -> séjour renvoyé.
   est refusée par `applyReview`). Évaluation réelle avec une clé :
   `node --use-system-ca scripts/ai/eval-wishes.mjs mistral` (« Peu de
   musées » et texte piégé sur un séjour de 3 jours à Villefranche).
+## Bloc F : ce que voit l'utilisateur
+
+- **Consentement** (`src/services/aiConsent.js`, réglage `aiReviewConsent` :
+  `null` tant que non demandé, puis `true` ou `false`) : à la première
+  génération, écran « Relecture par l'assistant IA » (`AiConsentScreen`,
+  trois phrases : ce que fait l'assistant, données transmises, facultatif),
+  boutons « Activer la relecture » et « Non merci » ; choix modifiable dans
+  les réglages (`AiReviewSection`). Refus : la requête `generate` ne
+  contient ni `review` ni `params.wishes` (le serveur journalise
+  `ai_review` `skipped`/`no_consent`, `attempted: false`, sans aucun
+  `ai_call`) ; champ « Vos envies » masqué. Relecture désactivée côté
+  serveur (`ai.enabled`, `ai.provider`) : ni écran, ni réglage, ni champ.
+- **Planning relu** : titre de chaque jour en tête de la journée (Fraunces) ;
+  carte « Le mot de l'assistant » (`AiReviewCard`) : résumé, badge « Ajusté
+  par l'assistant IA », nombre de changements, « Voir les changements »
+  (opération et raison), « Revenir à la version d'origine » (confirmation,
+  `switchToOriginal`) puis « Revenir à la version relue »
+  (`switchToReviewed`) ; l'enregistrement du séjour reprogramme les rappels
+  (`onTripsChanged`), hors ligne compris. Étapes modifiées : icône
+  discrète et raison dans leur carte (`reviewReasons`).
+- **Relecture sans changement** : résumé et titres seulement, sans badge.
+- **Confidentialité** : écran « Confidentialité » (section « Relecture par
+  l'assistant IA »), politique en ligne (fr, en), `store/data-safety.md`
+  (Mistral AI, données transmises, finalité ; accord de traitement du
+  fournisseur À VÉRIFIER avant publication).
+- Vérifié dans Chrome (2026-09-30) : refus et accord (contenu de la requête
+  `generate`), champ masqué après refus, réglage, carte et changements,
+  bascule origine / relue hors ligne.
+## Bloc G : mesurer avant d'activer
+
+- **Évaluation** (`scripts/ai-eval/`) : 12 séjours types déterministes
+  (`fixtures.js` : Paris, Lyon, Villefranche-sur-Saône, Annecy,
+  Saint-Émilion, Conques, Barcelone, Lisbonne, Florence, Bruges, Hallstatt,
+  Cracovie ; villes et villages, trois profils, sept avec envies, trois avec
+  pluie ; lieux de démonstration générés avec une graine fixe). `run.mjs`
+  génère chaque séjour sans puis avec relecture et mesure : opérations
+  proposées, appliquées, rejetées (raisons), variété par journée (catégories
+  différentes), trajets totaux (à pied pour les séjours à pied), durée et
+  jetons ; séjour « dégradé » si la variété baisse, si les trajets
+  augmentent de plus de 15 % (et de 5 min), ou si une journée ne tient plus
+  ses invariants (`metrics.js`, testé). Envies : fichier de vérification
+  manuelle guidée (`results/<date>-<fournisseur>-<modèle>-manuel.md`).
+  Tableau dans le README (marqueurs `ai-eval`).
+- **Fournisseur de l'évaluation** : celui d'`app_config` en production (lu
+  par la fonction `config`, comme l'application) ; `--provider` / `--model`
+  pour un essai ponctuel. Aucun code à changer.
+- **Seuils d'activation** : rejets < 30 %, aucun séjour dégradé, durée
+  médiane < 6 s, toutes les relectures abouties (`THRESHOLDS`).
+- **Déploiement progressif** : `ai.enabled` false par défaut ;
+  `ai.rolloutPercent` (10 % par défaut) décidé sur l'appareil à partir d'un
+  identifiant anonyme d'installation jamais envoyé (`domain/aiRollout.js` :
+  rang stable 0-99, élargir le pourcentage garde les installations déjà
+  concernées). Hors du déploiement : ni consentement, ni réglage, ni champ
+  « Vos envies ».
+- **Compteurs anonymes en production** (migration
+  `20260930120000_ai_review_stats.sql`, `ai/reviewStats.js`) : une ligne par
+  jour et par métrique, sans contenu ni identifiant ; relectures
+  appliquées / sans changement / sautées (par raison), non tentées (par
+  raison : consentement refusé, désactivée), tranches de durée, modèle,
+  opérations appliquées et rejetées (par raison) ; retours à la version
+  d'origine et à la version relue (fonction `ai-feedback`, appelée par
+  l'application en ligne seulement : estimation). Vue `ai_review_rates`
+  (taux par jour). Purge après un an.

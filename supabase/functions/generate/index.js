@@ -1,5 +1,5 @@
 import { reviewTrip } from '../_shared/ai/reviewTrip.js';
-import { supabaseUsageStore } from '../_shared/ai/usageStore.js';
+import { addReviewStats, supabaseUsageStore } from '../_shared/ai/usageStore.js';
 import { cached, cacheLookup, cacheSet } from '../_shared/cache.js';
 import { daysBetween, eachDate } from '../_shared/domain/dates.js';
 import { distanceKm, roundCoord } from '../_shared/domain/geo.js';
@@ -142,6 +142,7 @@ async function generate({ trip, lang, countryCode, provider, appConfig, review, 
     wishes: review.wishes,
     client,
     usageStore: supabaseUsageStore,
+    recordStats: addReviewStats,
     onStart: () => progress.reviewStarted(),
     onDone: (status) => progress.reviewDone(status)
   });

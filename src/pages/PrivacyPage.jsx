@@ -4,7 +4,7 @@ import Card from '../components/ui/Card.jsx';
 import { useConfig } from '../hooks/useConfig.js';
 import { sitePage } from '../config/links.js';
 
-const SECTIONS = ['data', 'server', 'purpose', 'hosting', 'retention', 'rights', 'contact'];
+const SECTIONS = ['data', 'server', 'ai', 'purpose', 'hosting', 'retention', 'rights', 'contact'];
 
 /** Confidentialité : données collectées, traitement, hébergement, droits. */
 export default function PrivacyPage() {

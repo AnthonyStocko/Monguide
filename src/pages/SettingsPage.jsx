@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import DeleteAccountSection from '../components/account/DeleteAccountSection.jsx';
 import Page from '../components/layout/Page.jsx';
+import AiReviewSection from '../components/settings/AiReviewSection.jsx';
 import NotificationsSection from '../components/settings/NotificationsSection.jsx';
 import PhotosSection from '../components/settings/PhotosSection.jsx';
 import HapticsSwitch from '../components/settings/HapticsSwitch.jsx';
@@ -56,6 +57,8 @@ export default function SettingsPage() {
         <HapticsSwitch />
         <p className="text-ink-muted">{t('motion.hapticsHint')}</p>
       </Card>
+
+      <AiReviewSection />
 
       <NotificationsSection />
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import { applyReview, fixedSignature, plainText, revertReview } from './applyReview.js';
+import { applyReview, fixedSignature, plainText, reviewReasons, switchToOriginal, switchToReviewed } from './applyReview.js';
 import { buildReviewRequest } from './buildReviewRequest.js';
 import { checkDayInvariants } from './checkDayInvariants.js';
 import { isFixed, isPersonal } from './stepTiming.js';
@@ -139,21 +139,43 @@ describe('applyReview : cas précis', () => {
     expect(run(t, { ...ok([{ op: 'swap', stepA: 'outdoor', stepB: 'relax', reason: 'x' }]), ids: request.ids }).review.rejectedOps[0].rejection).toBe('unknown_step');
   });
 
-  it('retour à originalDays : exactement le planning (et la réserve) d\'avant relecture', () => {
+  it('version d\'origine puis version relue : exactement les plannings (et réserves) de chacune', () => {
     const t = sample();
     const r = run(t, ok([
-      { op: 'swap', stepA: 'outdoor', stepB: 'relax', reason: 'x' },
-      { op: 'replace', step: 'lunch', candidate: 'noon', reason: 'x' },
-      { op: 'shift', step: 'd2-outdoor', newStart: '14:40', reason: 'x' }
+      { op: 'swap', stepA: 'outdoor', stepB: 'relax', reason: 'Le jardin d\'abord.' },
+      { op: 'replace', step: 'lunch', candidate: 'noon', reason: 'Plus proche.' },
+      { op: 'shift', step: 'd2-outdoor', newStart: '14:40', reason: 'Moins de hâte.' }
     ]));
     expect(r.review.appliedOps).toHaveLength(3);
-    const back = revertReview(r);
+    expect(r.review.appliedOps[1]).toMatchObject({ fromName: 'Le Bouchon', toName: 'Le Midi' });
+    const back = switchToOriginal(r);
     expect(back.days).toEqual(t.days);
     expect(back.candidates).toEqual(t.candidates);
-    expect(back.review).toMatchObject({ status: 'reverted', originalDays: null });
-    expect(revertReview(back)).toBe(back);
+    expect(back.review).toMatchObject({ status: 'reverted', originalDays: t.days });
+    expect(switchToOriginal(back)).toBe(back);
+    expect(reviewReasons(back).size).toBe(0);
+    const again = switchToReviewed(back);
+    expect(again.days).toEqual(r.days);
+    expect(again.candidates).toEqual(r.candidates);
+    expect(again.review).toEqual(r.review);
+    expect(switchToReviewed(again)).toBe(again);
+    // Plusieurs allers-retours : toujours exact.
+    expect(switchToReviewed(switchToOriginal(switchToReviewed(switchToOriginal(r)))).days).toEqual(r.days);
     // L'original n'est jamais modifié.
     expect(t.days[0].steps.map((s) => s.id)).toEqual(['culture', 'lunch', 'outdoor', 'relax']);
+  });
+
+  it('raisons par étape modifiée (version relue seulement)', () => {
+    const r = run(sample(), ok([
+      { op: 'swap', stepA: 'outdoor', stepB: 'relax', reason: 'Le jardin d\'abord.' },
+      { op: 'shift', step: 'd2-outdoor', newStart: '14:40', reason: 'Moins de hâte.' }
+    ]));
+    expect([...reviewReasons(r)]).toEqual([
+      ['outdoor', 'Le jardin d\'abord.'],
+      ['relax', 'Le jardin d\'abord.'],
+      ['d2-outdoor', 'Moins de hâte.']
+    ]);
+    expect(reviewReasons(run(sample(), ok([]))).size).toBe(0);
   });
 });
 
@@ -199,9 +221,10 @@ describe('applyReview : tests aléatoires (fast-check)', () => {
           expect(day.steps.map((s) => s.id).sort()).toEqual(t.days[i].steps.map((s) => s.id).sort());
         }
         expect(r.review.appliedOps.length + r.review.rejectedOps.length).toBe(operations.length);
-        const back = revertReview(r);
+        const back = switchToOriginal(r);
         expect(back.days).toEqual(t.days);
         expect(back.candidates).toEqual(t.candidates);
+        expect(switchToReviewed(back).days).toEqual(r.days);
       }),
       { numRuns: 500, seed: 20260930 }
     );

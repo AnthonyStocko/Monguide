@@ -457,3 +457,42 @@ hébergements et des étapes personnelles sont masquées, sauf si
 « Inclure les adresses personnelles » est coché. Généré avec jsPDF (sans
 `window.print`) ; sur Android, le fichier est enregistré dans le cache de
 l'application puis proposé au partage ; sur le web, il est téléchargé.
+
+## Relecture du planning par l'assistant IA
+
+Détails : docs/ai-review.md. Désactivée par défaut (`ai.enabled` false) tant
+que les seuils d'activation ne sont pas atteints ; ensuite, ouverte
+progressivement (`ai.rolloutPercent`, 10 % par défaut) :
+
+```sql
+insert into public.app_config (key, value) values ('ai', '{"enabled": true, "rolloutPercent": 10}')
+  on conflict (key) do update set value = excluded.value;
+```
+
+### Évaluation (12 séjours types)
+
+```
+AI_API_KEY_MISTRAL=<clé> node --use-system-ca scripts/ai-eval/run.mjs
+```
+
+Le script lit le fournisseur et le modèle dans `app_config` en production
+(changer `ai.provider` / `ai.model` suffit, sans modifier le code), génère
+chaque séjour type (`scripts/ai-eval/fixtures.js` : villes et villages,
+France et étranger, profils, envies, pluie) avec et sans relecture, et
+remplace le tableau ci-dessous. Seuils d'activation : moins de 30 %
+d'opérations rejetées, aucun séjour dégradé, durée médiane de relecture
+sous 6 s, toutes les relectures abouties.
+
+<!-- ai-eval:start -->
+Pas encore d'évaluation réelle : elle demande la clé d'API du fournisseur
+choisi (commande ci-dessus). Sans clé, le script tourne mais toutes les
+relectures sont sautées et ce tableau n'est pas modifié.
+<!-- ai-eval:end -->
+
+### Compteurs en production
+
+Table `ai_review_stats` (sans contenu ni identifiant) et vue
+`ai_review_rates` : relectures tentées, appliquées, sans changement,
+sautées (par raison), opérations rejetées, retours à la version d'origine,
+tranches de durée. Consultation : tableau de bord Supabase, SQL
+`select * from ai_review_rates order by day desc;`.

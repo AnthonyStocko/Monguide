@@ -8,7 +8,8 @@ const KEY = 'fake-api-key-for-tests-0001';
 const SCHEMA = { type: 'object', additionalProperties: false, required: ['greeting'], properties: { greeting: { type: 'string' } } };
 const REQUEST = { system: 'Réponds en JSON.', user: 'Dis bonjour à Anne Martin, 12 rue des Lilas.', jsonSchema: SCHEMA, language: 'fr' };
 
-const rulesWith = (ai) => mergeRules(RULES, { ai }).rules;
+// Relecture activée pour les tests (désactivée par défaut en production).
+const rulesWith = (ai) => mergeRules(RULES, { ai: { enabled: true, ...ai } }).rules;
 const memoryStore = ({ allowed = true, fails = false } = {}) => ({
   reserve: vi.fn(async () => {
     if (fails) throw new Error('db down');

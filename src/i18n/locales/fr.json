@@ -715,7 +715,15 @@
         "Responsable du traitement : Anthony Mourier, éditeur de l’application. Pour toute question sur vos données :"
       ]
     },
-    "online": "Version complète, consultable sans compte :"
+    "online": "Version complète, consultable sans compte :",
+    "ai": {
+      "title": "Relecture par l’assistant IA",
+      "text": [
+        "Si vous l’activez (facultatif, modifiable dans les réglages), le planning d’un nouveau séjour est relu par un service d’intelligence artificielle, Mistral AI (France), qui propose des ajustements vérifiés par Mon guide.",
+        "Données transmises : ville et pays de destination, dates, nombre de voyageurs, mode de déplacement, profil et préférences de repas, noms, catégories et horaires des lieux publics du planning, distances, probabilité de pluie et vos envies. Jamais d’adresse (ni celle de votre hébergement), de coordonnées, d’e-mail, ni le titre ou la note de vos étapes personnelles.",
+        "Finalité : améliorer votre planning. Nos journaux ne conservent ni le texte envoyé ni la réponse ; un compteur quotidien, sans contenu, limite le nombre de relectures."
+      ]
+    }
   },
   "tracking": {
     "status": {
@@ -1267,5 +1275,45 @@
     "addAt": "Ajouter à {{time}}",
     "cardLabel": "{{name}}, {{details}}",
     "distance": "≈ {{km}} km"
+  },
+  "aiReview": {
+    "consent": {
+      "title": "Relecture par l’assistant IA",
+      "text": [
+        "Une fois votre planning préparé, un assistant d’intelligence artificielle le relit et propose quelques ajustements (ordre des visites, lieux mieux adaptés à la météo ou à vos envies), toujours vérifiés par Mon guide avant d’être appliqués.",
+        "Il reçoit la destination, les dates, les lieux publics du planning, leurs horaires et vos envies ; jamais votre adresse, celle de votre hébergement ni votre e-mail.",
+        "Cette relecture est facultative : sans elle, votre planning est préparé normalement, et vous pourrez changer d’avis dans les réglages."
+      ],
+      "accept": "Activer la relecture",
+      "decline": "Non merci"
+    },
+    "settings": {
+      "title": "Relecture par l’assistant IA",
+      "switch": "Relecture par l’assistant IA",
+      "hint": "Relit chaque nouveau planning et propose des ajustements. Données transmises : destination, dates, lieux publics, horaires et vos envies ; jamais d’adresse ni d’e-mail."
+    },
+    "card": {
+      "title": "Le mot de l’assistant",
+      "badge": "Ajusté par l’assistant IA",
+      "changes_one": "{{count}} changement",
+      "changes_other": "{{count}} changements",
+      "showChanges": "Voir les changements",
+      "hideChanges": "Masquer les changements",
+      "showOriginal": "Revenir à la version d’origine",
+      "showReviewed": "Revenir à la version relue",
+      "originalShown": "Vous voyez la version d’origine du planning, avant la relecture par l’assistant IA."
+    },
+    "confirm": {
+      "title": "Revenir à la version d’origine ?",
+      "text": "Le planning d’avant la relecture sera affiché et vos rappels reprogrammés. La version relue reste disponible : vous pourrez y revenir à tout moment.",
+      "action": "Revenir à l’origine"
+    },
+    "ops": {
+      "swap": "{{a}} et {{b}} échangent leurs horaires",
+      "replace": "{{to}} remplace {{from}}",
+      "shift": "{{name}} : {{from}} → {{to}}"
+    },
+    "day": "Jour {{n}}",
+    "stepChanged": "Modifié par l’assistant IA"
   }
 }

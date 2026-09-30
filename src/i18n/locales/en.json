@@ -715,7 +715,15 @@
         "Data controller: Anthony Mourier, publisher of the app. For any question about your data:"
       ]
     },
-    "online": "Full version, available without an account:"
+    "online": "Full version, available without an account:",
+    "ai": {
+      "title": "Review by the AI assistant",
+      "text": [
+        "If you turn it on (optional, can be changed in the settings), the itinerary of a new trip is reviewed by an artificial intelligence service, Mistral AI (France), which suggests adjustments checked by Mon guide.",
+        "Data sent: destination city and country, dates, number of travelers, travel mode, profile and meal preferences, names, categories and opening hours of the public places of the itinerary, distances, chance of rain and your wishes. Never an address (including your accommodation’s), coordinates, e-mail, or the title or note of your personal stops.",
+        "Purpose: improving your itinerary. Our logs keep neither the text sent nor the answer; a daily counter, with no content, limits the number of reviews."
+      ]
+    }
   },
   "tracking": {
     "status": {
@@ -1267,5 +1275,45 @@
     "addAt": "Add at {{time}}",
     "cardLabel": "{{name}}, {{details}}",
     "distance": "≈ {{km}} km"
+  },
+  "aiReview": {
+    "consent": {
+      "title": "Review by the AI assistant",
+      "text": [
+        "Once your itinerary is ready, an artificial intelligence assistant reviews it and suggests a few adjustments (order of visits, places better suited to the weather or to your wishes), always checked by Mon guide before being applied.",
+        "It receives the destination, the dates, the public places of the itinerary, their opening hours and your wishes; never your address, your accommodation’s address or your e-mail.",
+        "This review is optional: without it, your itinerary is prepared as usual, and you can change your mind in the settings."
+      ],
+      "accept": "Turn on the review",
+      "decline": "No thanks"
+    },
+    "settings": {
+      "title": "Review by the AI assistant",
+      "switch": "Review by the AI assistant",
+      "hint": "Reviews each new itinerary and suggests adjustments. Data sent: destination, dates, public places, opening hours and your wishes; never an address or e-mail."
+    },
+    "card": {
+      "title": "A word from the assistant",
+      "badge": "Adjusted by the AI assistant",
+      "changes_one": "{{count}} change",
+      "changes_other": "{{count}} changes",
+      "showChanges": "See the changes",
+      "hideChanges": "Hide the changes",
+      "showOriginal": "Go back to the original version",
+      "showReviewed": "Go back to the reviewed version",
+      "originalShown": "You are seeing the original itinerary, before the AI assistant’s review."
+    },
+    "confirm": {
+      "title": "Go back to the original version?",
+      "text": "The itinerary from before the review will be shown and your reminders rescheduled. The reviewed version stays available: you can go back to it at any time.",
+      "action": "Go back to the original"
+    },
+    "ops": {
+      "swap": "{{a}} and {{b}} swap their times",
+      "replace": "{{to}} replaces {{from}}",
+      "shift": "{{name}}: {{from}} → {{to}}"
+    },
+    "day": "Day {{n}}",
+    "stepChanged": "Changed by the AI assistant"
   }
 }

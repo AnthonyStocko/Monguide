@@ -15,7 +15,11 @@ export const SETTINGS_KEYS = {
   /** Vibrations (true par défaut). */
   haptics: 'haptics',
   /** Écrans d'accueil du premier lancement déjà vus (ou passés). */
-  onboardingDone: 'onboardingDone'
+  onboardingDone: 'onboardingDone',
+  /** Relecture du planning par l'assistant IA : null (pas encore demandé), true ou false (aiConsent.js). */
+  aiReviewConsent: 'aiReviewConsent',
+  /** Identifiant anonyme de l'installation (déploiement progressif de la relecture ; jamais envoyé). */
+  installId: 'installId'
 };
 
 /**

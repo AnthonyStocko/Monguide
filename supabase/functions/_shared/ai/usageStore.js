@@ -21,3 +21,15 @@ export const supabaseUsageStore = {
     if (error) throw new Error(`ai_usage_add_tokens: ${error.code}`);
   }
 };
+
+/**
+ * Compteurs anonymes (table ai_review_stats) : ajoute des quantités aux
+ * métriques du jour (UTC). Jamais bloquant : une panne est seulement journalisée
+ * par l'appelant.
+ * @param {Record<string, number>} metrics
+ */
+export async function addReviewStats(metrics, day = new Date().toISOString().slice(0, 10)) {
+  if (!Object.keys(metrics).length) return;
+  const { error } = await getAdminClient().rpc('ai_stats_add', { p_day: day, p_metrics: metrics });
+  if (error) throw new Error(`ai_stats_add: ${error.code}`);
+}

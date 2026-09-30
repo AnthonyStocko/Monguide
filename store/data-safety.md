@@ -1,7 +1,8 @@
 # Formulaire « Sécurité des données » (Play Console) — Mon guide 1.0.0
 
 Réponses à reporter dans Play Console > Règles et programmes > Sécurité des
-données. Établies d'après le code au 24 septembre 2026 ; à revoir à chaque
+données. Établies d'après le code au 24 septembre 2026, mises à jour le
+30 septembre 2026 (relecture par l'assistant IA) ; à revoir à chaque
 évolution qui touche aux données.
 
 ## Vue d'ensemble
@@ -31,6 +32,7 @@ sans contrat, d'où la déclaration prudente « partagée » pour la position).
 | Position approximative (Position > Position approximative) | Oui : lieux recherchés, destination, hébergements envoyés au serveur | **Oui** : coordonnées transmises aux services de données (Open-Meteo, OpenStreetMap/Overpass, Wikidata, données publiques françaises) | Oui (caches et journaux : position arrondie à environ 1 km) | Obligatoire pour préparer un séjour | Fonctionnalités de l'application | Oui | Sans objet (non liée au compte) | Météo, lieux à visiter et restaurants autour de la destination |
 | Adresses saisies (Informations personnelles > Adresse) : hébergements, lieux des étapes personnelles | Oui : recherche d'adresse (Photon) ; conservées avec le séjour si compte | **Oui** : texte recherché transmis à Photon | Recherche : oui ; séjour : non (conservé tant que le compte existe) | Facultatives | Fonctionnalités de l'application | Oui | Oui (suppression du séjour ou du compte) | Calcul des trajets et de l'heure de départ ; retrouver ses séjours sur ses appareils |
 | Contenu des séjours (Activité dans l'application > Autre contenu généré par l'utilisateur) : titres, dates, planning, notes, étapes personnelles | Oui, avec un compte | Non | Non | Facultatif | Fonctionnalités de l'application | Oui | Oui (suppression du séjour ou du compte) | Synchronisation entre appareils |
+| Relecture par l'assistant IA (Activité dans l'application > Autre contenu généré par l'utilisateur ; Messages > Autres messages dans l'application pour le texte « Vos envies ») : destination, dates, voyageurs, mode, profil, préférences de repas, lieux publics du planning et leurs horaires, distances, pluie, texte « Vos envies » | Oui, seulement si l'utilisateur active la relecture | **Non** : Mistral AI agit comme prestataire pour notre compte (à confirmer par l'accord de traitement des données du fournisseur) | Oui : ni le texte envoyé ni la réponse ne sont conservés par Mon guide (compteur quotidien sans contenu) | Facultative (consentement à la première génération, réglage « Relecture par l'assistant IA ») | Fonctionnalités de l'application (personnalisation du planning) | Oui | Sans objet (non conservé) | Proposer des ajustements du planning, vérifiés par l'application ; jamais d'adresse, de coordonnées, d'e-mail, ni de titre ou note d'étape personnelle |
 | Identifiants d'appareil ou autres | Non | Non | — | — | — | — | — | Aucun identifiant d'appareil ni publicitaire. L'adresse IP n'est conservée que sous forme d'empreinte salée pendant un jour (limitation des abus) |
 | Journaux de plantage, diagnostics | Non | Non | — | — | — | — | — | Aucun outil de rapport de plantage |
 | Contacts, photos, fichiers, santé, finances, messages, audio | Non | Non | — | — | — | — | — | — |
@@ -41,6 +43,15 @@ sans contrat, d'où la déclaration prudente « partagée » pour la position).
   2026) : la position précise (« Utiliser ma position ») et le texte des
   adresses recherchées sont transmis à Photon (komoot) ; la position n'est
   pas arrondie avant la recherche inverse, pour garder une adresse précise.
+- **Relecture par l'assistant IA** (30 septembre 2026, Prompt 6.0) :
+  fournisseur Mistral AI (`ai.provider` = `mistral` dans app_config).
+  Déclarée « collectée » mais « non partagée » en tant que prestataire.
+  À VÉRIFIER avant publication : accord de traitement des données (DPA) de
+  Mistral AI et durée de conservation par le fournisseur ; si l'offre
+  utilisée permet l'entraînement des modèles sur les données reçues, la
+  déclarer « partagée » et le mentionner dans la politique de
+  confidentialité. À revoir si `ai.provider` change (Groq, OpenRouter,
+  Gemini : autres pays, autres conditions).
 - **Tuiles de carte** : chargées directement depuis tile.openstreetmap.org
   (l'adresse IP est visible par la fondation OpenStreetMap). Pas de donnée
   utilisateur transmise au sens du formulaire, mais mentionné dans la

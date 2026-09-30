@@ -300,9 +300,15 @@ export const RULES = Object.freeze({
    * "openrouter", "gemini" ou "off" ; model vide = modèle par défaut du
    * fournisseur. Clé d'API : secret Supabase AI_API_KEY_<FOURNISSEUR>
    * (docs/ai-review.md). Limites de coût : propositions.
+   *
+   * Désactivée par défaut tant que les seuils d'activation (Bloc G :
+   * évaluation scripts/ai-eval) ne sont pas atteints ; ensuite, activée pour
+   * rolloutPercent % des installations (tirage stable, aiRollout.js).
    */
   ai: {
-    enabled: true,
+    enabled: false,
+    /** Part des installations à qui la relecture est proposée (0 à 100). */
+    rolloutPercent: 10,
     provider: 'mistral',
     model: '',
     /** Délai maximal d'une relecture ; au-delà, planning livré sans relecture. */

@@ -1,3 +1,5 @@
+import { inRollout } from './aiRollout.js';
+
 /**
  * « Vos envies pour ce séjour » : texte libre facultatif (formulaire, étape 5),
  * transmis à l'IA de relecture comme une DONNÉE (jamais comme une
@@ -61,9 +63,13 @@ export function hasWish(text, suggestion) {
 }
 
 /**
- * Relecture par une IA possible (rules.ai.enabled, fournisseur autre que
- * "off") : sinon le champ « Vos envies » est masqué.
+ * Relecture par une IA proposée à cette installation : rules.ai.enabled,
+ * fournisseur autre que "off", et installation dans le déploiement progressif
+ * (rules.ai.rolloutPercent, aiRollout.js). Sinon : ni consentement, ni
+ * réglage, ni champ « Vos envies ».
+ * @param {any} rules
+ * @param {string | null | undefined} installId identifiant anonyme de l'installation
  */
-export function aiReviewAvailable(rules) {
-  return Boolean(rules.ai?.enabled) && rules.ai?.provider !== 'off';
+export function aiReviewAvailable(rules, installId) {
+  return Boolean(rules.ai?.enabled) && rules.ai?.provider !== 'off' && inRollout(installId, rules.ai?.rolloutPercent ?? 0);
 }

@@ -5,7 +5,8 @@ import { garden, park, personal, rules as fixtureRules, standardDay, trip } from
 import { reviewTrip } from './reviewTrip.js';
 
 const NOW = '2026-09-30T10:00:00.000Z';
-const rulesWith = (ai = {}) => mergeRules(RULES, { ai }).rules;
+// Relecture activée pour les tests (désactivée par défaut en production).
+const rulesWith = (ai = {}) => mergeRules(RULES, { ai: { enabled: true, ...ai } }).rules;
 const store = { reserve: vi.fn(async () => true), addTokens: vi.fn(async () => {}) };
 
 function setup({ ai = {}, consent = true, answer } = {}) {
@@ -145,7 +146,25 @@ describe('reviewTrip', () => {
     expect(r.candidates).toEqual(t.candidates);
   });
 
-  it('les règles de la fixture sont celles par défaut (relecture active)', () => {
-    expect(fixtureRules.ai.enabled).toBe(true);
+  it('compteurs anonymes : relecture tentée (statut, durée) et non tentée ; une panne des compteurs ne bloque rien', async () => {
+    const recorded = [];
+    const { ctx } = setup({ answer: () => ({ ok: false, reason: 'quota' }) });
+    let t = 0;
+    const r = await reviewTrip(trip(), { ...ctx, recordStats: (m) => recorded.push(m), clock: () => (t += 3000) });
+    expect(r.review.status).toBe('skipped');
+    expect(recorded).toEqual([{ 'review:skipped': 1, 'skipped:quota': 1, 'duration:2-4s': 1 }]);
+    const refused = setup({ consent: false });
+    await reviewTrip(trip(), { ...refused.ctx, recordStats: (m) => recorded.push(m) });
+    expect(recorded[1]).toEqual({ 'review:not_attempted': 1, 'not_attempted:no_consent': 1 });
+    const broken = setup({ answer: () => ({ ok: false, reason: 'timeout' }) });
+    const out = await reviewTrip(trip(), { ...broken.ctx, recordStats: async () => { throw new Error('db'); } });
+    expect(out.review).toMatchObject({ status: 'skipped', reason: 'timeout' });
+  });
+
+  it('règles par défaut : relecture désactivée (aucun appel sans activation dans app_config)', async () => {
+    expect(fixtureRules.ai.enabled).toBe(false);
+    const { ctx, completeFn } = setup();
+    expect((await reviewTrip(trip(), { ...ctx, rules: fixtureRules })).review).toMatchObject({ status: 'skipped', reason: 'disabled' });
+    expect(completeFn).not.toHaveBeenCalled();
   });
 });

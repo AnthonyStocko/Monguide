@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { BadgeCheck, CircleCheck, CloudRain, Globe, Navigation, Pencil, Replace, SkipForward, TriangleAlert, UserPen } from 'lucide-react';
+import { BadgeCheck, CircleCheck, CloudRain, Globe, Navigation, Pencil, Replace, SkipForward, Sparkles, TriangleAlert, UserPen } from 'lucide-react';
 import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { averageRain } from '@domain/weatherArbitration.js';
@@ -27,10 +27,10 @@ const STATUS_TONES = { planned: 'neutral', done: 'primary', skipped: 'warning' }
  * @param {{
  *   step: object, day: object, trip: object, rules: any, isToday: boolean, highlighted?: boolean, current?: boolean, readOnly?: boolean,
  *   onEditTime: () => void, onReplace: () => void, onEditPersonal: () => void, onTrack: (status: 'done' | 'skipped') => void,
- *   cascade?: { index: number, animate: boolean }
- * }} props
+ *   cascade?: { index: number, animate: boolean }, reviewReason?: string
+ * }} props reviewReason : étape modifiée par l'assistant IA (raison, "" si aucune)
  */
-const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTime, onReplace, onEditPersonal, onTrack, isToday, highlighted, current = false, readOnly, cascade = { index: 0, animate: false } }, ref) {
+const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTime, onReplace, onEditPersonal, onTrack, isToday, highlighted, current = false, readOnly, reviewReason, cascade = { index: 0, animate: false } }, ref) {
   const { t } = useTranslation();
   const { placeName } = usePlaceName();
   const place = step.place;
@@ -76,6 +76,22 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
             {t(`generation.stepTypes.${step.type}`)}
             {!personal && place ? ` · ${t(`categories.${place.category}`)}` : ''}
           </p>
+          {/* Étape modifiée par l'assistant IA : petite icône et sa raison. */}
+          {reviewReason !== undefined && (
+            <p className="flex items-start gap-1.5 text-ink-muted">
+              <Sparkles aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary-strong" />
+              <span>
+                {reviewReason ? (
+                  <>
+                    <span className="sr-only">{t('aiReview.stepChanged')} : </span>
+                    {reviewReason}
+                  </>
+                ) : (
+                  t('aiReview.stepChanged')
+                )}
+              </span>
+            </p>
+          )}
           {personal && place?.address && <p className="text-ink-muted">{place.address}</p>}
           <div className="flex flex-wrap gap-2">
             {step.conflicts?.length > 0 && (

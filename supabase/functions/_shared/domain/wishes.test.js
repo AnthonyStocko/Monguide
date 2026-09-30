@@ -32,8 +32,13 @@ describe('« Vos envies »', () => {
   });
 
   it('champ masqué si la relecture est désactivée', () => {
-    expect(aiReviewAvailable(RULES)).toBe(true);
-    expect(aiReviewAvailable(mergeRules(RULES, { 'ai.enabled': false }).rules)).toBe(false);
-    expect(aiReviewAvailable(mergeRules(RULES, { 'ai.provider': 'off' }).rules)).toBe(false);
+    const on = mergeRules(RULES, { ai: { enabled: true, rolloutPercent: 100 } }).rules;
+    expect(aiReviewAvailable(on, 'installation-1')).toBe(true);
+    // Par défaut : désactivée tant que les seuils d'activation ne sont pas atteints.
+    expect(aiReviewAvailable(RULES, 'installation-1')).toBe(false);
+    expect(aiReviewAvailable(mergeRules(on, { 'ai.provider': 'off' }).rules, 'installation-1')).toBe(false);
+    // Déploiement progressif : hors du pourcentage, ou identifiant pas encore lu.
+    expect(aiReviewAvailable(mergeRules(on, { 'ai.rolloutPercent': 0 }).rules, 'installation-1')).toBe(false);
+    expect(aiReviewAvailable(on, undefined)).toBe(false);
   });
 });

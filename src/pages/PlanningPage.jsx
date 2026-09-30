@@ -3,6 +3,7 @@ import { CirclePlus, FileDown, ImageOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { applyChanges } from '@domain/applyChanges.js';
+import { switchToOriginal, switchToReviewed } from '@domain/applyReview.js';
 import { checkDayInvariants } from '@domain/checkDayInvariants.js';
 import { clearResolvedConflicts } from '@domain/conflicts.js';
 import { recomputeTravel } from '@domain/dayEdits.js';
@@ -14,6 +15,7 @@ import { fromMinutes, nowInZone, toMinutes } from '@domain/time.js';
 import { dayWeather } from '@domain/weatherArbitration.js';
 import Page from '../components/layout/Page.jsx';
 import AddStepFlow from '../components/planning/add-step/AddStepFlow.jsx';
+import AiReviewCard from '../components/planning/AiReviewCard.jsx';
 import DayView from '../components/planning/DayView.jsx';
 import ExportDialog from '../components/planning/ExportDialog.jsx';
 import LodgingEditor from '../components/planning/LodgingEditor.jsx';
@@ -31,7 +33,7 @@ import { useConfig } from '../hooks/useConfig.js';
 import { useCurrentTrip } from '../hooks/useCurrentTrip.js';
 import { useFormat } from '../i18n/useFormat.js';
 import { usePlaceName } from '../i18n/usePlaceName.js';
-import { getWeather } from '../services/dataApi.js';
+import { getWeather, sendAiFeedback } from '../services/dataApi.js';
 import { onConnectionChange } from '../services/network.js';
 import { hapticStepValidated } from '../services/haptics.js';
 import { refreshTripPhotos } from '../services/tripImages.js';
@@ -295,6 +297,21 @@ export default function PlanningPage() {
           {t('planning.readOnly')}
         </p>
       )}
+
+      {/* Relecture par l'assistant IA : version relue ou d'origine (hors ligne compris ; notifications
+          reprogrammées par l'enregistrement du séjour). */}
+      <AiReviewCard
+        trip={trip}
+        readOnly={readOnly}
+        onShowOriginal={() => {
+          save(switchToOriginal(trip));
+          sendAiFeedback('revert_original');
+        }}
+        onShowReviewed={() => {
+          save(switchToReviewed(trip));
+          sendAiFeedback('revert_reviewed');
+        }}
+      />
 
       <div role="tablist" aria-label={t('planning.days')} className="flex gap-2 overflow-x-auto pb-1">
         {trip.days.map((d, i) => (

@@ -80,8 +80,19 @@ export async function getImages(params) {
  * @returns {Promise<{ trip: object, warnings: object[], sources: object[] }>}
  */
 export async function generateTrip(tripRequest, lang, { onEvent, signal, review } = {}) {
-  // review : { consent, wishes? } relecture du planning par une IA (docs/ai-review.md) ; absent = pas de relecture.
+  // review : { consent: true } relecture du planning par une IA (docs/ai-review.md) ; absent = pas de relecture.
   const body = { tripRequest, lang, ...(review ? { review } : {}) };
   const { data } = await streamFunction('generate', { body, timeoutMs: getRules().api.generateTimeoutMs, onEvent, signal });
   return data;
+}
+
+/**
+ * Compteur anonyme d'un retour à la version d'origine ou relue (fonction
+ * ai-feedback, sans contenu). Jamais bloquant : hors ligne ou en échec, rien
+ * n'est compté (les compteurs sont une estimation).
+ * @param {'revert_original' | 'revert_reviewed'} event
+ */
+export function sendAiFeedback(event) {
+  if (!navigator.onLine) return;
+  callFunction('ai-feedback', { method: 'POST', body: { event } }).catch(() => {});
 }

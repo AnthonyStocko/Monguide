@@ -5,7 +5,7 @@ import { recomputeTravel } from './dayEdits.js';
 import { openingState, placeOpeningHours } from './openingHours.js';
 import { REVIEW_TEXT_MAX } from './reviewSchema.js';
 import { replaceStepPlace, usedPlaceIds } from './replaceStep.js';
-import { endOf, fitsStepType, isFixed, isPersonal, legMinutes, startOf, withTimes } from './stepTiming.js';
+import { endOf, fitsStepType, isFixed, isPersonal, legMinutes, startOf, stepName, withTimes } from './stepTiming.js';
 import { toMinutes } from './time.js';
 
 /**
@@ -153,7 +153,7 @@ function applyOperation(trip, op, resolve, ctx, rules) {
     const after = recomputeTravel({ ...before, steps: swapped }, trip, rules);
     const next = withDay(trip, a.dayIndex, after);
     const rejection = dayRejection(before, after, [a.step.id, b.step.id], next, ctx, rules, { reordered: true });
-    return rejection ? { rejection } : { trip: next, applied: { op: 'swap', dayIndex: a.dayIndex, stepA: a.step.id, stepB: b.step.id } };
+    return rejection ? { rejection } : { trip: next, applied: { op: 'swap', dayIndex: a.dayIndex, stepA: a.step.id, stepB: b.step.id, nameA: stepName(a.step), nameB: stepName(b.step) } };
   }
 
   if (op.op === 'replace') {
@@ -177,7 +177,7 @@ function applyOperation(trip, op, resolve, ctx, rules) {
     const rejection = dayRejection(before, after, [step.id], next, ctx, rules, { reordered: false });
     return rejection
       ? { rejection }
-      : { trip: next, applied: { op: 'replace', dayIndex: target.dayIndex, step: step.id, from: step.place?.id ?? null, candidate: candidate.id } };
+      : { trip: next, applied: { op: 'replace', dayIndex: target.dayIndex, step: step.id, from: step.place?.id ?? null, candidate: candidate.id, fromName: stepName(step), toName: candidate.name } };
   }
 
   // shift
@@ -193,7 +193,7 @@ function applyOperation(trip, op, resolve, ctx, rules) {
   const after = recomputeTravel({ ...before, steps: before.steps.map((s) => (s.id === step.id ? withTimes(s, start, end) : s)) }, trip, rules);
   const next = withDay(trip, target.dayIndex, after);
   const rejection = dayRejection(before, after, [step.id], next, ctx, rules, { reordered: false });
-  return rejection ? { rejection } : { trip: next, applied: { op: 'shift', dayIndex: target.dayIndex, step: step.id, from: step.start, newStart: op.newStart } };
+  return rejection ? { rejection } : { trip: next, applied: { op: 'shift', dayIndex: target.dayIndex, step: step.id, from: step.start, newStart: op.newStart, name: stepName(step) } };
 }
 
 /**
@@ -267,19 +267,46 @@ export function applyReview(trip, response, rules, { now = new Date().toISOStrin
 }
 
 /**
- * Retour à la version d'origine : jours (et réserve) d'avant la relecture,
- * relecture marquée "reverted". Sans relecture appliquée : séjour inchangé.
+ * Affiche la version d'origine (jours et réserve d'avant relecture) ; la
+ * version relue est gardée pour y revenir (switchToReviewed). Relecture non
+ * appliquée : séjour inchangé. Fonction pure, utilisable hors ligne.
  * @param {import('./model.js').Trip} trip
  * @returns {import('./model.js').Trip}
  */
-export function revertReview(trip) {
+export function switchToOriginal(trip) {
   const review = trip.review;
   if (review?.status !== 'applied' || !review.originalDays) return trip;
-  const { originalDays, originalCandidates, ...rest } = review;
   return {
     ...trip,
-    days: structuredClone(originalDays),
-    candidates: structuredClone(originalCandidates ?? trip.candidates),
-    review: { ...rest, status: 'reverted', originalDays: null }
+    days: structuredClone(review.originalDays),
+    candidates: structuredClone(review.originalCandidates ?? trip.candidates),
+    review: { ...review, status: 'reverted', reviewedDays: structuredClone(trip.days), reviewedCandidates: structuredClone(trip.candidates) }
   };
+}
+
+/**
+ * Revient à la version relue après switchToOriginal. Sinon : séjour inchangé.
+ * @param {import('./model.js').Trip} trip
+ * @returns {import('./model.js').Trip}
+ */
+export function switchToReviewed(trip) {
+  const review = trip.review;
+  if (review?.status !== 'reverted' || !review.reviewedDays) return trip;
+  const { reviewedDays, reviewedCandidates, ...rest } = review;
+  return { ...trip, days: structuredClone(reviewedDays), candidates: structuredClone(reviewedCandidates ?? trip.candidates), review: { ...rest, status: 'applied' } };
+}
+
+/**
+ * Raison de l'assistant pour chaque étape modifiée (version relue affichée
+ * seulement) : identifiant d'étape -> motif (texte brut, peut être null).
+ * @param {import('./model.js').Trip} trip
+ * @returns {Map<string, string | null>}
+ */
+export function reviewReasons(trip) {
+  const out = new Map();
+  if (trip.review?.status !== 'applied') return out;
+  for (const op of trip.review.appliedOps ?? []) {
+    for (const id of op.op === 'swap' ? [op.stepA, op.stepB] : [op.step]) if (id && !out.has(id)) out.set(id, op.reason ?? null);
+  }
+  return out;
 }

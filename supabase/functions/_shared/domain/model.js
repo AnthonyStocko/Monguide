@@ -203,7 +203,7 @@ export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed'
 /**
  * @typedef {object} TripReview Relecture du planning par une IA (applyReview.js).
  * @property {'applied' | 'unchanged' | 'skipped' | 'reverted'} status applied : au moins une opération retenue ;
- *   unchanged : aucune ; skipped : pas de relecture (reason) ; reverted : retour à la version d'origine (revertReview)
+ *   unchanged : aucune ; skipped : pas de relecture (reason) ; reverted : version d'origine affichée (switchToOriginal)
  * @property {string} [reason] relecture non faite : "timeout", "quota", "invalid_json", "error", "disabled"…
  * @property {string | null} provider fournisseur d'IA
  * @property {string | null} model
@@ -213,7 +213,9 @@ export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed'
  * @property {Record<string, string>} dayTitles titre de chaque jour ("YYYY-MM-DD" -> texte brut, 40 caractères au plus)
  * @property {string | null} summary résumé du séjour (texte brut, 280 caractères au plus)
  * @property {Day[] | null} originalDays jours avant relecture (seulement si status "applied")
- * @property {Place[]} [originalCandidates] réserve avant relecture (seulement si status "applied")
+ * @property {Place[]} [originalCandidates] réserve avant relecture (seulement si au moins une opération appliquée)
+ * @property {Day[]} [reviewedDays] version relue, gardée pendant l'affichage de la version d'origine (status "reverted")
+ * @property {Place[]} [reviewedCandidates] réserve de la version relue (status "reverted")
  * @property {string} reviewedAt date ISO
  */
 

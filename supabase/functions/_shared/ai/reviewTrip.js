@@ -4,6 +4,7 @@ import { buildReviewSchema } from '../domain/reviewSchema.js';
 import { log } from '../log.js';
 import { complete } from './complete.js';
 import { loadPrompt, PROMPT_VERSIONS } from './prompts/index.js';
+import { reviewMetrics } from './reviewStats.js';
 
 /**
  * Relecture d'un séjour qui vient d'être généré (fonction generate
@@ -26,15 +27,32 @@ import { loadPrompt, PROMPT_VERSIONS } from './prompts/index.js';
  *   onStart?: () => void,
  *   onDone?: (status: string) => void,
  *   completeFn?: typeof complete,
- *   now?: () => string
+ *   recordStats?: (metrics: Record<string, number>) => void | Promise<void>,
+ *   now?: () => string,
+ *   clock?: () => number
  * }} ctx client : identifiant du client pour les quotas, calculé seulement si la relecture est tentée ;
- *   onStart / onDone : événements de progression "review" et "review_done"
+ *   onStart / onDone : événements de progression "review" et "review_done" ;
+ *   recordStats : compteurs anonymes (reviewStats.js), jamais bloquant
  * @returns {Promise<import('../domain/model.js').Trip>}
  */
-export async function reviewTrip(trip, { rules, language, consent, wishes, client, usageStore, onStart = () => {}, onDone = () => {}, completeFn = complete, now = () => new Date().toISOString() }) {
+export async function reviewTrip(trip, { rules, language, consent, wishes, client, usageStore, onStart = () => {}, onDone = () => {}, completeFn = complete, recordStats = () => {}, now = () => new Date().toISOString(), clock = Date.now }) {
   const skip = (reason) => ({ ...trip, review: { status: 'skipped', reason, provider: null, model: null, appliedOps: [], rejectedOps: [], dayTitles: {}, summary: null, originalDays: null, reviewedAt: now() } });
-  if (!consent) return skip('no_consent');
-  if (!rules.ai.enabled || rules.ai.provider === 'off') return skip('disabled');
+  const stats = async (review, info) => {
+    try {
+      await recordStats(reviewMetrics(review, info));
+    } catch (err) {
+      log('warn', 'ai_stats_failed', { message: String(err?.message ?? err) });
+    }
+  };
+  // Non tentée : journalisé et compté (aucun appel au fournisseur, vérifiable dans les journaux).
+  const notAttempted = async (reason) => {
+    log('info', 'ai_review', { status: 'skipped', reason, attempted: false });
+    const skipped = skip(reason);
+    await stats(skipped.review, { attempted: false });
+    return skipped;
+  };
+  if (!consent) return notAttempted('no_consent');
+  if (!rules.ai.enabled || rules.ai.provider === 'off') return notAttempted('disabled');
 
   let request;
   let schema;
@@ -45,9 +63,10 @@ export async function reviewTrip(trip, { rules, language, consent, wishes, clien
     log('error', 'ai_review', { status: 'skipped', reason: 'request_failed', message: String(err?.message ?? err) });
     return skip('error');
   }
-  if (!schema) return skip('nothing_to_review');
+  if (!schema) return notAttempted('nothing_to_review');
 
   onStart();
+  const started = clock();
   let reviewed;
   try {
     const system = await loadPrompt('review', { maxOps: rules.ai.maxOpsPerTrip });
@@ -71,6 +90,7 @@ export async function reviewTrip(trip, { rules, language, consent, wishes, clien
     promptVersion: `review.${PROMPT_VERSIONS.review}`,
     requestChars: request.stats.chars
   });
+  await stats(r, { attempted: true, durationMs: clock() - started });
   onDone(r.status);
   return reviewed;
 }

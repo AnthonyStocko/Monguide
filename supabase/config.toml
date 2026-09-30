@@ -443,6 +443,11 @@ verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/holidays/index.js"
 
+[functions.ai-feedback]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/ai-feedback/index.js"
+
 [functions.fuel]
 verify_jwt = true
 import_map = "./functions/deno.json"

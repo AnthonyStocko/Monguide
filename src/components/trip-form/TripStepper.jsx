@@ -6,6 +6,7 @@ import { generateTrip } from '../../services/dataApi.js';
 import { daysBetween, todayIn } from '@domain/dates.js';
 import { STEPS, buildTrip, firstInvalidStep, validateStep } from '@domain/tripDraft.js';
 import { useConfig } from '../../hooks/useConfig.js';
+import { setAiConsent, useAiConsent, useAiReviewAvailable } from '../../services/aiConsent.js';
 import { useTripDraft } from '../../hooks/useTripDraft.js';
 import { refreshTripPhotos } from '../../services/tripImages.js';
 import { hapticConfirm, hapticError } from '../../services/haptics.js';
@@ -16,6 +17,7 @@ import Button from '../ui/Button.jsx';
 import Card from '../ui/Card.jsx';
 import ErrorState from '../ui/ErrorState.jsx';
 import Skeleton from '../ui/Skeleton.jsx';
+import AiConsentScreen from './AiConsentScreen.jsx';
 import DatesStep from './DatesStep.jsx';
 import DestinationStep from './DestinationStep.jsx';
 import LodgingStep from './LodgingStep.jsx';
@@ -61,6 +63,8 @@ export default function TripStepper({ onCreated }) {
   const alertRef = useRef(null);
   const previousIndex = useRef(null);
   const cancelRef = useRef(null);
+  const aiConsent = useAiConsent();
+  const aiAvailable = useAiReviewAvailable(rules);
 
   const index = draft?.step ?? 0;
   const allowed = useMotionAllowed();
@@ -101,13 +105,22 @@ export default function TripStepper({ onCreated }) {
     goTo(index + 1);
   };
 
-  const generate = async () => {
+  /** @param {boolean} [consentChoice] choix fait à l'instant sur l'écran de consentement */
+  const generate = async (consentChoice) => {
     const invalid = firstInvalidStep(draft, ctx);
     if (invalid >= 0) {
       setShowErrors(true);
       setErrorTick((n) => n + 1);
       return;
     }
+    // Relecture par l'assistant IA : consentement demandé une seule fois, à la première génération.
+    const available = aiAvailable === true;
+    const consent = typeof consentChoice === 'boolean' ? consentChoice : aiConsent;
+    if (available && consent !== true && consent !== false) {
+      setGeneration({ status: 'consent' });
+      return;
+    }
+    const reviewOn = available && consent === true;
     setGeneration({ status: 'loading', steps: null });
     const controller = new AbortController();
     cancelRef.current = controller;
@@ -123,7 +136,9 @@ export default function TripStepper({ onCreated }) {
     };
     try {
       const request = buildTrip(draft, { id: crypto.randomUUID(), now: new Date().toISOString(), makeId: () => crypto.randomUUID() });
-      const { trip, warnings } = await generateTrip(request, i18n.resolvedLanguage, { onEvent, signal: controller.signal });
+      // Relecture refusée ou indisponible : ni demande de relecture, ni « Vos envies » transmises.
+      if (!reviewOn) delete request.params;
+      const { trip, warnings } = await generateTrip(request, i18n.resolvedLanguage, { onEvent, signal: controller.signal, ...(reviewOn ? { review: { consent: true } } : {}) });
       await saveTrip(trip);
       // Photos demandées après la génération (jamais par elle), sans attendre.
       refreshTripPhotos(trip.id).catch(() => {});
@@ -152,6 +167,17 @@ export default function TripStepper({ onCreated }) {
         radiusKm={draft.radiusKm}
         steps={generation.steps}
         onCancel={() => cancelRef.current?.abort()}
+      />
+    );
+  }
+
+  if (generation.status === 'consent') {
+    return (
+      <AiConsentScreen
+        onChoose={async (accepted) => {
+          await setAiConsent(accepted);
+          generate(accepted);
+        }}
       />
     );
   }
