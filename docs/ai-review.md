@@ -235,3 +235,23 @@ l'appel, 8 s au plus) -> `applyReview` -> séjour renvoyé.
 - Mesures réelles (2026-09-30, séjour de 3 jours, moteur réel) : génération
   déterministe 49 ms ; clé invalide chez Mistral : `skipped` (`error`) en
   171 ms ; fournisseur qui ne répond pas : `skipped` (`timeout`) en 8,0 s.
+## Bloc E : « Vos envies » (`domain/wishes.js`)
+
+- Formulaire, étape 5 : champ facultatif « Vos envies pour ce séjour »
+  (200 caractères, `ai.wishesMaxLength`), suggestions en puces à toucher
+  (ajoutées au texte, retirées au second appui), mention « Ce texte est
+  transmis à un service d'intelligence artificielle… ». Champ masqué si la
+  relecture est désactivée (`ai.enabled` false ou fournisseur `off`).
+- Enregistré dans `trip.params.wishes` (champ facultatif, rétrocompatible)
+  pour une éventuelle régénération. `cleanWishes` (texte brut : sans balise
+  ni caractère de contrôle, espaces normalisés) et la longueur sont vérifiés
+  dans l'application (brouillon, `buildTrip`) ET sur le serveur
+  (`validateTripRequest`, puis `generate`).
+- Transmis à l'IA dans le champ `wishes` du résumé, jamais dans les
+  consignes ; consignes `review.v2.md` (en service) : une envie « moins
+  de… » se traduit par des remplacements vers d'autres types ; une envie
+  non satisfaite est expliquée dans le résumé.
+- Texte piégé : testé (le texte reste une donnée ; toute opération inventée
+  est refusée par `applyReview`). Évaluation réelle avec une clé :
+  `node --use-system-ca scripts/ai/eval-wishes.mjs mistral` (« Peu de
+  musées » et texte piégé sur un séjour de 3 jours à Villefranche).

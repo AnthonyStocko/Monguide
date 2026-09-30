@@ -2,6 +2,7 @@ import { countryInfo } from './config/countries.js';
 import { daysBetween, isValidDate, isValidTimeZone } from './dates.js';
 import { DINNER_OPTIONS, FUEL_TYPES, LUNCH_OPTIONS, PROFILES, TRAVEL_MODES } from './model.js';
 import { tripNights } from './tripDraft.js';
+import { validateWishes } from './wishes.js';
 
 const isNumber = (v) => typeof v === 'number' && Number.isFinite(v);
 const isPoint = (p) => p && isNumber(p.lat) && isNumber(p.lon) && Math.abs(p.lat) <= 90 && Math.abs(p.lon) <= 180;
@@ -37,6 +38,12 @@ export function validateTripRequest(trip, rules) {
   // Dîner facultatif : absent dans la demande d'une application antérieure (aucun dîner généré).
   if (trip.dinner !== undefined && !DINNER_OPTIONS.includes(trip.dinner)) errors.push('dinner');
   if (!trip.prefs || typeof trip.prefs.vegetarian !== 'boolean' || typeof trip.prefs.wheelchair !== 'boolean') errors.push('prefs');
+  // Paramètres facultatifs : « Vos envies » (texte, longueur vérifiée après nettoyage).
+  if (trip.params !== undefined) {
+    const p = trip.params;
+    if (!p || typeof p !== 'object' || Array.isArray(p)) errors.push('params');
+    else if (p.wishes !== undefined && (typeof p.wishes !== 'string' || validateWishes(p.wishes, rules))) errors.push('params.wishes');
+  }
   if (!Array.isArray(trip.lodgings)) errors.push('lodgings');
   else if (isValidDate(trip.startDate) && isValidDate(trip.endDate)) {
     const nights = new Set(tripNights(trip.startDate, trip.endDate));

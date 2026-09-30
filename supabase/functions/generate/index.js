@@ -5,6 +5,7 @@ import { daysBetween, eachDate } from '../_shared/domain/dates.js';
 import { distanceKm, roundCoord } from '../_shared/domain/geo.js';
 import { generateTrip } from '../_shared/domain/generateTrip.js';
 import { validateTripRequest } from '../_shared/domain/validateTripRequest.js';
+import { cleanWishes } from '../_shared/domain/wishes.js';
 import { includesRestaurants } from '../_shared/domain/tripDraft.js';
 import { buildWeatherDays } from '../_shared/domain/weatherDays.js';
 import { AppError } from '../_shared/errors.js';
@@ -18,7 +19,7 @@ import { createProgress } from '../_shared/services/generationProgress.js';
 import { fetchHolidays, holidaysBetween } from '../_shared/services/holidays.js';
 import { fetchHourlyForecast } from '../_shared/services/weather.js';
 import { withDeadline } from '../_shared/services/withDeadline.js';
-import { readJsonBody, readString } from '../_shared/validate.js';
+import { readJsonBody } from '../_shared/validate.js';
 
 /** Zones de collecte hors destination au plus (hébergements éloignés). */
 const MAX_EXTRA_ZONES = 2;
@@ -164,12 +165,9 @@ serveFunction({
     const provider = getProvider(countryCode);
     if (!provider) throw new AppError(400, 'unsupported_country', `Country not supported: ${countryCode}`);
     const lang = ['fr', 'en'].includes(body.lang) ? body.lang : 'fr';
-    // Relecture par une IA (facultatif) : consentement de l'utilisateur et texte « Vos envies ».
-    const reviewBody = body.review && typeof body.review === 'object' ? body.review : {};
-    const review = {
-      consent: reviewBody.consent === true,
-      wishes: reviewBody.wishes === undefined || reviewBody.wishes === null || reviewBody.wishes === '' ? undefined : readString(reviewBody.wishes, 'review.wishes', { min: 1, max: 2000 })
-    };
+    // Relecture par une IA (facultatif) : consentement de l'utilisateur ; « Vos envies » dans trip.params
+    // (longueur déjà vérifiée par validateTripRequest), nettoyé à nouveau ici.
+    const review = { consent: body.review?.consent === true, wishes: cleanWishes(trip.params?.wishes) || undefined };
     const input = { trip, lang, countryCode, provider, appConfig, review, client: () => clientId(req, caller) };
     const restaurants = includesRestaurants(trip.lunch, trip.dinner);
     const zones = collectionZones(trip).length;

@@ -209,7 +209,7 @@
       "counts": "{{days}} jours, {{steps}} étapes ({{editable}} modifiables), {{candidates}} candidats",
       "summary": "Résumé envoyé",
       "size": "{{chars}} caractères, {{bytes}} octets, ≈ {{tokens}} jetons",
-      "prompt": "Instructions (v1)",
+      "prompt": "Instructions (v2)",
       "schema": "Schéma de réponse",
       "sizeShort": "{{chars}} caractères, ≈ {{tokens}} jetons",
       "show": "Voir le résumé envoyé (anonymisé)"
@@ -440,7 +440,18 @@
       "prefs": "Préférences pour les restaurants",
       "vegetarian": "Options végétariennes",
       "wheelchair": "Accessible en fauteuil roulant",
-      "prefsSource": "Ces informations proviennent d’OpenStreetMap et ne sont pas toujours renseignées."
+      "prefsSource": "Ces informations proviennent d’OpenStreetMap et ne sont pas toujours renseignées.",
+      "wishes": "Vos envies pour ce séjour (facultatif)",
+      "wishesCount": "{{count}} / {{max}} caractères",
+      "wishSuggestionsLabel": "Suggestions d’envies",
+      "wishSuggestions": {
+        "wine": "On adore le vin",
+        "lessWalking": "Pas trop de marche",
+        "kids": "Avec des enfants",
+        "nature": "Plutôt nature",
+        "fewMuseums": "Peu de musées"
+      },
+      "wishesNotice": "Ce texte est transmis à un service d’intelligence artificielle pour adapter votre planning. N’y indiquez pas d’informations personnelles."
     },
     "summary": {
       "edit": "Modifier : {{section}}",
@@ -456,7 +467,8 @@
       "nights_one": "{{count}} nuit, le {{first}}",
       "nights_other": "{{count}} nuits à partir du {{first}}",
       "lunch": "Déjeuner : {{value}}",
-      "dinner": "Dîner : {{value}}"
+      "dinner": "Dîner : {{value}}",
+      "wishes": "Envies : {{value}}"
     },
     "errors": {
       "summary_one": "{{count}} information à corriger avant de continuer.",
@@ -478,7 +490,8 @@
       "profileRequired": "Choisissez un profil.",
       "lunchRequired": "Choisissez une pause déjeuner.",
       "dinnerRequired": "Choisissez une option pour le dîner.",
-      "stepIncomplete": "Cette étape est incomplète."
+      "stepIncomplete": "Cette étape est incomplète.",
+      "wishesTooLong": "Vos envies ne doivent pas dépasser {{max}} caractères."
     },
     "created": {
       "title": "Séjour enregistré",

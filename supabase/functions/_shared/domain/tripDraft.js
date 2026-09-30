@@ -2,6 +2,7 @@ import { countryInfo } from './config/countries.js';
 import { addDays, daysBetween, eachDate, isValidDate, isValidTimeZone } from './dates.js';
 import { distanceKm } from './geo.js';
 import { DINNER_OPTIONS, FUEL_TYPES, LUNCH_OPTIONS, PROFILES, SCHEMA_VERSION, TRAVEL_MODES } from './model.js';
+import { cleanWishes, validateWishes } from './wishes.js';
 
 /**
  * Brouillon du formulaire de création de séjour (6 étapes) : validation par
@@ -39,6 +40,7 @@ export const LODGING_MODES = Object.freeze(['same', 'multiple', 'unknown']);
  * @property {string} profile
  * @property {string} lunch
  * @property {'restaurant' | 'free'} dinner
+ * @property {string} wishes « Vos envies pour ce séjour » (facultatif, texte libre)
  * @property {{ vegetarian: boolean, wheelchair: boolean }} prefs
  */
 
@@ -59,6 +61,7 @@ export function emptyDraft(rules) {
     profile: 'balanced',
     lunch: 'both',
     dinner: 'restaurant',
+    wishes: '',
     prefs: { vegetarian: false, wheelchair: false }
   };
 }
@@ -210,6 +213,8 @@ export function validateStep(step, draft, { rules, today }) {
     if (!PROFILES.includes(draft.profile)) errors.profile = 'profileRequired';
     if (!LUNCH_OPTIONS.includes(draft.lunch)) errors.lunch = 'lunchRequired';
     if (!DINNER_OPTIONS.includes(draft.dinner)) errors.dinner = 'dinnerRequired';
+    const wishes = validateWishes(draft.wishes, rules);
+    if (wishes) errors.wishes = wishes;
   }
   if (step === 'summary') {
     for (const s of STEPS.slice(0, -1)) {
@@ -261,5 +266,8 @@ export function buildTrip(draft, { id, now, makeId }) {
     candidates: []
   };
   if (draft.mode === 'car') trip.fuelType = draft.fuelType;
+  // Envies : texte brut, gardé pour une éventuelle régénération.
+  const wishes = cleanWishes(draft.wishes);
+  if (wishes) trip.params = { wishes };
   return trip;
 }

@@ -35,11 +35,20 @@ describe('validateTripRequest', () => {
     ['dinner', (t) => (t.dinner = 'x')],
     ['prefs', (t) => (t.prefs = null)],
     ['lodgings', (t) => (t.lodgings[0].nights = ['2026-10-09'])],
-    ['fuelConsumption', (t) => (t.fuelConsumption = -1)]
+    ['fuelConsumption', (t) => (t.fuelConsumption = -1)],
+    ['params', (t) => (t.params = 'Peu de musées')],
+    ['params.wishes', (t) => (t.params = { wishes: 'x'.repeat(201) })],
+    ['params.wishes', (t) => (t.params = { wishes: ['Peu de musées'] })]
   ])('refuse un champ %s invalide', (field, mutate) => {
     const t = valid();
     mutate(t);
     expect(validateTripRequest(t, RULES)).toContain(field);
+  });
+
+  it('accepte « Vos envies » de 200 caractères au plus', () => {
+    const t = valid();
+    t.params = { wishes: 'Peu de musées' };
+    expect(validateTripRequest(t, RULES)).toEqual([]);
   });
 
   it("accepte une demande sans dîner (application antérieure)", () => {

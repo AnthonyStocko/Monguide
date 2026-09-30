@@ -182,6 +182,9 @@ export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed'
  * @property {number} [fuelConsumption] L/100 km (défaut rules.fuel.defaultConsumptionL100)
  * @property {'certified' | 'balanced' | 'explorer'} profile
  * @property {'market' | 'restaurant' | 'both'} lunch
+ * @property {{ wishes?: string }} [params] paramètres du séjour gardés pour une éventuelle régénération : wishes =
+ *   « Vos envies pour ce séjour » (texte brut, rules.ai.wishesMaxLength au plus, wishes.js). Champ facultatif,
+ *   rétrocompatible, sans changement de schemaVersion.
  * @property {'restaurant' | 'free'} dinner voir DINNER_OPTIONS (séjour migré de la version 1 : "free", sans étape de dîner)
  * @property {{ vegetarian: boolean, wheelchair: boolean }} prefs
  * @property {Lodging[]} lodgings

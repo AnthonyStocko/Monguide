@@ -8,8 +8,12 @@ import { readFile } from 'node:fs/promises';
  * fonction par static_files (config.toml).
  */
 
-/** Version en service de chaque jeu d'instructions. */
-export const PROMPT_VERSIONS = Object.freeze({ review: 'v1' });
+/**
+ * Version en service de chaque jeu d'instructions. review : v2 (Bloc E) =
+ * v1 + envies du type « moins de… » et envies non satisfaites expliquées
+ * dans le résumé.
+ */
+export const PROMPT_VERSIONS = Object.freeze({ review: 'v2' });
 
 const cache = new Map();
 

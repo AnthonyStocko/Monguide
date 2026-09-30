@@ -209,7 +209,7 @@
       "counts": "{{days}} days, {{steps}} stops ({{editable}} editable), {{candidates}} candidates",
       "summary": "Summary sent",
       "size": "{{chars}} characters, {{bytes}} bytes, ≈ {{tokens}} tokens",
-      "prompt": "Instructions (v1)",
+      "prompt": "Instructions (v2)",
       "schema": "Response schema",
       "sizeShort": "{{chars}} characters, ≈ {{tokens}} tokens",
       "show": "Show the summary sent (anonymised)"
@@ -440,7 +440,18 @@
       "prefs": "Restaurant preferences",
       "vegetarian": "Vegetarian options",
       "wheelchair": "Wheelchair accessible",
-      "prefsSource": "This information comes from OpenStreetMap and is not always filled in."
+      "prefsSource": "This information comes from OpenStreetMap and is not always filled in.",
+      "wishes": "Your wishes for this trip (optional)",
+      "wishesCount": "{{count}} / {{max}} characters",
+      "wishSuggestionsLabel": "Wish suggestions",
+      "wishSuggestions": {
+        "wine": "We love wine",
+        "lessWalking": "Not too much walking",
+        "kids": "With children",
+        "nature": "Mostly nature",
+        "fewMuseums": "Few museums"
+      },
+      "wishesNotice": "This text is sent to an artificial intelligence service to adapt your itinerary. Do not include personal information."
     },
     "summary": {
       "edit": "Edit: {{section}}",
@@ -456,7 +467,8 @@
       "nights_one": "{{count}} night, on {{first}}",
       "nights_other": "{{count}} nights from {{first}}",
       "lunch": "Lunch: {{value}}",
-      "dinner": "Dinner: {{value}}"
+      "dinner": "Dinner: {{value}}",
+      "wishes": "Wishes: {{value}}"
     },
     "errors": {
       "summary_one": "{{count}} item to fix before continuing.",
@@ -478,7 +490,8 @@
       "profileRequired": "Choose a profile.",
       "lunchRequired": "Choose a lunch option.",
       "dinnerRequired": "Choose a dinner option.",
-      "stepIncomplete": "This step is incomplete."
+      "stepIncomplete": "This step is incomplete.",
+      "wishesTooLong": "Your wishes must not exceed {{max}} characters."
     },
     "created": {
       "title": "Trip saved",

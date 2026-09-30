@@ -96,6 +96,7 @@ export default function SummaryStep({ draft, errors, goTo }) {
         <p>{t(`profiles.${draft.profile}.label`)}</p>
         <p>{t('tripForm.summary.lunch', { value: t(`lunch.${draft.lunch}`) })}</p>
         <p>{t('tripForm.summary.dinner', { value: t(`dinner.${draft.dinner}`) })}</p>
+        {draft.wishes?.trim() && <p>{t('tripForm.summary.wishes', { value: draft.wishes.trim() })}</p>}
         {includesRestaurants(draft.lunch, draft.dinner) && (draft.prefs.vegetarian || draft.prefs.wheelchair) && (
           <p>
             {[draft.prefs.vegetarian && t('tripForm.profile.vegetarian'), draft.prefs.wheelchair && t('tripForm.profile.wheelchair')].filter(Boolean).join(' · ')}

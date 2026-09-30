@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildReviewRequest } from '@domain/buildReviewRequest.js';
 import { buildReviewSchema } from '@domain/reviewSchema.js';
-import reviewPrompt from '../../../supabase/functions/_shared/ai/prompts/review.v1.md?raw';
+import reviewPrompt from '../../../supabase/functions/_shared/ai/prompts/review.v2.md?raw';
 import { useConfig } from '../../hooks/useConfig.js';
 import { useFormat } from '../../i18n/useFormat.js';
 import { listTrips } from '../../services/tripsStore.js';

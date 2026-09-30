@@ -445,7 +445,7 @@ rien n'est modifié.
 ### `generate` — génération d'un séjour
 
 - **Méthode** : `POST` ; limite de requêtes du type `generate` (30 par heure).
-- **Entrée** : `{ "tripRequest": Trip, "lang": "fr" | "en", "review"?: { "consent": boolean, "wishes"?: string } }` : séjour issu du
+- **Entrée** : `{ "tripRequest": Trip, "lang": "fr" | "en", "review"?: { "consent": boolean } }` : séjour issu du
   formulaire (`domain/tripDraft.js`, `buildTrip`), `days` et `candidates`
   vides. Vérifié par `domain/validateTripRequest.js` (`400 invalid_input`
   en listant les champs invalides). `dinner` (`restaurant` | `free`) est
@@ -518,8 +518,9 @@ rien n'est modifié.
   - Relecture par une IA (docs/ai-review.md) : `review` quand elle est tentée
     (champ `review.consent` à `true`, `ai.enabled`, au moins une étape
     modifiable), puis `review_done` avec le statut (`applied`, `unchanged`
-    ou `skipped`) ; absents sinon. `review.wishes` : texte « Vos envies »
-    (2 000 caractères au plus, tronqué à `ai.wishesMaxLength` avant envoi).
+    ou `skipped`) ; absents sinon. « Vos envies » : `tripRequest.params.wishes`
+    (facultatif, texte de `ai.wishesMaxLength` = 200 caractères au plus
+    après nettoyage, sinon `400 invalid_input` sur `params.wishes`).
     Le séjour renvoyé porte `trip.review` (statut, raison d'un échec,
     opérations appliquées et refusées, titres des jours, résumé) ; un échec
     de la relecture n'est jamais une erreur de `generate`.

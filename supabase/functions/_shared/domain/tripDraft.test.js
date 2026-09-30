@@ -178,6 +178,13 @@ describe('buildTrip', () => {
     expect(trip.dinner).toBe('free');
   });
 
+  it('« Vos envies » : nettoyées et gardées dans trip.params ; absentes si vides', () => {
+    const trip = buildTrip(validDraft({ wishes: '  Peu de <i>musées</i>\n et du vin ' }), { id: 't', now: 'n', makeId });
+    expect(trip.params).toEqual({ wishes: 'Peu de musées et du vin' });
+    expect(buildTrip(validDraft({ wishes: '   ' }), { id: 't', now: 'n', makeId })).not.toHaveProperty('params');
+    expect(validateStep('profile', validDraft({ wishes: 'x'.repeat(201) }), ctx)).toEqual({ wishes: 'wishesTooLong' });
+  });
+
   it('garde les préférences quand seul le dîner est au restaurant', () => {
     const trip = buildTrip(validDraft({ lunch: 'market', dinner: 'restaurant', prefs: { vegetarian: true, wheelchair: false } }), { id: 't', now: 'n', makeId });
     expect(trip.prefs).toEqual({ vegetarian: true, wheelchair: false });
