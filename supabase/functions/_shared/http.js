@@ -49,14 +49,9 @@ export async function fetchExternal(url, options) {
       await res.body?.cancel();
       lastError = new ExternalError(source, res.status, res.status >= 500);
     } catch (err) {
-      log('warn', 'external_call', {
-        source,
-        host,
-        attempt,
-        failure: err?.name === 'TimeoutError' ? 'timeout' : 'network',
-        durationMs: Date.now() - started
-      });
-      lastError = new ExternalError(source, null, true);
+      const failure = err?.name === 'TimeoutError' ? 'timeout' : 'network';
+      log('warn', 'external_call', { source, host, attempt, failure, durationMs: Date.now() - started });
+      lastError = new ExternalError(source, null, true, failure);
     }
     if (!lastError.retryable) break;
     if (attempt < maxAttempts) await new Promise((resolve) => setTimeout(resolve, retryDelayMs));

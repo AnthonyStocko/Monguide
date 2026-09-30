@@ -31,7 +31,9 @@ function sameKind(a, b) {
 /**
  * Applique des surcharges { "chemin.pointé": valeur } aux règles par défaut.
  * Une surcharge n'est retenue que si le chemin existe dans les défauts et que
- * la valeur est du même type ; les autres sont ignorées et listées.
+ * la valeur est du même type ; les autres sont ignorées et listées. Un objet
+ * sur le chemin d'une rubrique (ex. clé "ai", valeur { enabled: false })
+ * vaut une surcharge par feuille ("ai.enabled"), contrôlée de même.
  * @param {object} defaults
  * @param {Record<string, unknown>} overrides
  * @returns {{ rules: object, ignored: string[] }}
@@ -41,7 +43,13 @@ export function mergeRules(defaults, overrides = {}) {
   const rules = structuredClone(defaults);
   const ignored = [];
 
+  const expanded = {};
   for (const [path, value] of Object.entries(overrides)) {
+    if (isPlainObject(value) && !(path in leaves)) Object.assign(expanded, flattenRules(value, path));
+    else expanded[path] = value;
+  }
+
+  for (const [path, value] of Object.entries(expanded)) {
     if (!(path in leaves) || !sameKind(leaves[path], value)) {
       ignored.push(path);
       continue;

@@ -15,7 +15,7 @@ async function sha256Hex(text) {
  * stockée ni journalisée.
  * À VÉRIFIER : en-tête portant l'IP du client derrière la passerelle Supabase.
  */
-async function clientId(req, caller) {
+export async function clientId(req, caller) {
   if (caller.type === 'user') return `u:${caller.userId}`;
   const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'unknown';
   const salt = Deno.env.get('RATE_LIMIT_SALT') ?? '';

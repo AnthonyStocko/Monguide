@@ -19,6 +19,15 @@ describe('flattenRules', () => {
   });
 });
 
+describe('mergeRules : bloc', () => {
+  it('un objet sur le chemin d\'une rubrique vaut une surcharge par feuille, chacune contrôlée', () => {
+    const { rules, ignored } = mergeRules(DEFAULTS, { travel: { modes: { walk: { speedKmh: 5, wings: 2 } } }, weather: { rainThresholdPct: 'x' } });
+    expect(rules.travel.modes.walk.speedKmh).toBe(5);
+    expect(rules.weather.rainThresholdPct).toBe(50);
+    expect(ignored.sort()).toEqual(['travel.modes.walk.wings', 'weather.rainThresholdPct']);
+  });
+});
+
 describe('mergeRules', () => {
   it('sans surcharge, renvoie une copie des défauts', () => {
     const { rules, ignored } = mergeRules(DEFAULTS);
@@ -46,7 +55,7 @@ describe('mergeRules', () => {
   it('ignore les chemins inconnus et les types incorrects', () => {
     const { rules, ignored } = mergeRules(DEFAULTS, {
       'weather.unknown': 1,
-      weather: { rainThresholdPct: 10 },
+      weather: 10,
       'weather.rainThresholdPct': '60',
       'schedule.lateEnd': 22,
       'places.regionalCuisines': [1, 2],

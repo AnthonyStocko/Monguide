@@ -25,12 +25,14 @@ export class ExternalError extends AppError {
    * @param {string} source nom de la source (ex. "open-meteo")
    * @param {number | null} upstreamStatus statut HTTP reçu, null si aucune réponse
    * @param {boolean} retryable une nouvelle tentative a-t-elle un sens ?
+   * @param {'timeout' | 'network' | null} [failure] sans réponse : délai dépassé ou erreur réseau
    */
-  constructor(source, upstreamStatus, retryable) {
+  constructor(source, upstreamStatus, retryable, failure = null) {
     super(502, 'external_unavailable', `External source unavailable: ${source}`);
     this.name = 'ExternalError';
     this.source = source;
     this.upstreamStatus = upstreamStatus;
     this.retryable = retryable;
+    this.failure = failure;
   }
 }

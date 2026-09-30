@@ -6,11 +6,12 @@ const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
 
 describe('RULES', () => {
-  it('ne contient que des nombres positifs, des heures "HH:mm", des chaînes ou des listes', () => {
+  it('ne contient que des nombres positifs, des heures "HH:mm", des chaînes, des booléens ou des listes', () => {
     for (const [path, value] of Object.entries(flattenRules(RULES))) {
       if (value === null) continue; // rayon de la voiture : rayon choisi
       if (typeof value === 'number') expect(value, path).toBeGreaterThan(0);
       else if (Array.isArray(value)) expect(value.length, path).toBeGreaterThan(0);
+      else if (typeof value === 'boolean') continue;
       else expect(typeof value, path).toBe('string');
       if (/time|start|end|latest|departure|culture|lunch|outdoor|relax/i.test(path) && typeof value === 'string') {
         expect(value, path).toMatch(HHMM);
@@ -62,6 +63,8 @@ describe('RULES', () => {
     expect(RULES.places.minDinnerCandidates).toBe(10);
     expect(RULES.places).toMatchObject({ maxCandidates: 100, minPerType: 8, pageSize: 20 });
     expect(RULES.activityTypes).toEqual({ dinnerFrom: '17:00', marketLunchUntil: '15:00' });
+    expect(RULES.ai).toMatchObject({ enabled: true, timeoutMs: 8000, maxOpsPerTrip: 6, userDailyLimit: 5 });
+    expect(RULES.api.generateTimeoutMs).toBe(30000);
     expect(RULES.places.dedupDistanceM).toBe(50);
     expect(RULES.lodging.farFactor).toBe(1.5);
     expect(RULES.notifications).toEqual({ eveningSummaryTime: '19:00', reminderLeadMin: 60 });

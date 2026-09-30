@@ -143,6 +143,10 @@ des carburants) ; les autres pays utilisent Wikidata et OpenStreetMap.
    désactivée par défaut : voir « Lieux OpenStreetMap » ; l'instance
    overpass-api.de refuse les requêtes venant de Supabase) et `PHOTON_URL`
    (instance Photon dédiée en cas de diffusion large).
+   Relecture du planning par une IA : la clé du fournisseur choisi dans
+   `app_config` (`AI_API_KEY_MISTRAL`, `AI_API_KEY_GROQ`,
+   `AI_API_KEY_OPENROUTER` ou `AI_API_KEY_GEMINI`) ; sans clé, le planning
+   est livré sans relecture (voir docs/ai-review.md).
 
 4. **Déployer les fonctions**, dont `delete-account` (suppression du compte
    et, en cascade, de ses séjours ; seule fonction qui utilise la clé

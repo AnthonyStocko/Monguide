@@ -283,13 +283,36 @@ export const RULES = Object.freeze({
   /** Appels de l'application vers le serveur. */
   api: {
     timeoutMs: 10000,
-    generateTimeoutMs: 25000,
+    /** Génération : collecte (16 s au plus) puis relecture par l'IA (8 s au plus). */
+    generateTimeoutMs: 30000,
     /**
      * Fonction places : ses sources ont leur propre délai côté serveur
      * (Wikidata 15 s, Overpass 8 s) ; l'application attend donc plus que
      * 10 s pour ne pas abandonner avant la réponse (proposition).
      */
     placesTimeoutMs: 20000
+  },
+
+  /**
+   * Relecture du planning par une IA (côté serveur, _shared/ai). Surchargeable
+   * dans app_config clé par clé ("ai.enabled") ou d'un bloc (clé "ai", valeur
+   * { enabled, provider, model, ... }). provider : "mistral", "groq",
+   * "openrouter", "gemini" ou "off" ; model vide = modèle par défaut du
+   * fournisseur. Clé d'API : secret Supabase AI_API_KEY_<FOURNISSEUR>
+   * (docs/ai-review.md). Limites de coût : propositions.
+   */
+  ai: {
+    enabled: true,
+    provider: 'mistral',
+    model: '',
+    /** Délai maximal d'une relecture ; au-delà, planning livré sans relecture. */
+    timeoutMs: 8000,
+    /** Opérations proposées par l'IA retenues au plus par séjour. */
+    maxOpsPerTrip: 6,
+    /** Relectures par jour (UTC) et par client (utilisateur, sinon empreinte d'IP). */
+    userDailyLimit: 5,
+    /** Relectures par jour (UTC), tous clients confondus. */
+    globalDailyLimit: 500
   },
 
   /** Appels du serveur vers les API externes (module _shared/http.js). */
