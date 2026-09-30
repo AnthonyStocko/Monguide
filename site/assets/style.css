@@ -38,6 +38,7 @@ body {
 header, main, footer { max-width: 44rem; margin: 0 auto; padding: 1rem; }
 header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; border-bottom: 1px solid var(--line); }
 header .brand { font-weight: 700; font-size: 1.25rem; color: var(--ink); text-decoration: none; }
+header .brand img { display: block; height: 2.5rem; width: auto; }
 nav a, .lang a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 0.5rem; }
 a { color: var(--primary); }
 a:hover { color: var(--primary-hover); }

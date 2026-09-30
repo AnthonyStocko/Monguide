@@ -1,9 +1,10 @@
-import { ArrowLeft, Leaf, Settings } from 'lucide-react';
+import { ArrowLeft, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import Button from '../ui/Button.jsx';
 import OfflineBanner from '../ui/OfflineBanner.jsx';
 import SyncIndicator from './SyncIndicator.jsx';
+import Logo from '../brand/Logo.jsx';
 
 const TITLES = {
   '/': 'app.name',
@@ -36,12 +37,14 @@ export default function TopBar() {
     <header className="sticky top-0 z-[1100] border-b border-line bg-surface pt-safe">
       <div className="flex min-h-14 items-center gap-1 px-2">
         {isSubPage && <Button variant="ghost" icon={ArrowLeft} aria-label={t('common.back')} onClick={goBack} />}
-        {location.pathname === '/' && (
-          <span aria-hidden="true" className="ml-2 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-strong">
-            <Leaf className="size-5 text-white" />
-          </span>
+        {location.pathname === '/' ? (
+          // Accueil : le logo (repère + nom en tracés) sert de titre, lu « Mon guide ».
+          <h1 className="flex-1 px-2">
+            <Logo className="h-9 w-auto" label={t('app.name')} />
+          </h1>
+        ) : (
+          <h1 className="flex-1 px-2 text-xl font-bold">{t(TITLES[location.pathname] ?? (location.pathname.startsWith('/planning/') ? 'nav.planning' : 'app.name'))}</h1>
         )}
-        <h1 className="flex-1 px-2 text-xl font-bold">{t(TITLES[location.pathname] ?? (location.pathname.startsWith('/planning/') ? 'nav.planning' : 'app.name'))}</h1>
         <SyncIndicator />
         {!isSubPage && (
           <Button variant="ghost" icon={Settings} aria-label={t('nav.settings')} onClick={() => navigate('/settings')} />

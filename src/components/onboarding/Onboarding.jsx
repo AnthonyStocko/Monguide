@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Illustration from '../../illustrations/index.jsx';
 import { useMotionAllowed, variants } from '../../ui/motion.js';
 import Button from '../ui/Button.jsx';
+import Logo from '../brand/Logo.jsx';
 
 const SLIDES = [
   { key: 'prepare', illustration: 'onboardingPrepare' },
@@ -46,7 +47,7 @@ export default function Onboarding({ onDone }) {
     <div className="flex min-h-dvh flex-col bg-canvas pt-safe pb-safe">
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 p-5">
         <div className="flex min-h-12 items-center justify-between">
-          <p className="font-display text-xl font-semibold">{t('app.name')}</p>
+          <Logo className="h-9 w-auto" label={t('app.name')} />
           {!last && (
             <Button variant="ghost" onClick={onDone}>
               {t('onboarding.skip')}

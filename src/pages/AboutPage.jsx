@@ -7,6 +7,7 @@ import { APP_VERSION } from '../config/app.js';
 import { sitePage } from '../config/links.js';
 import { useConfig } from '../hooks/useConfig.js';
 import { useFormat } from '../i18n/useFormat.js';
+import Logo from '../components/brand/Logo.jsx';
 
 /** Autres éléments intégrés à l'application (noms propres, licences). */
 const CREDITS = [
@@ -38,7 +39,9 @@ export default function AboutPage() {
   return (
     <Page>
       <Card as="section" className="space-y-2">
-        <h2 className="text-2xl font-bold">Mon guide</h2>
+        <h2>
+          <Logo className="h-14 w-auto" />
+        </h2>
         <p>{t('about.version', { version: APP_VERSION })}</p>
         <p className="flex items-start gap-2 rounded-xl bg-secondary-soft px-3 py-2 text-secondary-on-soft">
           <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0" />

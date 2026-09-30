@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Généré par scripts/brand/build.mjs depuis src/brand/logo.js : ne pas modifier à la main. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <group android:translateX="194.56" android:translateY="192.7" android:scaleX="0.62" android:scaleY="0.62">
+        <path android:fillColor="#059669" android:pathData="M512 900C430 780 212 610 212 430A300 300 0 1 1 812 430C812 610 594 780 512 900Z"/>
+        <path android:fillColor="#FAEBD0" android:pathData="M307 430A205 205 0 1 0 717 430A205 205 0 1 0 307 430Z"/>
+        <path android:fillColor="#D9A441" android:pathData="M535 365A50 50 0 1 0 635 365A50 50 0 1 0 535 365Z"/>
+        <group>
+            <clip-path android:pathData="M307 430A205 205 0 1 0 717 430A205 205 0 1 0 307 430Z"/>
+            <path android:fillColor="#059669" android:pathData="M290 500C370 420 455 425 535 470C600 425 680 420 740 455L740 660L290 660Z"/>
+            <path android:fillColor="#047857" android:pathData="M290 560C380 490 500 510 590 560C650 530 700 530 740 545L740 660L290 660Z"/>
+        </group>
+    </group>
+</vector>
