@@ -1159,5 +1159,78 @@
     "current": "En cours",
     "upcoming": "À venir",
     "past": "Terminé"
+  },
+  "addStep": {
+    "title": "Que voulez-vous ajouter ?",
+    "types": {
+      "restaurant": {
+        "label": "Restaurant",
+        "description": "Un déjeuner ou un dîner, selon l’heure."
+      },
+      "museum": {
+        "label": "Musée",
+        "description": "Collections, expositions, maisons d’artistes."
+      },
+      "monument": {
+        "label": "Monument",
+        "description": "Châteaux, églises, édifices remarquables."
+      },
+      "nature": {
+        "label": "Parc et nature",
+        "description": "Jardins, parcs, espaces naturels, sentiers."
+      },
+      "viewpoint": {
+        "label": "Point de vue",
+        "description": "Un panorama pour souffler et admirer."
+      },
+      "market": {
+        "label": "Marché et producteur",
+        "description": "Produits locaux : un déjeuner avant 15h00, une visite ensuite."
+      },
+      "small_heritage": {
+        "label": "Petit patrimoine",
+        "description": "Lavoirs, croix, fontaines, ruines…"
+      },
+      "personal": {
+        "label": "Étape personnelle",
+        "description": "Un rendez-vous, une visite à un proche : titre et lieu libres."
+      }
+    },
+    "listTitle": {
+      "restaurant": "Restaurants près de votre étape",
+      "museum": "Musées près de votre étape",
+      "monument": "Monuments près de votre étape",
+      "nature": "Parcs et nature près de votre étape",
+      "viewpoint": "Points de vue près de votre étape",
+      "market": "Marchés et producteurs près de votre étape",
+      "small_heritage": "Petit patrimoine près de votre étape"
+    },
+    "back": "Changer de type",
+    "time": "Heure de début",
+    "search": "Rechercher par nom",
+    "filters": "Filtres",
+    "filterOpen": "Ouvert à {{time}}",
+    "filterVegetarian": "Végétarien",
+    "filterWheelchair": "Accès fauteuil",
+    "filterWithin": "À moins de {{km}} km",
+    "count_zero": "Aucun lieu",
+    "count_one": "{{count}} lieu",
+    "count_other": "{{count}} lieux",
+    "open": "Ouvert à {{time}}",
+    "closed": "Fermé à {{time}}",
+    "hoursUnknown": "Horaires non renseignés",
+    "planned": "Déjà prévu ({{day}})",
+    "plannedNote": "Ce lieu est déjà prévu {{day}} : modifiez ou remplacez plutôt cette étape.",
+    "more": "Plus de résultats",
+    "moreLoading": "Recherche…",
+    "moreOffline": "« Plus de résultats » nécessite une connexion.",
+    "moreError": "Impossible de charger plus de résultats pour le moment.",
+    "moreEnd": "Tous les lieux trouvés sont affichés.",
+    "none": "Aucun lieu de ce type pour ces critères.",
+    "noneHint": "Essayez une autre heure ou retirez un filtre.",
+    "hours": "Horaires : {{hours}}",
+    "addAt": "Ajouter à {{time}}",
+    "cardLabel": "{{name}}, {{details}}",
+    "distance": "≈ {{km}} km"
   }
 }

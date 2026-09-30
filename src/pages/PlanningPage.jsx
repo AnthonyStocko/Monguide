@@ -13,6 +13,7 @@ import { replaceStepPlace } from '@domain/replaceStep.js';
 import { fromMinutes, nowInZone, toMinutes } from '@domain/time.js';
 import { dayWeather } from '@domain/weatherArbitration.js';
 import Page from '../components/layout/Page.jsx';
+import AddStepFlow from '../components/planning/add-step/AddStepFlow.jsx';
 import DayView from '../components/planning/DayView.jsx';
 import ExportDialog from '../components/planning/ExportDialog.jsx';
 import LodgingEditor from '../components/planning/LodgingEditor.jsx';
@@ -203,6 +204,8 @@ export default function PlanningPage() {
     const endMin = Math.min(toMinutes(start) + rules.personalStep.defaultDurationMin, 23 * 60 + 55);
     setDialog({ kind: 'personal', defaultStart: start, defaultEnd: fromMinutes(endMin) });
   };
+  // Étape personnelle ou lieu choisi dans la liste (« + Ajouter une étape ») : même chemin,
+  // replanDay puis panneau « Planning réajusté » (Appliquer / Ajouter sans réorganiser).
   const submitPersonal = (step) => {
     const result = replanDay(trip, day, step, rules, { today: here.date });
     if (result.error) {
@@ -217,6 +220,9 @@ export default function PlanningPage() {
     setDialog((d) => ({ ...d, draft: step, error: null }));
     setProposal({ kind: 'personal', base: trip, result, step });
   };
+  const openAddFlow = (afterIndex) => setDialog({ kind: 'add', afterIndex });
+  // Type « Étape personnelle » : formulaire existant, au même endroit de la journée.
+  const personalFromFlow = () => openPersonal(dialog.afterIndex);
   const deletePersonal = (stepId) => applyProposal(trip, removePersonalStep(trip, day, stepId, rules), {}, t('personal.deleted'));
 
   // --- Hébergements ---
@@ -236,7 +242,7 @@ export default function PlanningPage() {
       onApply: (choices) => applyProposal(proposal.base, proposal.result, choices, t('replan.applied'))
     },
     personal: {
-      intro: t('personal.replanIntro', { name: proposal.step?.title }),
+      intro: t('personal.replanIntro', { name: proposal.step?.title ?? (proposal.step?.place ? placeName(proposal.step.place) : '') }),
       dismissLabel: t('personal.addWithoutReplan'),
       onDismiss: () => {
         const result = insertWithoutReplan(trip, day, proposal.step, rules);
@@ -323,7 +329,7 @@ export default function PlanningPage() {
           onEditTime={(i) => !readOnly && setDialog({ kind: 'time', stepIndex: i })}
           onReplace={(i) => !readOnly && setDialog({ kind: 'replace', stepIndex: i })}
           onLodging={() => !readOnly && setDialog({ kind: 'lodging' })}
-          onAddStep={(afterIndex) => !readOnly && openPersonal(afterIndex)}
+          onAddStep={(afterIndex) => !readOnly && openAddFlow(afterIndex)}
           onEditPersonal={(i) => !readOnly && setDialog({ kind: 'personal', stepIndex: i })}
           onTrack={(i, s) => !readOnly && track(i, s)}
         />
@@ -346,6 +352,19 @@ export default function PlanningPage() {
       )}
       {dialog?.kind === 'export' && <ExportDialog trip={trip} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'lodging' && <LodgingEditor trip={trip} onSave={saveLodgings} onClose={() => setDialog(null)} />}
+      {/* Reste ouvert sous le panneau « Planning réajusté » : fermer ce panneau ramène à la fiche. */}
+      {dialog?.kind === 'add' && (
+        <AddStepFlow
+          trip={trip}
+          dayIndex={day}
+          afterIndex={dialog.afterIndex}
+          rules={rules}
+          blockingError={dialog.error}
+          onAdd={submitPersonal}
+          onPersonal={personalFromFlow}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog?.kind === 'personal' && !proposal && (
         <PersonalStepForm
           trip={trip}

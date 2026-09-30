@@ -21,9 +21,10 @@ const loadedUrls = new Set();
  * TalkBack) ; l'illustration de repli reste décorative (aria-hidden).
  * Crédit : "button" (défaut) = bouton "i" discret sur la photo (zone de
  * 48 px) qui affiche le crédit et ses liens ; "inline" = crédit écrit en
- * clair (fiches de lieu).
+ * clair (fiches de lieu) ; "none" = sans crédit (vignette décorative dans un
+ * bouton : le crédit est affiché dans la fiche ouverte par ce bouton).
  *
- * @param {{ image?: object | null, illustration?: import('../../illustrations/index.jsx').IllustrationName, alt?: string, className?: string, overlay?: import('react').ReactNode, credit?: 'button' | 'inline' }} options
+ * @param {{ image?: object | null, illustration?: import('../../illustrations/index.jsx').IllustrationName, alt?: string, className?: string, overlay?: import('react').ReactNode, credit?: 'button' | 'inline' | 'none' }} options
  * @returns {{ media: import('react').ReactNode, creditBlock: import('react').ReactNode }}
  */
 export function usePhoto({ image, illustration = 'landscape', alt = '', className = '', overlay = null, credit = 'button' }) {

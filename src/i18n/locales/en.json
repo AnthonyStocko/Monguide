@@ -1159,5 +1159,78 @@
     "current": "In progress",
     "upcoming": "Upcoming",
     "past": "Finished"
+  },
+  "addStep": {
+    "title": "What would you like to add?",
+    "types": {
+      "restaurant": {
+        "label": "Restaurant",
+        "description": "Lunch or dinner, depending on the time."
+      },
+      "museum": {
+        "label": "Museum",
+        "description": "Collections, exhibitions, artists’ houses."
+      },
+      "monument": {
+        "label": "Monument",
+        "description": "Castles, churches, remarkable buildings."
+      },
+      "nature": {
+        "label": "Parks and nature",
+        "description": "Gardens, parks, natural areas, trails."
+      },
+      "viewpoint": {
+        "label": "Viewpoint",
+        "description": "A panorama to catch your breath."
+      },
+      "market": {
+        "label": "Market and producer",
+        "description": "Local produce: lunch before 3 pm, a visit afterwards."
+      },
+      "small_heritage": {
+        "label": "Local heritage",
+        "description": "Wash houses, crosses, fountains, ruins…"
+      },
+      "personal": {
+        "label": "Personal stop",
+        "description": "An appointment, a visit to a relative: free title and place."
+      }
+    },
+    "listTitle": {
+      "restaurant": "Restaurants near your stop",
+      "museum": "Museums near your stop",
+      "monument": "Monuments near your stop",
+      "nature": "Parks and nature near your stop",
+      "viewpoint": "Viewpoints near your stop",
+      "market": "Markets and producers near your stop",
+      "small_heritage": "Local heritage near your stop"
+    },
+    "back": "Change type",
+    "time": "Start time",
+    "search": "Search by name",
+    "filters": "Filters",
+    "filterOpen": "Open at {{time}}",
+    "filterVegetarian": "Vegetarian",
+    "filterWheelchair": "Wheelchair access",
+    "filterWithin": "Within {{km}} km",
+    "count_zero": "No places",
+    "count_one": "{{count}} place",
+    "count_other": "{{count}} places",
+    "open": "Open at {{time}}",
+    "closed": "Closed at {{time}}",
+    "hoursUnknown": "Opening hours unknown",
+    "planned": "Already planned ({{day}})",
+    "plannedNote": "This place is already planned on {{day}}: edit or replace that stop instead.",
+    "more": "More results",
+    "moreLoading": "Searching…",
+    "moreOffline": "“More results” needs a connection.",
+    "moreError": "Could not load more results right now.",
+    "moreEnd": "All places found are shown.",
+    "none": "No places of this type for these criteria.",
+    "noneHint": "Try another time or remove a filter.",
+    "hours": "Opening hours: {{hours}}",
+    "addAt": "Add at {{time}}",
+    "cardLabel": "{{name}}, {{details}}",
+    "distance": "≈ {{km}} km"
   }
 }
