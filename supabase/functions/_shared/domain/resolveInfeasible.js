@@ -149,9 +149,10 @@ export function findReplacement(steps, stepId, reasons, ctx, rules) {
   const lateEnd = lateEndFor(s, rules);
   const maxTravel = rules.travel.maxTravelMin;
   // Pluie : comme l'arbitrage météo de la génération, un musée ou monument intérieur remplace une visite extérieure.
-  const rainShelter = (p) => reasons[0] === 'RAIN' && s.type !== 'lunch' && s.type !== 'dinner' && p.indoor === true && (p.category === 'museum' || p.category === 'monument');
+  const rainShelter = (p) =>
+    reasons[0] === 'RAIN' && s.type !== 'lunch' && s.type !== 'dinner' && p.indoor === true && (p.category === 'museum' || p.category === 'monument') && fitsStepType(p, 'culture', ctx.trip.profile);
   const options = (ctx.trip.candidates ?? [])
-    .filter((p) => !ctx.used.has(p.id) && (fitsStepType(p, s.type) || rainShelter(p)))
+    .filter((p) => !ctx.used.has(p.id) && (fitsStepType(p, s.type, ctx.trip.profile) || rainShelter(p)))
     .map((p) => {
       const candidate = { ...s, place: p, indoor: p.indoor, badges: rainShelter(p) ? ['weather_adapted'] : [] };
       const legIn = legMinutes(prev, candidate, ctx.mode, rules);

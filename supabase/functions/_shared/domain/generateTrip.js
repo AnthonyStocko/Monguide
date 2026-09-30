@@ -2,6 +2,7 @@ import { allowedByProfile, fitsSlot, isMarket } from './activity.js';
 import { eachDate } from './dates.js';
 import { dedupePlaces } from './dedupePlaces.js';
 import { distanceKm } from './geo.js';
+import { ACTIVITY_TYPE_IDS, ACTIVITY_TYPES } from './config/activityTypes.js';
 import { dinnerTimeFor } from './config/countries.js';
 import { dinnerWindow, evaluateRestaurant, lunchKindForDay, pickRestaurant } from './pickRestaurant.js';
 import { scheduleDay } from './scheduleDay.js';
@@ -57,6 +58,35 @@ export function eveningRestaurants(restaurants, { dates, countryCode, window, pr
     out.push({ place, known: best.hours === 'open', score: best.score });
   }
   return out.sort((a, b) => Number(b.known) - Number(a.known) || b.score - a.score).map((o) => o.place);
+}
+
+/**
+ * Réserve de lieux non utilisés (Trip.candidates), au plus
+ * rules.places.maxCandidates, classés par score. Y sont gardés en priorité :
+ *  - pour chaque type proposé (config/activityTypes.js), ses
+ *    rules.places.minPerType meilleurs lieux, quel que soit le profil (le
+ *    voyageur choisit lui-même le type) ;
+ *  - avec un dîner, rules.places.minDinnerCandidates restaurants ouverts le soir.
+ * Le reste est complété par les meilleurs lieux du profil.
+ */
+function buildCandidates({ all, visits, markets, restaurants, used, center, radius, trip, dates, countryCode, dinnerSlot }, rules) {
+  const score = new Map();
+  const scoreOf = (p) => {
+    if (!score.has(p.id)) score.set(p.id, scorePlace(p, { distanceKm: distanceKm(center, p), effectiveRadiusKm: radius, categoryUses: 0 }, rules));
+    return score.get(p.id);
+  };
+  const byScore = (list) => list.filter((p) => !used.has(p.id)).sort((a, b) => scoreOf(b) - scoreOf(a));
+  const reserved = new Set();
+  const keep = (list, n) => list.slice(0, n).forEach((p) => reserved.add(p.id));
+
+  const unused = byScore([...all]);
+  for (const id of ACTIVITY_TYPE_IDS) keep(unused.filter((p) => ACTIVITY_TYPES[id].categories.includes(p.category)), rules.places.minPerType);
+  if (trip.dinner) keep(eveningRestaurants(restaurants.filter((p) => !used.has(p.id)), { dates, countryCode, window: dinnerSlot, prefs: trip.prefs }, rules), rules.places.minDinnerCandidates);
+
+  const ranked = byScore([...new Set([...visits, ...markets, ...restaurants])]);
+  const room = Math.max(0, rules.places.maxCandidates - reserved.size);
+  const others = new Set(ranked.filter((p) => !reserved.has(p.id)).slice(0, room).map((p) => p.id));
+  return unused.filter((p) => reserved.has(p.id) || others.has(p.id));
 }
 
 /**
@@ -221,17 +251,8 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
   if (days.some((d) => !d.weatherAvailable)) warnings.push({ code: 'weather_later' });
   if (!restaurants.length && includesRestaurants(trip.lunch, trip.dinner)) warnings.push({ code: 'no_restaurants' });
 
-  // Réserve : les meilleurs lieux non utilisés, pour remplacer une étape sans réseau,
-  // dont au moins rules.places.minDinnerCandidates restaurants ouverts le soir (dîner hors ligne).
-  const ranked = [...visits, ...markets, ...restaurants]
-    .filter((p) => !used.has(p.id))
-    .map((p) => ({ p, s: scorePlace(p, { distanceKm: distanceKm(center, p), effectiveRadiusKm: radius, categoryUses: 0 }, rules) }))
-    .sort((a, b) => b.s - a.s)
-    .map(({ p }) => p);
-  const evening = trip.dinner ? eveningRestaurants(restaurants.filter((p) => !used.has(p.id)), { dates, countryCode, window: dinnerSlot, prefs: trip.prefs }, rules) : [];
-  const reserved = new Set(evening.slice(0, rules.places.minDinnerCandidates).map((p) => p.id));
-  const others = new Set(ranked.filter((p) => !reserved.has(p.id)).slice(0, Math.max(0, rules.places.maxCandidates - reserved.size)).map((p) => p.id));
-  const candidates = ranked.filter((p) => reserved.has(p.id) || others.has(p.id));
+  // Réserve : les meilleurs lieux non utilisés, pour remplacer ou ajouter une étape sans réseau.
+  const candidates = buildCandidates({ all, visits, markets, restaurants, used, center, radius, trip, dates, countryCode, dinnerSlot }, rules);
 
   const result = { ...trip, days, candidates };
   const carbon = computeCarbon(legsKmByDay, trip, co2Factors, rules);

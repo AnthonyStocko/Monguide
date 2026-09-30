@@ -137,10 +137,10 @@ describe('generateTrip : planning', () => {
 });
 
 describe('generateTrip : réserve de candidats', () => {
-  it('contient au plus 60 lieux, aucun déjà utilisé', () => {
+  it('contient au plus 100 lieux, aucun déjà utilisé', () => {
     const many = [...placesAround(VILLEFRANCHE, 'a', 12), ...placesAround(destinationPoint(VILLEFRANCHE, 3, 45), 'b', 12)];
     const { trip: t } = generateTrip({ trip: trip(), places: many, co2Factors: FACTORS, makeId }, RULES);
-    expect(t.candidates.length).toBe(60);
+    expect(t.candidates.length).toBe(RULES.places.maxCandidates);
     const used = new Set(placeIds(t));
     expect(t.candidates.some((c) => used.has(c.id))).toBe(false);
   });

@@ -51,6 +51,20 @@ export function readString(value, field, { min = 1, max = 200 } = {}) {
   return s;
 }
 
+/**
+ * Liste facultative de valeurs autorisées (sans doublon) ; undefined si absente.
+ * @template T
+ * @param {unknown} value
+ * @param {string} field
+ * @param {readonly T[]} allowed
+ * @returns {T[] | undefined}
+ */
+export function readEnumList(value, field, allowed) {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value) || !value.length || value.some((v) => !allowed.includes(v))) throw invalid(field, `non-empty array of ${allowed.join(', ')}`);
+  return [...new Set(value)];
+}
+
 /** @param {unknown} value @param {string} field */
 export function readDate(value, field) {
   if (!isValidDate(value)) throw invalid(field, 'date YYYY-MM-DD required');

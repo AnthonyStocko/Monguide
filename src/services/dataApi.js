@@ -30,10 +30,12 @@ export function getWeather(params) {
 
 /**
  * Lieux candidats autour d'une destination, avec l'état de chaque source.
- * @param {{ lat: number, lon: number, radiusKm: number, countryCode: string, profile: string, lunch: string, lang: string }} params
+ * categories et offset (facultatifs) : « Plus de résultats », une page de
+ * lieux des catégories demandées, avec total et nextOffset (docs/api.md).
+ * @param {{ lat: number, lon: number, radiusKm: number, countryCode: string, profile: string, lunch: string, lang: string, categories?: string[], offset?: number }} params
  */
 export function getPlaces(params) {
-  const key = ['places', params.lat, params.lon, params.radiusKm, params.countryCode, params.lunch, params.lang].join(':');
+  const key = ['places', params.lat, params.lon, params.radiusKm, params.countryCode, params.lunch, params.lang, params.categories?.join(',') ?? '', params.offset ?? ''].join(':');
   // Délai propre : les sources ont leurs propres délais côté serveur (Wikidata 15 s).
   return callFunction('places', { method: 'POST', body: params, cacheKey: key, timeoutMs: getRules().api.placesTimeoutMs });
 }

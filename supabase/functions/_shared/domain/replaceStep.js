@@ -34,7 +34,7 @@ export function alternativesFor(trip, dayIndex, stepIndex, { limit = 3, extraPla
   const closeness = (p) => (neighbours.length ? neighbours.reduce((sum, n) => sum + distanceKm(n, p), 0) / neighbours.length : 0);
   const seen = new Set();
   const pool = [...trip.candidates, ...extraPlaces].filter((p) => {
-    if (seen.has(p.id) || used.has(p.id) || !fitsStepType(p, step.type)) return false;
+    if (seen.has(p.id) || used.has(p.id) || !fitsStepType(p, step.type, trip.profile)) return false;
     seen.add(p.id);
     return true;
   });

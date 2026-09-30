@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readDate, readEnum, readJsonBody, readNumber, readPoint, readString, readTimeZone } from './validate.js';
+import { readDate, readEnum, readEnumList, readJsonBody, readNumber, readPoint, readString, readTimeZone } from './validate.js';
 
 const bad = (fn) => expect(fn).toThrow(expect.objectContaining({ status: 400, code: 'invalid_input' }));
 
@@ -10,6 +10,14 @@ describe('validate', () => {
     bad(() => readNumber('', 'lat'));
     bad(() => readNumber('abc', 'lat'));
     bad(() => readNumber(51, 'radiusKm', { min: 1, max: 50 }));
+  });
+
+  it('lit une liste facultative de valeurs autorisées', () => {
+    expect(readEnumList(undefined, 'categories', ['park', 'museum'])).toBeUndefined();
+    expect(readEnumList(['park', 'park', 'museum'], 'categories', ['park', 'museum'])).toEqual(['park', 'museum']);
+    bad(() => readEnumList([], 'categories', ['park']));
+    bad(() => readEnumList(['zoo'], 'categories', ['park']));
+    bad(() => readEnumList('park', 'categories', ['park']));
   });
 
   it('lit une position valide', () => {

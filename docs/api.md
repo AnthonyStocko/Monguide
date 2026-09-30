@@ -231,6 +231,17 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
   | `profile` | `certified` \| `balanced` \| `explorer` | profil du séjour (utilisé par `generate`, phase 4) |
   | `lunch` | `market` \| `restaurant` \| `both` | avec `market`, les restaurants ne sont pas recherchés |
   | `lang` | `fr` \| `en` | langue des noms OSM (`name:<lang>` si présent) |
+  | `categories` | tableau de catégories `Place` (sauf `personal`), facultatif | « Plus de résultats » : seulement ces catégories ; avec `restaurant`, les restaurants sont cherchés quel que soit `lunch` |
+  | `offset` | entier ≥ 0, facultatif | « Plus de résultats » : rang du premier lieu de la page |
+
+  `categories` et `offset` sont facultatifs et rétrocompatibles (même
+  version du contrat) : sans eux, la réponse est inchangée (tous les lieux).
+  Avec l'un d'eux, `places` est une page de `places.pageSize` (20) lieux,
+  du plus proche au plus éloigné de la position arrondie (puis par
+  identifiant : ordre stable d'une page à l'autre), et la sortie contient en
+  plus `total` (lieux correspondants) et `nextOffset` (`offset` de la page
+  suivante, `null` à la dernière). L'application ajoute chaque page à sa
+  liste sans doublon (même `id`, `mergePlaces` de `domain/listCandidates.js`).
 
 - **Sortie** :
 
@@ -453,8 +464,11 @@ rien n'est modifié.
     aucun restaurant trouvé, badge `free_time`) ;
     `departure` et `returnTravelMin` si un hébergement est connu ;
     `weatherAvailable`, `weather` (`{ "HH": % }`), `holiday`.
-  - `trip.candidates` : les 60 meilleurs lieux non utilisés (remplacement et
-    recalcul sans réseau), dont au moins 10 restaurants ouverts le soir
+  - `trip.candidates` : les 100 meilleurs lieux non utilisés
+    (`places.maxCandidates` ; remplacement, recalcul et listes de lieux sans
+    réseau), dont, s'il en existe, au moins 8 lieux de chaque type proposé
+    (`places.minPerType`, types de `config/activityTypes.js`, quel que soit
+    le profil) et au moins 10 restaurants ouverts le soir
     (`places.minDinnerCandidates`) quand le séjour a un dîner.
   - `trip.carbon` : `{ totalKgCo2e, byDay, byMode, distanceKm }` ;
     `trip.fuelCost` : `{ amount, currency }` (voiture, monnaie du pays).

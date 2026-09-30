@@ -60,6 +60,8 @@ describe('RULES', () => {
     expect(RULES.schedule).toEqual({ latestStart: { activity: '19:00', dinner: '21:30' }, lateEnd: { activity: '21:00', dinner: '23:00' } });
     expect(RULES.durations.dinner).toEqual({ recommendedMin: 90, minimumMin: 60 });
     expect(RULES.places.minDinnerCandidates).toBe(10);
+    expect(RULES.places).toMatchObject({ maxCandidates: 100, minPerType: 8, pageSize: 20 });
+    expect(RULES.activityTypes).toEqual({ dinnerFrom: '17:00', marketLunchUntil: '15:00' });
     expect(RULES.places.dedupDistanceM).toBe(50);
     expect(RULES.lodging.farFactor).toBe(1.5);
     expect(RULES.notifications).toEqual({ eveningSummaryTime: '19:00', reminderLeadMin: 60 });

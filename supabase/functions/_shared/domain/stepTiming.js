@@ -1,4 +1,4 @@
-import { activityType, fitsSlot, isMarket, scheduleLimits, stepDurations } from './activity.js';
+import { activityType, allowedByProfile, fitsSlot, isMarket, scheduleLimits, stepDurations } from './activity.js';
 import { openingState, placeOpeningHours } from './openingHours.js';
 import { fromMinutes, toMinutes } from './time.js';
 import { travelMinutes } from './travel.js';
@@ -55,11 +55,19 @@ export const lateEndFor = (step, rules) => toMinutes(scheduleLimits(step, rules)
 /** Copie de l'étape avec de nouveaux horaires (minutes). */
 export const withTimes = (step, start, end) => ({ ...step, start: fromMinutes(start), end: fromMinutes(end) });
 
-/** Le lieu convient-il à ce type d'étape ? (déjeuner : restaurant ou marché ; dîner : restaurant) */
-export function fitsStepType(place, type) {
+/**
+ * Le lieu convient-il à ce type d'étape ? (déjeuner : restaurant ou marché ;
+ * dîner : restaurant). Avec profile, une visite doit aussi respecter le profil
+ * du séjour : la réserve contient des lieux de tous les types (listCandidates),
+ * mais un remplacement automatique reste fidèle au profil.
+ * @param {object} place
+ * @param {string} type
+ * @param {string} [profile]
+ */
+export function fitsStepType(place, type, profile) {
   if (type === 'lunch') return place.category === 'restaurant' || isMarket(place);
   if (type === 'dinner') return place.category === 'restaurant';
-  return fitsSlot(place, type);
+  return fitsSlot(place, type) && (!profile || allowedByProfile(place, profile));
 }
 
 /**

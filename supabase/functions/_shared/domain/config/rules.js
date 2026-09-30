@@ -155,7 +155,14 @@ export const RULES = Object.freeze({
     /** Deux lieux à moins de cette distance (m) sont considérés comme un seul. */
     dedupDistanceM: 50,
     /** Taille maximale de la réserve de lieux non utilisés d'un séjour (Trip.candidates). */
-    maxCandidates: 60,
+    maxCandidates: 100,
+    /**
+     * Lieux gardés au moins dans la réserve pour chaque type proposé
+     * (config/activityTypes.js), s'il en existe : aucune liste vide hors ligne.
+     */
+    minPerType: 8,
+    /** Fonction places, bouton « Plus de résultats » : lieux par page. */
+    pageSize: 20,
     /** Restaurants ouverts le soir gardés au moins dans la réserve, pour remplacer un dîner sans réseau. */
     minDinnerCandidates: 10,
     /** Rayon de recherche maximal accepté par la fonction places, en km. */
@@ -236,6 +243,17 @@ export const RULES = Object.freeze({
   lodging: {
     /** Hébergement éloigné : au-delà de ce facteur × rayon de la destination. */
     farFactor: 1.5
+  },
+
+  /**
+   * Types de lieux proposés (config/activityTypes.js) : type d'étape selon
+   * l'heure choisie (propositions).
+   */
+  activityTypes: {
+    /** Restaurant : déjeuner avant cette heure, dîner à partir de cette heure. */
+    dinnerFrom: '17:00',
+    /** Marché et producteur : déjeuner avant cette heure, visite (culture) ensuite. */
+    marketLunchUntil: '15:00'
   },
 
   /** Étapes personnelles ajoutées par l'utilisateur. */
