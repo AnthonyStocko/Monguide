@@ -79,7 +79,9 @@ export async function getImages(params) {
  * @param {{ onEvent?: (event: object) => void, signal?: AbortSignal }} [options] signal : bouton "Annuler"
  * @returns {Promise<{ trip: object, warnings: object[], sources: object[] }>}
  */
-export async function generateTrip(tripRequest, lang, { onEvent, signal } = {}) {
-  const { data } = await streamFunction('generate', { body: { tripRequest, lang }, timeoutMs: getRules().api.generateTimeoutMs, onEvent, signal });
+export async function generateTrip(tripRequest, lang, { onEvent, signal, review } = {}) {
+  // review : { consent, wishes? } relecture du planning par une IA (docs/ai-review.md) ; absent = pas de relecture.
+  const body = { tripRequest, lang, ...(review ? { review } : {}) };
+  const { data } = await streamFunction('generate', { body, timeoutMs: getRules().api.generateTimeoutMs, onEvent, signal });
   return data;
 }

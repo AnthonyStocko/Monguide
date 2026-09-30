@@ -64,7 +64,7 @@ describe('RULES', () => {
     expect(RULES.places).toMatchObject({ maxCandidates: 100, minPerType: 8, pageSize: 20 });
     expect(RULES.activityTypes).toEqual({ dinnerFrom: '17:00', marketLunchUntil: '15:00' });
     expect(RULES.ai).toMatchObject({ enabled: true, timeoutMs: 8000, maxOpsPerTrip: 6, userDailyLimit: 5 });
-    expect(RULES.api.generateTimeoutMs).toBe(30000);
+    expect(RULES.api.generateTimeoutMs).toBe(35000);
     expect(RULES.places.dedupDistanceM).toBe(50);
     expect(RULES.lodging.farFactor).toBe(1.5);
     expect(RULES.notifications).toEqual({ eveningSummaryTime: '19:00', reminderLeadMin: 60 });

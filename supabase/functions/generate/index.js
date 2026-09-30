@@ -1,3 +1,5 @@
+import { reviewTrip } from '../_shared/ai/reviewTrip.js';
+import { supabaseUsageStore } from '../_shared/ai/usageStore.js';
 import { cached, cacheLookup, cacheSet } from '../_shared/cache.js';
 import { daysBetween, eachDate } from '../_shared/domain/dates.js';
 import { distanceKm, roundCoord } from '../_shared/domain/geo.js';
@@ -10,12 +12,13 @@ import { fuelPricesEu } from '../_shared/fuelPricesEu.js';
 import { serveFunction } from '../_shared/handler.js';
 import { ndjsonResponse } from '../_shared/respond.js';
 import { getProvider } from '../_shared/providers/index.js';
+import { clientId } from '../_shared/rateLimit.js';
 import { collectPlaces } from '../_shared/services/collectPlaces.js';
 import { createProgress } from '../_shared/services/generationProgress.js';
 import { fetchHolidays, holidaysBetween } from '../_shared/services/holidays.js';
 import { fetchHourlyForecast } from '../_shared/services/weather.js';
 import { withDeadline } from '../_shared/services/withDeadline.js';
-import { readJsonBody } from '../_shared/validate.js';
+import { readJsonBody, readString } from '../_shared/validate.js';
 
 /** Zones de collecte hors destination au plus (hébergements éloignés). */
 const MAX_EXTRA_ZONES = 2;
@@ -43,10 +46,13 @@ function collectionZones(trip) {
 }
 
 /**
- * Génération complète. progress : suivi des étapes (createProgress), dont les
- * événements partent en flux quand l'application le demande.
+ * Génération complète : génération déterministe (generateTrip), puis
+ * relecture facultative par une IA (reviewTrip : consentement, ai.enabled,
+ * quota ; 8 s au plus ; tout échec livre le planning généré). progress :
+ * suivi des étapes (createProgress), dont les événements partent en flux
+ * quand l'application le demande.
  */
-async function generate({ trip, lang, countryCode, provider, appConfig }, progress) {
+async function generate({ trip, lang, countryCode, provider, appConfig, review, client }, progress) {
   const { rules } = appConfig;
   const ctx = { rules, lang, countryCode, cache: { lookup: cacheLookup, set: cacheSet }, fuelStore: fuelPricesEu, osmPointer: appConfig.osmPointer };
   const deadline = Date.now() + rules.generation.collectBudgetMs;
@@ -126,7 +132,19 @@ async function generate({ trip, lang, countryCode, provider, appConfig }, progre
   const missing = [...new Set(sources.flatMap((s) => s.missingCountries ?? []))].sort();
   if (missing.length) warnings.splice(failed.size, 0, { code: 'places_partial', countries: missing });
   progress.planningDone();
-  return { trip: { ...generated, updatedAt: new Date().toISOString() }, warnings, sources: sources.map(({ query, ...s }) => s) };
+
+  // Relecture par une IA : génération initiale seulement (jamais lors d'un recalcul de journée).
+  const reviewed = await reviewTrip(generated, {
+    rules,
+    language: lang,
+    consent: review.consent,
+    wishes: review.wishes,
+    client,
+    usageStore: supabaseUsageStore,
+    onStart: () => progress.reviewStarted(),
+    onDone: (status) => progress.reviewDone(status)
+  });
+  return { trip: { ...reviewed, updatedAt: new Date().toISOString() }, warnings, sources: sources.map(({ query, ...s }) => s) };
 }
 
 // POST /functions/v1/generate { tripRequest } -> { trip, warnings, sources } (docs/api.md) ;
@@ -135,7 +153,7 @@ serveFunction({
   name: 'generate',
   methods: ['POST'],
   rateLimitKind: 'generate',
-  handle: async ({ req, appConfig }) => {
+  handle: async ({ req, caller, appConfig }) => {
     const { rules } = appConfig;
     const body = await readJsonBody(req);
     const trip = body.tripRequest;
@@ -146,7 +164,13 @@ serveFunction({
     const provider = getProvider(countryCode);
     if (!provider) throw new AppError(400, 'unsupported_country', `Country not supported: ${countryCode}`);
     const lang = ['fr', 'en'].includes(body.lang) ? body.lang : 'fr';
-    const input = { trip, lang, countryCode, provider, appConfig };
+    // Relecture par une IA (facultatif) : consentement de l'utilisateur et texte « Vos envies ».
+    const reviewBody = body.review && typeof body.review === 'object' ? body.review : {};
+    const review = {
+      consent: reviewBody.consent === true,
+      wishes: reviewBody.wishes === undefined || reviewBody.wishes === null || reviewBody.wishes === '' ? undefined : readString(reviewBody.wishes, 'review.wishes', { min: 1, max: 2000 })
+    };
+    const input = { trip, lang, countryCode, provider, appConfig, review, client: () => clientId(req, caller) };
     const restaurants = includesRestaurants(trip.lunch, trip.dinner);
     const zones = collectionZones(trip).length;
 

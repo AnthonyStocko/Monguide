@@ -7,6 +7,18 @@ const run = (options) => {
   return { events, progress };
 };
 
+describe('createProgress : relecture', () => {
+  it('review puis review_done avec le statut, hors de la liste des étapes (ajoutée par l\'application si elle est tentée)', () => {
+    const { events, progress } = run();
+    progress.start();
+    progress.planningDone();
+    progress.reviewStarted();
+    progress.reviewDone('skipped');
+    expect(events[0].steps).not.toContain('review');
+    expect(events.slice(-2)).toEqual([{ event: 'review' }, { event: 'review_done', status: 'skipped' }]);
+  });
+});
+
 describe('createProgress', () => {
   it('début : liste des étapes, collecte en cours, planning en attente', () => {
     const { events, progress } = run();

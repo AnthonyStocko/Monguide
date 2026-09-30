@@ -445,7 +445,7 @@ rien n'est modifié.
 ### `generate` — génération d'un séjour
 
 - **Méthode** : `POST` ; limite de requêtes du type `generate` (30 par heure).
-- **Entrée** : `{ "tripRequest": Trip, "lang": "fr" | "en" }` : séjour issu du
+- **Entrée** : `{ "tripRequest": Trip, "lang": "fr" | "en", "review"?: { "consent": boolean, "wishes"?: string } }` : séjour issu du
   formulaire (`domain/tripDraft.js`, `buildTrip`), `days` et `candidates`
   vides. Vérifié par `domain/validateTripRequest.js` (`400 invalid_input`
   en listant les champs invalides). `dinner` (`restaurant` | `free`) est
@@ -484,7 +484,7 @@ rien n'est modifié.
 - **Budget** : collecte limitée à `generation.collectBudgetMs` (16 s) ; au-delà,
   génération avec les sources disponibles (les collectes lentes continuent en
   arrière-plan et remplissent le cache). L'application attend
-  `api.generateTimeoutMs` (25 s). Limites Supabase vérifiées le 2026-09-24 :
+  `api.generateTimeoutMs` (35 s : collecte, planning, puis relecture par une IA de 8 s au plus). Limites Supabase vérifiées le 2026-09-24 :
   150 s de durée, 2 s de temps CPU par requête, 256 Mo.
 - **Progression en flux** (écran « Préparation du séjour ») : avec l'en-tête
   `Accept: application/x-ndjson`, la réponse `200` est un flux NDJSON
@@ -501,6 +501,8 @@ rien n'est modifié.
   {"event":"step","step":"heritage","status":"failed","message":"timeout"}
   {"event":"step","step":"planning","status":"running"}
   {"event":"step","step":"planning","status":"done"}
+  {"event":"review"}
+  {"event":"review_done","status":"applied"}
   {"event":"result","trip":Trip,"warnings":[…],"sources":[…]}
   ```
 
@@ -513,6 +515,14 @@ rien n'est modifié.
     étape est finie quand toutes ses zones ont répondu, `failed` si toutes
     ont échoué ; budget épuisé : `failed` avec `message: "timeout"` (ou
     `done` si une zone a répondu).
+  - Relecture par une IA (docs/ai-review.md) : `review` quand elle est tentée
+    (champ `review.consent` à `true`, `ai.enabled`, au moins une étape
+    modifiable), puis `review_done` avec le statut (`applied`, `unchanged`
+    ou `skipped`) ; absents sinon. `review.wishes` : texte « Vos envies »
+    (2 000 caractères au plus, tronqué à `ai.wishesMaxLength` avant envoi).
+    Le séjour renvoyé porte `trip.review` (statut, raison d'un échec,
+    opérations appliquées et refusées, titres des jours, résumé) ; un échec
+    de la relecture n'est jamais une erreur de `generate`.
   - Dernière ligne : `{"event":"result", …}` (même contenu que la sortie
     JSON), ou `{"event":"error","error":{"code","message"}}` si la génération
     échoue après le début du flux. Les erreurs d'entrée, de version ou de

@@ -1138,6 +1138,13 @@
         "done": "Days organised",
         "failed": "Could not organise the days",
         "detail": "Travel, times and weather"
+      },
+      "review": {
+        "pending": "Reviewing your itinerary",
+        "running": "Reviewing your itinerary…",
+        "done": "Itinerary reviewed",
+        "failed": "Itinerary reviewed",
+        "detail": "Final touches to each day"
       }
     }
   },

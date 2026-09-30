@@ -210,3 +210,28 @@ Tests : cas précis (échange valide, restaurant fermé, étape verrouillée,
 identifiant inventé, réponse vide, textes piégés, retour à l'origine) et
 500 réponses aléatoires fast-check, absurdes comprises : `checkDayInvariants`
 toujours tenu, étapes fixes jamais modifiées, retour exact à l'origine.
+## Bloc D : relecture dans la fonction generate (`ai/reviewTrip.js`)
+
+Enchaînement : `generateTrip` (inchangée) -> si consentement
+(`review.consent` dans la requête, Bloc F), `ai.enabled` et au moins une
+étape modifiable : `buildReviewRequest` -> `complete` (quota compté avant
+l'appel, 8 s au plus) -> `applyReview` -> séjour renvoyé.
+
+- Progression en flux : `review` (l'application ajoute alors l'étape
+  « Relecture de votre planning… »), puis `review_done` avec le statut ;
+  relecture non tentée : aucun événement, aucune étape affichée. Un échec
+  est coché comme les autres (aucun message d'erreur).
+- Échec (délai, quota, JSON invalide, erreur, exception) : `trip.review`
+  `{ status: "skipped", reason }`, planning généré livré tel quel. Non
+  tentée : `skipped` avec `no_consent`, `disabled` ou `nothing_to_review`.
+- Journal `ai_review` : statut, raison, fournisseur, modèle, opérations
+  appliquées et refus (types seulement), version des consignes, taille du
+  résumé ; jamais le contenu.
+- Délai de l'application pour generate : `api.generateTimeoutMs` = 35 s
+  (collecte 16 s au plus, planning, relecture 8 s au plus).
+- Jamais d'IA lors d'un recalcul de journée ou du suivi : le domaine partagé
+  n'importe pas la couche IA et n'appelle pas le réseau (test
+  `noAiInDomain.test.js`).
+- Mesures réelles (2026-09-30, séjour de 3 jours, moteur réel) : génération
+  déterministe 49 ms ; clé invalide chez Mistral : `skipped` (`error`) en
+  171 ms ; fournisseur qui ne répond pas : `skipped` (`timeout`) en 8,0 s.

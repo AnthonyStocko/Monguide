@@ -283,8 +283,8 @@ export const RULES = Object.freeze({
   /** Appels de l'application vers le serveur. */
   api: {
     timeoutMs: 10000,
-    /** Génération : collecte (16 s au plus) puis relecture par l'IA (8 s au plus). */
-    generateTimeoutMs: 30000,
+    /** Génération : collecte (16 s au plus), planning, puis relecture par l'IA (8 s au plus). */
+    generateTimeoutMs: 35000,
     /**
      * Fonction places : ses sources ont leur propre délai côté serveur
      * (Wikidata 15 s, Overpass 8 s) ; l'application attend donc plus que

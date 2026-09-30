@@ -45,6 +45,14 @@ export function createProgress({ send, zones, restaurants }) {
     },
     planningDone() {
       finish('planning', 'done');
+    },
+    /** Relecture du planning tentée (après la génération) : l'application ajoute l'étape à cet instant. */
+    reviewStarted() {
+      send({ event: 'review' });
+    },
+    /** Fin de la relecture : status de trip.review (applied, unchanged ou skipped). */
+    reviewDone(status) {
+      send({ event: 'review_done', status });
     }
   };
 }

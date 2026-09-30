@@ -1138,6 +1138,13 @@
         "done": "Journées organisées",
         "failed": "Organisation impossible",
         "detail": "Trajets, horaires et météo"
+      },
+      "review": {
+        "pending": "Relecture de votre planning",
+        "running": "Relecture de votre planning…",
+        "done": "Planning relu",
+        "failed": "Planning relu",
+        "detail": "Derniers ajustements des journées"
       }
     }
   },

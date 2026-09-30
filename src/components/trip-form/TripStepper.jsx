@@ -111,12 +111,15 @@ export default function TripStepper({ onCreated }) {
     setGeneration({ status: 'loading', steps: null });
     const controller = new AbortController();
     cancelRef.current = controller;
-    // Progression réelle envoyée par le serveur : start (liste des étapes), puis step (état de chacune).
+    // Progression réelle envoyée par le serveur : start (liste des étapes), puis step (état de chacune) ;
+    // review / review_done : relecture du planning, étape ajoutée seulement si elle est tentée.
+    const setStep = (name, status) => setGeneration((g) => (g.steps ? { ...g, steps: g.steps.map((st) => (st.name === name ? { ...st, status } : st)) } : g));
     const onEvent = (event) => {
       if (event.event === 'start') setGeneration({ status: 'loading', steps: event.steps.map((name) => ({ name, status: 'pending' })) });
-      if (event.event === 'step') {
-        setGeneration((g) => (g.steps ? { ...g, steps: g.steps.map((st) => (st.name === event.step ? { ...st, status: event.status } : st)) } : g));
-      }
+      if (event.event === 'step') setStep(event.step, event.status);
+      if (event.event === 'review') setGeneration((g) => (g.steps ? { ...g, steps: [...g.steps.filter((st) => st.name !== 'review'), { name: 'review', status: 'running' }] } : g));
+      // Relecture non appliquée (délai, quota…) : étape cochée quand même, sans message d'erreur.
+      if (event.event === 'review_done') setStep('review', 'done');
     };
     try {
       const request = buildTrip(draft, { id: crypto.randomUUID(), now: new Date().toISOString(), makeId: () => crypto.randomUUID() });
