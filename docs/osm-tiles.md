@@ -182,7 +182,9 @@ Nom du `Place` : `name` OSM tel quel (un nom bilingue reste bilingue),
 sinon la variante de la langue demandée ; `Place.names` reçoit les
 variantes qui en diffèrent. L'application affiche `displayName(place,
 langue)` (`domain/displayName.js`) : variante de la langue de l'interface,
-sinon `name` ; nom générique traduit pour le petit patrimoine sans nom.
+sinon `name` ; un `name` en alphabet non latin (grec) est remplacé par
+`names.en`, à défaut translittéré (ELOT 743, `domain/translitGreek.js`) ;
+nom générique traduit pour le petit patrimoine sans nom.
 
 ## Organisation du bucket `osm-tiles`
 
@@ -294,7 +296,7 @@ Workflow `.github/workflows/osm-tiles.yml`, script `scripts/osm-tiles/`
   Geofabrik (`https://download.geofabrik.de/<extrait>-latest.osm.pbf`, somme
   MD5 dans `….osm.pbf.md5`), langues gardées dans `names`, repli du
   patrimoine, seuil de restaurants d'un premier import. Au départ : France,
-  Belgique, Luxembourg.
+  Belgique, Luxembourg ; Grèce ajoutée le 2026-10-01.
 - **Pays par pays, séquentiellement** : chaque extrait est téléchargé,
   vérifié, filtré, puis supprimé avant le pays suivant (disque de
   l'exécuteur : 14 Go, extrait le plus gros : 5 Go) ; chaque pays est

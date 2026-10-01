@@ -7,8 +7,8 @@ import { fromMinutes, toMinutes } from './time.js';
  *
  * - Ouverture : les horaires OSM (opening_hours) sont évalués sur la plage du
  *   repas du jour concerné, à l'heure locale de la destination. Déjeuner :
- *   plage rules.lunchWindow (12h30-14h00), une ouverture sur une partie de la
- *   plage suffit. Dîner : plage du dîner (dinnerWindow : heure du dîner du
+ *   plage rules.lunchWindow (12h30-14h00, décalée à l'heure du déjeuner du
+ *   pays : lunchWindowAt), une ouverture sur une partie de la plage suffit. Dîner : plage du dîner (dinnerWindow : heure du dîner du
  *   pays + durée conseillée), ouverture exigée sur toute la plage. Le pays est
  *   transmis à la librairie, qui connaît les jours fériés de chaque pays
  *   (règles "PH") : vérifié pour la France (14 juillet), l'Italie (15 août)
@@ -34,6 +34,19 @@ export const RESTAURANT_BADGES = { hoursUnconfirmed: 'hours_unconfirmed', infoMi
  */
 export function dinnerWindow(start, rules) {
   return { start, end: fromMinutes(toMinutes(start) + rules.durations.dinner.recommendedMin) };
+}
+
+/**
+ * Plage du déjeuner pour une heure de déjeuner : rules.lunchWindow décalée
+ * de l'écart entre cette heure et rules.dayTemplate.lunch (14:00 donne
+ * 14:00-15:30). Inchangée à l'heure par défaut.
+ * @param {string} start "HH:mm"
+ * @returns {{ start: string, end: string }}
+ */
+export function lunchWindowAt(start, rules) {
+  const shift = toMinutes(start) - toMinutes(rules.dayTemplate.lunch);
+  const { lunchWindow: w } = rules;
+  return { start: fromMinutes(toMinutes(w.start) + shift), end: fromMinutes(toMinutes(w.end) + shift) };
 }
 
 /**

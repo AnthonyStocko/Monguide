@@ -315,7 +315,9 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
     bilingue, « Grand-Place - Grote Markt ») ; `names` (facultatif) donne
     les variantes par langue qui en diffèrent (`{ "fr": "Grand-Place",
     "nl": "Grote Markt" }`). L'application affiche la variante de la langue
-    de l'interface, sinon `name` (`domain/displayName.js`) ; un séjour
+    de l'interface, sinon `name` ; un `name` en alphabet non latin est
+    remplacé par `names.en`, à défaut translittéré du grec (ELOT 743,
+    `domain/translitGreek.js`) (`domain/displayName.js`) ; un séjour
     enregistré ne change pas, seul l'affichage suit la langue.
   - L'application attend jusqu'à `api.placesTimeoutMs` (20 s) : Wikidata a
     un délai de 15 s côté serveur.
@@ -452,8 +454,10 @@ rien n'est modifié.
   facultatif : absent (application antérieure), aucun dîner n'est généré.
 - **Sortie** : `{ "trip": Trip, "warnings": Warning[], "sources": Source[] }`
   - `trip.days` : une journée par date, étapes `culture` (10h00), `lunch`
-    (12h30), `outdoor` (14h30), `relax` (17h30), puis `dinner` (19h30 ;
-    21h00 en Espagne, 20h00 au Portugal et en Italie : `dinnerTime` de
+    (12h30 ; 14h00 en Grèce : `lunchTime` de `config/countries.js`, plage
+    d'ouverture du restaurant et `outdoor` décalées d'autant), `outdoor`
+    (14h30), `relax` (17h30), puis `dinner` (19h30 ; 21h00 en Espagne et en
+    Grèce, 20h00 au Portugal et en Italie : `dinnerTime` de
     `config/countries.js`) avec `start`/`end`
     ("HH:mm", fuseau du séjour), `travelFromPreviousMin`, `badges`
     (`weather_adapted`, `hours_unconfirmed`, `info_missing`,

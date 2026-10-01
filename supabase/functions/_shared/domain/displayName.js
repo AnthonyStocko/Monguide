@@ -3,6 +3,7 @@
  * langue de l'interface. Le nom enregistré dans le séjour ne change jamais :
  * seul l'affichage suit la langue choisie.
  */
+import { translitGreek } from './translitGreek.js';
 
 /** Noms génériques des lieux OSM sans nom (rules.osm.unnamedTypes), par sous-catégorie. */
 export const GENERIC_PLACE_NAMES = Object.freeze({
@@ -46,10 +47,18 @@ export function nameVariants(tags, languages) {
   return Object.keys(out).length ? out : undefined;
 }
 
+/** Vrai si le texte contient une lettre hors de l'alphabet latin (grec, cyrillique…). */
+export function hasNonLatinLetter(text) {
+  return /(?=\p{L})\P{Script=Latin}/u.test(text);
+}
+
 /**
  * Nom à afficher, dans cet ordre :
  *  - petit patrimoine sans nom (unnamed) : le nom générique traduit ;
  *  - names[uiLanguage] s'il existe ;
+ *  - name en alphabet non latin : names.en s'il existe, sinon name
+ *    translittéré du grec (ELOT 743, translitGreek ; les autres alphabets
+ *    restent tels quels) ;
  *  - sinon name tel quel (un nom bilingue « Grand-Place - Grote Markt »
  *    reste compréhensible).
  * Fonctionne aussi pour les séjours enregistrés avant Place.names.
@@ -62,7 +71,10 @@ export function displayName(place, uiLanguage) {
     const type = genericType(place.name);
     return (type && genericPlaceName(type, uiLanguage)) ?? place.name;
   }
-  return place.names?.[uiLanguage] ?? place.name;
+  const own = place.names?.[uiLanguage];
+  if (own) return own;
+  if (!hasNonLatinLetter(place.name)) return place.name;
+  return place.names?.en ?? translitGreek(place.name);
 }
 
 /**

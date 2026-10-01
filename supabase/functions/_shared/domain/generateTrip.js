@@ -3,9 +3,10 @@ import { eachDate } from './dates.js';
 import { dedupePlaces } from './dedupePlaces.js';
 import { distanceKm } from './geo.js';
 import { ACTIVITY_TYPE_IDS, ACTIVITY_TYPES } from './config/activityTypes.js';
-import { dinnerTimeFor } from './config/countries.js';
-import { dinnerWindow, evaluateRestaurant, lunchKindForDay, pickRestaurant } from './pickRestaurant.js';
+import { dinnerTimeFor, lunchTimeFor } from './config/countries.js';
+import { dinnerWindow, evaluateRestaurant, lunchKindForDay, lunchWindowAt, pickRestaurant } from './pickRestaurant.js';
 import { scheduleDay } from './scheduleDay.js';
+import { fromMinutes, toMinutes } from './time.js';
 import { detourKm, scorePlace } from './scorePlace.js';
 import { effectiveRadiusKm, travelMinutes } from './travel.js';
 import { includesRestaurants } from './tripDraft.js';
@@ -16,7 +17,8 @@ import { computeCarbon, computeFuelCost } from './carbon.js';
  * Moteur de génération d'un séjour (fonction pure, exécutée par la fonction
  * serveur generate). Construit chaque journée à partir du gabarit
  * (rules.dayTemplate) : départ, visite culturelle, pause gourmande, plein
- * air, détente, dîner (heure du pays : dinnerTimeFor), puis retour à
+ * air, détente, dîner (heures du pays : lunchTimeFor, dinnerTimeFor ; un
+ * déjeuner plus tardif décale d'autant le plein air), puis retour à
  * l'hébergement. Aucun lieu n'est répété ; un créneau sans candidat devient
  * un "temps libre" (badge free_time) plutôt qu'un lieu inventé. Dîner
  * "libre" : créneau sans lieu ni badge ("Soirée libre") ; trip.dinner absent
@@ -117,8 +119,16 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
   const categoryUses = {};
   const specialties = appellations.slice(0, 3).map((a) => a.name);
   const countryCode = trip.destination.countryCode;
-  // Heures de gabarit par type d'étape, dîner à l'heure du pays.
-  const slots = { ...rules.dayTemplate, dinner: dinnerTimeFor(countryCode, rules) };
+  // Heures de gabarit par type d'étape, déjeuner et dîner à l'heure du pays.
+  const lunchTime = lunchTimeFor(countryCode, rules);
+  const lunchShift = Math.max(0, toMinutes(lunchTime) - toMinutes(rules.dayTemplate.lunch));
+  const slots = {
+    ...rules.dayTemplate,
+    lunch: lunchTime,
+    outdoor: fromMinutes(toMinutes(rules.dayTemplate.outdoor) + lunchShift),
+    dinner: dinnerTimeFor(countryCode, rules)
+  };
+  const lunchSlot = lunchWindowAt(slots.lunch, rules);
   const dinnerSlot = dinnerWindow(slots.dinner, rules);
 
   const days = [];
@@ -159,7 +169,7 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
       if (k === 'restaurant') {
         const r = pickRestaurant(
           restaurants,
-          { date, countryCode, near: near.length ? near : [anchor ?? center], effectiveRadiusKm: radius, prefs: trip.prefs, usedIds: used, accept: (p) => reachable(culture ?? startLodging, p) },
+          { date, countryCode, window: lunchSlot, near: near.length ? near : [anchor ?? center], effectiveRadiusKm: radius, prefs: trip.prefs, usedIds: used, accept: (p) => reachable(culture ?? startLodging, p) },
           rules
         );
         return r ? { place: take(r.place), badges: r.badges } : null;

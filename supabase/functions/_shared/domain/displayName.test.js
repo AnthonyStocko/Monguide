@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GENERIC_PLACE_NAMES, displayName, genericPlaceName, nameVariants, stepDisplayName } from './displayName.js';
+import { GENERIC_PLACE_NAMES, displayName, genericPlaceName, hasNonLatinLetter, nameVariants, stepDisplayName } from './displayName.js';
 
 const place = (extra) => ({ id: 'osm:node/1', category: 'monument', lat: 50.8467, lon: 4.3525, source: 'osm', certified: false, indoor: null, ...extra });
 
@@ -34,6 +34,41 @@ describe('displayName', () => {
 
   it('langue sans noms génériques : français', () => {
     expect(displayName(place({ name: 'Ruins', category: 'small_heritage', unnamed: true }), 'nl')).toBe('Ruines');
+  });
+});
+
+describe('displayName : noms non latins', () => {
+  it('nom grec avec name:en : names.en en français comme en anglais', () => {
+    const acropolis = place({ name: 'Ακρόπολη Αθηνών', names: { en: 'Acropolis of Athens', el: 'Ακρόπολη' } });
+    expect(displayName(acropolis, 'en')).toBe('Acropolis of Athens');
+    expect(displayName(acropolis, 'fr')).toBe('Acropolis of Athens');
+  });
+
+  it('names de la langue de l’interface en priorité', () => {
+    const acropolis = place({ name: 'Ακρόπολη Αθηνών', names: { en: 'Acropolis of Athens', fr: 'Acropole d’Athènes' } });
+    expect(displayName(acropolis, 'fr')).toBe('Acropole d’Athènes');
+  });
+
+  it('nom grec sans name:en : translittéré (ELOT 743)', () => {
+    const taverna = place({ name: 'Ταβέρνα Ψαράς', category: 'restaurant' });
+    expect(displayName(taverna, 'fr')).toBe('Taverna Psaras');
+    expect(displayName(taverna, 'en')).toBe('Taverna Psaras');
+    expect(displayName(place({ name: 'Μουσείο Ναυπλίου', names: { el: 'Μουσείο' } }), 'en')).toBe('Mouseio Nafpliou');
+  });
+
+  it('nom mixte (latin et grec) : translittéré', () => {
+    expect(displayName(place({ name: 'Café Πλάκα', category: 'restaurant' }), 'fr')).toBe('Café Plaka');
+  });
+
+  it('nom latin inchangé, accents et ligatures compris', () => {
+    expect(displayName(place({ name: 'Brasserie Œnologie Ça Va', category: 'restaurant' }), 'en')).toBe('Brasserie Œnologie Ça Va');
+    expect(displayName(place({ name: 'Taverna Psaras 1898', category: 'restaurant' }), 'fr')).toBe('Taverna Psaras 1898');
+  });
+
+  it('hasNonLatinLetter', () => {
+    expect(hasNonLatinLetter('Πλάκα')).toBe(true);
+    expect(hasNonLatinLetter('Москва')).toBe(true);
+    expect(hasNonLatinLetter('Grand-Place – Grote Markt (1695) & Ö')).toBe(false);
   });
 });
 

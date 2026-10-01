@@ -1,9 +1,9 @@
 {
   "_notes": [
     "Pays importés dans les tuiles de lieux OSM (docs/osm-tiles.md). Ajouter un pays = une entrée ici.",
-    "geofabrik : chemin de l'extrait sans -latest.osm.pbf. À VÉRIFIER avant chaque ajout ; ceux-ci ont été vérifiés le 2026-09-28 dans https://download.geofabrik.de/index-v1-nogeom.json (code ISO -> extrait).",
+    "geofabrik : chemin de l'extrait sans -latest.osm.pbf. À VÉRIFIER avant chaque ajout ; FR, BE, LU vérifiés le 2026-09-28, GR le 2026-10-01, dans https://download.geofabrik.de/index-v1-nogeom.json (code ISO -> extrait).",
     "languages : langues locales gardées dans names, en plus de fr, en, nl, de, it, es, ca, eu, pt (BASE_NAME_LANGUAGES) ; les langues de tous les pays servent à tous les pays.",
-    "minRestaurants : contrôle d'un premier import seulement (ensuite : baisse de plus de 20 % par rapport à la version précédente). Environ 2/3 des restaurants comptés par taginfo Geofabrik le 2026-09-28 (FR 92 423, BE 13 497, LU 1 352).",
+    "minRestaurants : contrôle d'un premier import seulement (ensuite : baisse de plus de 20 % par rapport à la version précédente). Environ 2/3 des restaurants comptés par taginfo Geofabrik le 2026-09-28 (FR 92 423, BE 13 497, LU 1 352) ; GR 17 275 le 2026-10-01.",
     "heritageFallback : monuments et musées pour le repli du patrimoine quand Wikidata échoue ; inutile en France (Mérimée, Muséofile).",
     "maxStorageMb : plafond de l'espace occupé par le bucket osm-tiles après publication (tous pays, versions conservées). 200 Mo = 20 % du stockage gratuit de Supabase (1 Go, À VÉRIFIER sur https://supabase.com/pricing)."
   ],
@@ -11,6 +11,7 @@
   "countries": [
     { "code": "FR", "geofabrik": "europe/france", "languages": ["fr"], "heritageFallback": false, "minRestaurants": 60000 },
     { "code": "BE", "geofabrik": "europe/belgium", "languages": ["nl", "fr", "de"], "heritageFallback": true, "minRestaurants": 9000 },
-    { "code": "LU", "geofabrik": "europe/luxembourg", "languages": ["lb", "fr", "de"], "heritageFallback": true, "minRestaurants": 900 }
+    { "code": "LU", "geofabrik": "europe/luxembourg", "languages": ["lb", "fr", "de"], "heritageFallback": true, "minRestaurants": 900 },
+    { "code": "GR", "geofabrik": "europe/greece", "languages": ["el", "en", "fr"], "heritageFallback": true, "minRestaurants": 11000 }
   ]
 }

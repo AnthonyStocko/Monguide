@@ -8,6 +8,8 @@
  *   autres pays) ;
  * - languages : langues locales, pour les noms de lieux quand ils n'existent
  *   pas dans la langue de l'interface ni en anglais ;
+ * - lunchTime (facultatif) : heure habituelle du déjeuner "HH:mm", à la place
+ *   de rules.dayTemplate.lunch (12:30) ;
  * - dinnerTime (facultatif) : heure habituelle du dîner "HH:mm", à la place
  *   de rules.dayTemplate.dinner (19:30). Valeurs modifiables ici.
  *
@@ -27,7 +29,7 @@ export const SUPPORTED_COUNTRIES = Object.freeze({
   ES: { currency: 'EUR', provider: 'eu', languages: ['es', 'ca', 'eu', 'gl'], dinnerTime: '21:00' },
   FI: { currency: 'EUR', provider: 'eu', languages: ['fi', 'sv'] },
   FR: { currency: 'EUR', provider: 'fr', languages: ['fr'] },
-  GR: { currency: 'EUR', provider: 'eu', languages: ['el'] },
+  GR: { currency: 'EUR', provider: 'eu', languages: ['el'], lunchTime: '14:00', dinnerTime: '21:00' },
   HR: { currency: 'EUR', provider: 'eu', languages: ['hr'] },
   HU: { currency: 'HUF', provider: 'eu', languages: ['hu'] },
   IE: { currency: 'EUR', provider: 'eu', languages: ['en', 'ga'] },
@@ -78,13 +80,23 @@ export function nameLanguages(countryCodes) {
 
 /**
  * @param {string} countryCode code ISO 3166-1 alpha-2, casse indifférente
- * @returns {{ code: string, currency: string, provider: string, languages: string[], dinnerTime?: string } | null}
+ * @returns {{ code: string, currency: string, provider: string, languages: string[], lunchTime?: string, dinnerTime?: string } | null}
  */
 export function countryInfo(countryCode) {
   if (typeof countryCode !== 'string') return null;
   const code = countryCode.toUpperCase();
   const info = SUPPORTED_COUNTRIES[code];
   return info ? { code, ...info } : null;
+}
+
+/**
+ * Heure du déjeuner proposée dans un pays : lunchTime du pays, sinon
+ * rules.dayTemplate.lunch.
+ * @param {string} countryCode
+ * @returns {string} "HH:mm"
+ */
+export function lunchTimeFor(countryCode, rules) {
+  return countryInfo(countryCode)?.lunchTime ?? rules.dayTemplate.lunch;
 }
 
 /**

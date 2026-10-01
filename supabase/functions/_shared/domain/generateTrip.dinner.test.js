@@ -6,6 +6,7 @@ import { mealOpeningState } from './pickRestaurant.js';
 
 const VILLEFRANCHE = { lat: 45.9865, lon: 4.7266 };
 const BARCELONA = { lat: 41.3874, lon: 2.1686 };
+const PLAKA = { lat: 37.9715, lon: 23.7298 };
 
 let seq = 0;
 const makeId = () => `id-${(seq += 1)}`;
@@ -130,6 +131,26 @@ describe('generateTrip : dîner', () => {
       placesAround(BARCELONA)
     );
     for (const d of t.days) expect(stepOf(d, 'dinner')).toMatchObject({ start: '21:00', end: '22:30' });
+  });
+
+  it('à Athènes, déjeuner à 14:00 (plage décalée, plein air ensuite) et dîner à 21:00', () => {
+    const places = placesAround(PLAKA, { eveningHours: 'Mo-Su 19:00-24:00' }).filter((p) => !p.id.startsWith('noon'));
+    // Ouverts seulement de 11:00 à 13:30 : hors de la plage du déjeuner grec (14:00-15:30).
+    for (let i = 0; i < 4; i += 1) places.push(place(`early-${i}`, 'restaurant', PLAKA, 0.2, i * 90, { food: { regional: true, openingHours: 'Mo-Su 11:00-13:30' } }));
+    const { trip: t } = run({ destination: { name: 'Athína', countryCode: 'GR', ...PLAKA, radiusKm: 2 }, timezone: 'Europe/Athens', currency: 'EUR' }, places);
+    for (const d of t.days) {
+      const lunch = stepOf(d, 'lunch');
+      expect(lunch).toMatchObject({ start: '14:00', end: '15:15' });
+      expect(lunch.place.id).not.toMatch(/^early/);
+      expect(stepOf(d, 'outdoor').start >= '15:15').toBe(true);
+      expect(stepOf(d, 'dinner')).toMatchObject({ start: '21:00', end: '22:30' });
+    }
+  });
+
+  it('en France, déjeuner à 12:30 et plein air à 14:30 (inchangés)', () => {
+    const { trip: t } = run({ startDate: '2026-10-06', endDate: '2026-10-06' });
+    expect(stepOf(t.days[0], 'lunch').start).toBe('12:30');
+    expect(stepOf(t.days[0], 'outdoor').start).toBe('14:30');
   });
 
   it('"Dîner : Libre" : créneau "Soirée libre" sans proposition', () => {
