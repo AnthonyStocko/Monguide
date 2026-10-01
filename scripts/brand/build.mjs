@@ -29,6 +29,8 @@ const out = (path, content) => {
   console.log('écrit', path);
 };
 const png = async (path, svg, width, height = width) => out(path, await sharp(Buffer.from(svg), { density: 300 }).resize(width, height).png().toBuffer());
+// PNG 24 bits sans couche alpha : exigé par Google Play pour l'image de présentation.
+const opaquePng = async (path, svg, width, height = width) => out(path, await sharp(Buffer.from(svg), { density: 300 }).resize(width, height).removeAlpha().png().toBuffer());
 
 /**
  * Taille du repère dans les icônes. @capacitor/assets pose le premier plan
@@ -82,7 +84,7 @@ await png('assets/capacitor/icon-background.png', `<svg xmlns="http://www.w3.org
 await png('assets/store/play-icon-512.png', appIcon, 512);
 const feature = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500"><rect width="1024" height="500" fill="${C.sand}"/><path d="M0 400C180 330 330 350 470 395C610 340 820 330 1024 380L1024 500L0 500Z" fill="${C.green}"/><path d="M0 450C200 400 380 420 560 455C720 425 880 420 1024 440L1024 500L0 500Z" fill="${C.greenDark}"/><g transform="translate(${(1024 - 820) / 2} 110) scale(${820 / LOGO_SIZE.width})">${logoMarkup()}</g></svg>`;
 out('assets/store/play-feature-1024x500.svg', `${feature}\n`);
-await png('assets/store/play-feature-1024x500.png', feature, 1024, 500);
+await opaquePng('assets/store/play-feature-1024x500.png', feature, 1024, 500);
 
 // --- Web : application et pages du site ---
 const favicon = iconSvg({ size: 64, scale: 1.2 });
