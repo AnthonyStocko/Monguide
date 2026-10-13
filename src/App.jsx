@@ -16,7 +16,10 @@ import PlanningPage from './pages/PlanningPage.jsx';
 import PrivacyPage from './pages/PrivacyPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import ThemeDebugPage from './pages/ThemeDebugPage.jsx';
+import { WEB_APP_URL } from './config/links.js';
+import { onAppUrlOpen } from './platform/lifecycle.js';
 import { initNotifications } from './services/notifications.js';
+import { appPathFromUrl } from './utils/navigation.js';
 import Onboarding from './components/onboarding/Onboarding.jsx';
 import { completeOnboarding, isOnboardingDone } from './services/onboarding.js';
 
@@ -24,6 +27,20 @@ import { completeOnboarding, isOnboardingDone } from './services/onboarding.js';
 function NotificationsBridge() {
   const navigate = useNavigate();
   useEffect(() => initNotifications({ onOpen: (url) => navigate(url) }), [navigate]);
+  return null;
+}
+
+/** Application Android ouverte par un lien de la version web : même page que sur le web. */
+function DeepLinksBridge() {
+  const navigate = useNavigate();
+  useEffect(
+    () =>
+      onAppUrlOpen((url) => {
+        const path = appPathFromUrl(url, WEB_APP_URL);
+        if (path) navigate(path);
+      }),
+    [navigate]
+  );
   return null;
 }
 
@@ -48,6 +65,7 @@ export default function App() {
   return (
     <LazyMotion features={domAnimation} strict>
       <NotificationsBridge />
+      <DeepLinksBridge />
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<HomePage />} />

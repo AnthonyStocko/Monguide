@@ -15,7 +15,7 @@ vi.mock('./settings.js', () => ({
   get: async (k, fallback = null) => (prefs.has(k) ? prefs.get(k) : fallback),
   set: async (k, v) => void prefs.set(k, v)
 }));
-vi.mock('./network.js', () => ({ connectionType: async () => connection }));
+vi.mock('./network.js', () => ({ connectionTypeKnown: true, connectionType: async () => connection }));
 
 const { deleteTripPhotos, photosOfTrip, saveTripPhotos, tripImagesStatus } = await import('./offlineImages.js');
 

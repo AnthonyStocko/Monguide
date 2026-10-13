@@ -9,3 +9,11 @@ export function onAppActive(listener) {
     handle.then((h) => h.remove()).catch(() => {});
   };
 }
+
+export function onAppUrlOpen(listener) {
+  const handle = App.addListener('appUrlOpen', ({ url }) => listener(url));
+  handle.catch(() => {});
+  return () => {
+    handle.then((h) => h.remove()).catch(() => {});
+  };
+}

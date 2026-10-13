@@ -14,3 +14,6 @@ import { Capacitor } from '@capacitor/core';
 export const isNative = import.meta.env.VITE_TARGET !== 'web' && Capacitor.isNativePlatform();
 
 export const isAndroid = isNative && Capacitor.getPlatform() === 'android';
+
+/** Version web ouverte sur un téléphone Android : l'application du Play Store y est proposée. */
+export const isAndroidBrowser = !isNative && /Android/i.test(globalThis.navigator?.userAgent ?? '');

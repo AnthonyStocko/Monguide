@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { IMAGE_ORIGIN } from '../../src/config/images.js';
 import { TILE_URL } from '../../src/config/map.js';
-import { contentSecurityPolicy, headersFile, REDIRECTS_FILE, securityHeaders } from './hosting.js';
+import { assetLinksFile, contentSecurityPolicy, headersFile, REDIRECTS_FILE, securityHeaders } from './hosting.js';
 
 const sources = { supabaseUrl: 'https://abc.supabase.co', tileUrl: TILE_URL, imageOrigin: IMAGE_ORIGIN };
 
@@ -41,5 +41,19 @@ describe('fichiers d’hébergement', () => {
 
   it('_redirects : toutes les adresses renvoient vers index.html', () => {
     expect(REDIRECTS_FILE).toBe('/* /index.html 200\n');
+  });
+});
+
+describe('assetlinks.json (liens ouverts par l’application Android)', () => {
+  const fingerprint = Array.from({ length: 32 }, (_, i) => i.toString(16).padStart(2, '0')).join(':');
+
+  it('déclare l’application et ses empreintes, en majuscules', () => {
+    const [entry] = JSON.parse(assetLinksFile(`${fingerprint}, ${fingerprint.toUpperCase()}`, 'com.monguide.app'));
+    expect(entry.relation).toEqual(['delegate_permission/common.handle_all_urls']);
+    expect(entry.target).toEqual({ namespace: 'android_app', package_name: 'com.monguide.app', sha256_cert_fingerprints: [fingerprint.toUpperCase(), fingerprint.toUpperCase()] });
+  });
+
+  it('refuse une empreinte mal formée', () => {
+    expect(() => assetLinksFile('AA:BB', 'com.monguide.app')).toThrow('ANDROID_CERT_SHA256');
   });
 });

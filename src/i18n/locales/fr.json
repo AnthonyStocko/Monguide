@@ -913,7 +913,9 @@
         "prompt": "Les rappels ne sont pas activés. Mon guide peut vous envoyer le programme du lendemain et un rappel avant chaque étape : ils sont envoyés par notre serveur à l’heure prévue, sans adresse ni titre de vos étapes personnelles.",
         "denied": "Les notifications sont refusées : aucun rappel ne sera affiché. Pour les autoriser, ouvrez les réglages de ce site dans votre navigateur.",
         "needsInstall": "Les rappels sont disponibles une fois Mon guide ajouté à l’écran d’accueil.",
-        "showHelp": "Voir comment faire"
+        "showHelp": "Voir comment faire",
+        "active": "Rappels actifs sur cet appareil.",
+        "paused": "Notifications autorisées, mais les rappels sont désactivés sur cet appareil (réglage ci-dessous)."
       }
     },
     "confidential": {
@@ -971,7 +973,9 @@
     "osmDataDate": "Lieux OpenStreetMap, données du {{date}}.",
     "osmCountriesTitle": "Lieux OpenStreetMap, date des données par pays :",
     "osmCountryDate": "{{country}} : données du {{date}}",
-    "odbl": "Licence ODbL 1.0 (Open Database License)"
+    "odbl": "Licence ODbL 1.0 (Open Database License)",
+    "versionWeb": "Version web {{version}}",
+    "playStore": "Application Android sur Google Play"
   },
   "countriesIn": {
     "AT": "en Autriche",

@@ -34,7 +34,7 @@ import { useCurrentTrip } from '../hooks/useCurrentTrip.js';
 import { useFormat } from '../i18n/useFormat.js';
 import { usePlaceName } from '../i18n/usePlaceName.js';
 import { getWeather, sendAiFeedback } from '../services/dataApi.js';
-import { onConnectionChange } from '../services/network.js';
+import { connectionTypeKnown, onConnectionChange } from '../services/network.js';
 import { hapticStepValidated } from '../services/haptics.js';
 import { refreshTripPhotos } from '../services/tripImages.js';
 
@@ -97,7 +97,8 @@ export default function PlanningPage() {
         .then((record) => alive && setPhotos(record))
         .catch(() => {});
     run();
-    const stop = onConnectionChange((type) => type === 'wifi' && run());
+    // Web : type de connexion inconnu, nouvel essai dès le retour du réseau.
+    const stop = onConnectionChange((type) => (connectionTypeKnown ? type === 'wifi' : type !== 'none') && run());
     return () => {
       alive = false;
       stop();

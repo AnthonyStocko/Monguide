@@ -57,7 +57,7 @@ export default function NextTripCard({ trip, status }) {
         </div>
         <div className="image-scrim absolute inset-x-0 bottom-0 px-4 pb-4">
           <h2 className="text-3xl leading-tight text-white">
-            <Link to={`/planning/${trip.id}`} className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-3xl focus-visible:after:outline-3 focus-visible:after:outline-focus">
+            <Link to={`/planning/${trip.id}`} className="after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:outline-none focus-visible:after:rounded-3xl focus-visible:after:outline-3 focus-visible:after:outline-focus">
               {trip.title}
             </Link>
           </h2>

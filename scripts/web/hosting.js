@@ -62,3 +62,20 @@ export function headersFile(sources) {
 
 /** Fichier _redirects : routage côté application (réécriture, code 200). */
 export const REDIRECTS_FILE = '/* /index.html 200\n';
+
+/**
+ * Fichier /.well-known/assetlinks.json (Android App Links) : autorise
+ * l'application Android à ouvrir les adresses de la version web. Empreintes
+ * SHA-256 du certificat de signature (Play Console > Intégrité de
+ * l'application), séparées par des virgules.
+ * @param {string} fingerprints
+ * @param {string} packageName identifiant de l'application Android
+ */
+export function assetLinksFile(fingerprints, packageName) {
+  const list = fingerprints
+    .split(',')
+    .map((f) => f.trim().toUpperCase())
+    .filter((f) => /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(f));
+  if (!list.length) throw new Error('ANDROID_CERT_SHA256 : empreinte SHA-256 attendue (32 octets en hexadécimal, séparés par des deux-points).');
+  return `${JSON.stringify([{ relation: ['delegate_permission/common.handle_all_urls'], target: { namespace: 'android_app', package_name: packageName, sha256_cert_fingerprints: list } }], null, 2)}\n`;
+}

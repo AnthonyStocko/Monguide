@@ -199,6 +199,76 @@ de logique métier.
   - Confidentialité : le texte envoyé ne contient ni adresse ni titre d'étape
     personnelle ; rappels supprimés 7 jours après l'envoi, abonnements après
     90 jours sans utilisation ou dès qu'ils sont révoqués.
+  - Rotation des clés VAPID (clé privée compromise, ou changement
+    d'expéditeur) : générer une nouvelle paire, remplacer les trois secrets
+    Supabase et le secret GitHub `VITE_VAPID_PUBLIC_KEY`, puis relancer
+    « Version web ». Les abonnements créés avec l'ancienne clé ne peuvent plus
+    recevoir de message : le service de push les refuse, `push-send` les
+    supprime à la première tentative, et chaque appareil doit réactiver ses
+    rappels (Réglages > Rappels). Vider `push_subscriptions` au moment du
+    changement évite ces envois inutiles.
+- **Adresse de la version web** : variable GitHub `WEB_APP_URL`
+  (`https://app.…`). Elle alimente le bouton « Utiliser sur iPhone et
+  ordinateur » de la page de présentation (`pages.yml`, masqué tant qu'elle
+  manque) et `VITE_WEB_APP_URL` dans les builds.
+- **Liens ouverts par l'application Android** (Android App Links) : préparé,
+  pas encore activé. L'application sait déjà ouvrir une adresse de la version
+  web (`onAppUrlOpen`), et le build web publie
+  `/.well-known/assetlinks.json` quand la variable GitHub
+  `ANDROID_CERT_SHA256` est renseignée (empreinte du certificat : Play
+  Console > Intégrité de l'application). Il reste à déclarer l'adresse dans
+  `android/app/src/main/AndroidManifest.xml`, une fois le domaine choisi,
+  dans l'activité principale :
+
+  ```xml
+  <intent-filter android:autoVerify="true">
+      <action android:name="android.intent.action.VIEW" />
+      <category android:name="android.intent.category.DEFAULT" />
+      <category android:name="android.intent.category.BROWSABLE" />
+      <data android:scheme="https" android:host="app.votre-domaine" />
+  </intent-filter>
+  ```
+
+  D'ici là, un lien de la version web s'ouvre dans le navigateur, y compris
+  sur Android.
+- **Sur le web, par rapport à Android** : pas de vibrations ni de réglage
+  « Wi-Fi uniquement » (les photos d'un séjour sont enregistrées dès qu'il y
+  a du réseau) ; « À propos » affiche « Version web » (numéro du dernier tag
+  Git) et, sur un téléphone Android, un lien vers Google Play.
+- **Limites connues sur iPhone** :
+  - les rappels n'existent que dans l'application ajoutée à l'écran d'accueil
+    (iOS 16.4 et plus) ; dans Safari, les réglages l'expliquent et renvoient
+    vers l'aide à l'installation ;
+  - hors installation, Safari peut effacer les données d'un site peu utilisé
+    (séjours sans compte compris) : l'application invite à l'installer ou à
+    se connecter, le compte restant la garantie ;
+  - l'installation ne se fait que depuis Safari (Partager > Sur l'écran
+    d'accueil) : l'aide n'est pas proposée dans les autres navigateurs ;
+  - l'application installée et Safari ne partagent pas leurs données : sans
+    compte, un séjour créé dans Safari n'apparaît pas dans l'application
+    installée ;
+  - les rappels demandent une connexion au moment de l'envoi ; téléphone
+    éteint ou hors réseau plus de 15 minutes, le rappel est perdu.
+- **Mesures** (13 octobre 2026, `npm run build:web`) :
+
+  | Mesure | Objectif | Résultat |
+  |---|---|---|
+  | JS + CSS au premier chargement, compressés (gzip) | moins de 1 Mo | **564 Ko** (JS 549 Ko, CSS 15 Ko) ; 443 Ko en brotli |
+  | Export PDF (chargé seulement à l'export) | hors objectif | 230 Ko gzip, plus les polices |
+  | Mise en cache par le service worker | — | 39 fichiers, 4,4 Mo (polices du PDF comprises) |
+  | Lighthouse mobile, performance | 80 ou plus | **non mesuré** |
+  | Lighthouse mobile, accessibilité | 80 ou plus | **non mesuré** |
+  | Premier affichage en 4G | moins de 3 s | **non mesuré** |
+
+  Les trois dernières lignes se mesurent sur la version déployée (Chrome >
+  Outils de développement > Lighthouse > Mobile, ou
+  `npx lighthouse https://app.… --form-factor=mobile`) : à compléter après le
+  premier déploiement.
+- **Contrôles avant publication** : parcours complet (créer un séjour,
+  l'afficher, carte, modifier un horaire, ajouter une étape, export PDF,
+  connexion et synchronisation, rappel) sur iPhone (Safari, puis application
+  installée, avec VoiceOver), Mac (Safari), PC (Chrome et Edge, au clavier
+  seul) et Android (application native, non-régression).
 - **Mise en page** : sur le web, l'application reste une colonne centrée de
   480 px au plus, sur fond sable, avec le logo à gauche au-delà de 1024 px
   (`data-target="web"` sur `<html>`, voir `src/index.css`).

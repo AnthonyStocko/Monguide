@@ -2,6 +2,9 @@
 # confidentialité et suppression de compte, en français et en anglais.
 # config.js (URL et clé publique Supabase, version) est généré ici depuis les
 # secrets VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY : il n'est jamais versionné.
+# Variable GitHub facultative WEB_APP_URL (https://app.…) : adresse de la version
+# web, pour le bouton « Utiliser sur iPhone et ordinateur » de la page de
+# présentation (masqué tant qu'elle manque).
 # Adresse : https://anthonystocko.github.io/Monguide/
 
 name: Pages web publiques
@@ -36,6 +39,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          WEB_APP_URL: ${{ vars.WEB_APP_URL }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
             echo "::error::Secrets VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY manquants."
@@ -43,7 +47,7 @@ jobs:
           fi
           version=$(node -p "require('./package.json').version")
           node -e "
-            const c = { url: process.env.SUPABASE_URL, anonKey: process.env.SUPABASE_ANON_KEY, appVersion: process.argv[1] };
+            const c = { url: process.env.SUPABASE_URL, anonKey: process.env.SUPABASE_ANON_KEY, appVersion: process.argv[1], webAppUrl: process.env.WEB_APP_URL || '' };
             require('fs').writeFileSync('site/config.js', '// Généré au déploiement (pages.yml).\nexport const MONGUIDE = ' + JSON.stringify(c) + ';\n');
           " "$version"
 

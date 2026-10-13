@@ -2,8 +2,9 @@
 
 Réponses à reporter dans Play Console > Règles et programmes > Sécurité des
 données. Établies d'après le code au 24 septembre 2026, mises à jour le
-30 septembre 2026 (relecture par l'assistant IA) ; à revoir à chaque
-évolution qui touche aux données.
+30 septembre 2026 (relecture par l'assistant IA) et le 13 octobre 2026
+(rappels de la version web) ; à revoir à chaque évolution qui touche aux
+données.
 
 ## Vue d'ensemble
 
@@ -37,6 +38,28 @@ sans contrat, d'où la déclaration prudente « partagée » pour la position).
 | Identifiants d'appareil ou autres | Non | Non | — | — | — | — | — | Aucun identifiant d'appareil ni publicitaire. L'adresse IP n'est conservée que sous forme d'empreinte salée pendant un jour (limitation des abus) |
 | Journaux de plantage, diagnostics | Non | Non | — | — | — | — | — | Aucun outil de rapport de plantage |
 | Contacts, photos, fichiers, santé, finances, messages, audio | Non | Non | — | — | — | — | — | — |
+
+## Version web : abonnements aux notifications
+
+Le formulaire « Sécurité des données » décrit l'application Android
+distribuée par Google Play. Les abonnements aux notifications web (Web Push)
+ne la concernent pas : sur Android, les rappels sont des notifications
+locales, programmées sur le téléphone, et rien n'est transmis. **Aucune
+réponse du formulaire ne change.**
+
+La version web (iPhone, Mac, PC), elle, collecte si l'utilisateur active les
+rappels : l'abonnement du navigateur (adresse technique du service de push
+et clés de chiffrement), un identifiant aléatoire de l'appareil, la langue,
+le lien avec le compte s'il est connecté, et les rappels à envoyer (heure,
+texte sans adresse ni titre d'étape personnelle, lien vers le planning).
+Conservation : rappels 7 jours après l'envoi, abonnement 90 jours sans
+utilisation ou jusqu'au retrait de l'autorisation. C'est décrit dans la
+politique de confidentialité (section « Rappels de la version web »),
+commune aux deux versions et référencée par la fiche Play.
+
+À revoir si l'application Android adopte un jour des notifications envoyées
+par le serveur : il faudrait alors déclarer « Identifiants d'appareil ou
+autres » (collectés, non partagés, fonctionnalités de l'application).
 
 ## Décisions
 

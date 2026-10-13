@@ -33,7 +33,7 @@ export default function TripImageCard({ trip, showStatus = false, headingLevel =
           </Badge>
         )}
         <Heading className={compact ? 'text-lg leading-snug' : 'text-xl'}>
-          <Link to={`/planning/${trip.id}`} className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-2xl focus-visible:after:outline-3 focus-visible:after:outline-focus">
+          <Link to={`/planning/${trip.id}`} className="after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:outline-none focus-visible:after:rounded-2xl focus-visible:after:outline-3 focus-visible:after:outline-focus">
             {trip.title}
           </Link>
         </Heading>

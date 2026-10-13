@@ -5,12 +5,13 @@ import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import { headersFile, REDIRECTS_FILE, securityHeaders } from './scripts/web/hosting.js';
+import { assetLinksFile, headersFile, REDIRECTS_FILE, securityHeaders } from './scripts/web/hosting.js';
 import { WEB_HEAD_TAGS, WEB_ICONS, WEB_MANIFEST, workboxOptions } from './scripts/web/pwa.js';
 import { IMAGE_ORIGIN } from './src/config/images.js';
 import { TILE_URL } from './src/config/map.js';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+const capacitor = JSON.parse(readFileSync(new URL('./capacitor.config.json', import.meta.url), 'utf8'));
 // Release : version = tag Git (MONGUIDE_VERSION, fournie par release.yml), sinon package.json.
 const version = process.env.MONGUIDE_VERSION || pkg.version;
 if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error(`Version invalide : ${version} (attendu x.y.z)`);
@@ -40,6 +41,10 @@ function webHosting(sources) {
         this.emitFile({ type: 'asset', fileName: `icons/${name}`, source: readFileSync(new URL(`./assets/web/${name}`, import.meta.url)) });
       }
       this.emitFile({ type: 'asset', fileName: pushWorkerFile, source: pushWorker });
+      // Android App Links : seulement quand l'empreinte du certificat est fournie (ANDROID_CERT_SHA256).
+      if (process.env.ANDROID_CERT_SHA256) {
+        this.emitFile({ type: 'asset', fileName: '.well-known/assetlinks.json', source: assetLinksFile(process.env.ANDROID_CERT_SHA256, capacitor.appId) });
+      }
       this.emitFile({ type: 'asset', fileName: '_headers', source: headersFile(sources) });
       this.emitFile({ type: 'asset', fileName: '_redirects', source: REDIRECTS_FILE });
     }

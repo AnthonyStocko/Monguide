@@ -11,7 +11,11 @@
 #   uniquement dans les secrets Supabase.
 #   CLOUDFLARE_API_TOKEN : jeton Cloudflare limité à « Cloudflare Pages : Edit ».
 #   CLOUDFLARE_ACCOUNT_ID : identifiant du compte Cloudflare.
-# Variable GitHub (onglet Variables) :
+# Variables GitHub (onglet Variables) :
+#   WEB_APP_URL : adresse de la version web (https://app.…).
+#   ANDROID_CERT_SHA256 : empreinte SHA-256 du certificat de signature Android
+#   (Play Console > Intégrité de l'application), pour /.well-known/assetlinks.json ;
+#   facultative.
 #   CLOUDFLARE_PAGES_PROJECT : nom du projet Cloudflare Pages (« mon-guide » par défaut).
 #
 # En-têtes de sécurité, cache et réécriture vers index.html : fichiers _headers
@@ -48,7 +52,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # Historique complet : la version affichée est celle du dernier tag (comme l'application Android).
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v7
         with:
@@ -66,6 +73,8 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+          VITE_WEB_APP_URL: ${{ vars.WEB_APP_URL }}
+          ANDROID_CERT_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
         run: |
           if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
             echo "::error::Secrets GitHub VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY manquants (Settings > Secrets and variables > Actions)."
@@ -74,6 +83,8 @@ jobs:
           if [ -z "$VITE_VAPID_PUBLIC_KEY" ]; then
             echo "::warning::Secret VITE_VAPID_PUBLIC_KEY absent : version web publiée sans rappels."
           fi
+          tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
+          if [ -n "$tag" ]; then export MONGUIDE_VERSION="${tag#v}"; fi
           npm run build:web
           test -f dist-web/_headers && test -f dist-web/_redirects
 

@@ -4,7 +4,8 @@ import { DATA_SOURCES } from '@domain/config/dataSources.js';
 import Page from '../components/layout/Page.jsx';
 import Card from '../components/ui/Card.jsx';
 import { APP_VERSION } from '../config/app.js';
-import { sitePage } from '../config/links.js';
+import { PLAY_STORE_URL, sitePage } from '../config/links.js';
+import { isAndroidBrowser, isNative } from '../platform/target.js';
 import { useConfig } from '../hooks/useConfig.js';
 import { useFormat } from '../i18n/useFormat.js';
 import Logo from '../components/brand/Logo.jsx';
@@ -42,7 +43,8 @@ export default function AboutPage() {
         <h2>
           <Logo className="h-14 w-auto" />
         </h2>
-        <p>{t('about.version', { version: APP_VERSION })}</p>
+        <p>{t(isNative ? 'about.version' : 'about.versionWeb', { version: APP_VERSION })}</p>
+        {isAndroidBrowser && <Link href={PLAY_STORE_URL}>{t('about.playStore')}</Link>}
         <p className="flex items-start gap-2 rounded-xl bg-secondary-soft px-3 py-2 text-secondary-on-soft">
           <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
           {t('about.indicative')}

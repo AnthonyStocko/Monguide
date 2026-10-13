@@ -913,7 +913,9 @@
         "prompt": "Reminders are not turned on. Mon guide can send you the next day’s programme and a reminder before each stop: they are sent by our server at the scheduled time, with no address and no title of your personal stops.",
         "denied": "Notifications are blocked: no reminder will be shown. To allow them, open this site’s settings in your browser.",
         "needsInstall": "Reminders are available once Mon guide has been added to your home screen.",
-        "showHelp": "See how"
+        "showHelp": "See how",
+        "active": "Reminders are on for this device.",
+        "paused": "Notifications are allowed, but reminders are turned off on this device (setting below)."
       }
     },
     "confidential": {
@@ -971,7 +973,9 @@
     "osmDataDate": "OpenStreetMap places, data as of {{date}}.",
     "osmCountriesTitle": "OpenStreetMap places, data date by country:",
     "osmCountryDate": "{{country}}: data as of {{date}}",
-    "odbl": "ODbL 1.0 licence (Open Database License)"
+    "odbl": "ODbL 1.0 licence (Open Database License)",
+    "versionWeb": "Web version {{version}}",
+    "playStore": "Android app on Google Play"
   },
   "countriesIn": {
     "AT": "in Austria",

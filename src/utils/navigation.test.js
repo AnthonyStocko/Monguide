@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { directionsUrl, geoUrl, mapsProvider, telUrl, webUrl } from './navigation.js';
+import { appPathFromUrl, directionsUrl, geoUrl, mapsProvider, telUrl, webUrl } from './navigation.js';
 
 describe('navigation', () => {
   it('construit un lien geo: avec un libellé', () => {
@@ -20,6 +20,16 @@ describe('navigation', () => {
     expect(directionsUrl('geo', point, 'Musée Paul-Dini')).toBe(geoUrl(point, 'Musée Paul-Dini'));
     expect(directionsUrl('apple', point, 'Musée Paul-Dini')).toBe('https://maps.apple.com/?daddr=45.9,4.7');
     expect(directionsUrl('google', point)).toBe('https://www.google.com/maps/dir/?api=1&destination=45.9,4.7');
+  });
+
+  it('lien de la version web ouvert dans l’application : chemin interne, rien pour une autre adresse', () => {
+    const web = 'https://app.example.org';
+    expect(appPathFromUrl('https://app.example.org/planning/t1?day=2026-10-20&step=s1', web)).toBe('/planning/t1?day=2026-10-20&step=s1');
+    expect(appPathFromUrl('https://app.example.org/', web)).toBe('/');
+    expect(appPathFromUrl('https://evil.example/planning/t1', web)).toBeNull();
+    expect(appPathFromUrl('https://app.example.org.evil.example/planning/t1', web)).toBeNull();
+    expect(appPathFromUrl('pas une adresse', web)).toBeNull();
+    expect(appPathFromUrl('https://app.example.org/planning/t1', '')).toBeNull();
   });
 
   it('construit des liens tel: et web', () => {

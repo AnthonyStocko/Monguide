@@ -11,3 +11,10 @@ const impl = await (import.meta.env.VITE_TARGET !== 'web' && isNative ? import('
  * @type {(listener: () => void) => () => void} renvoie le désabonnement
  */
 export const onAppActive = impl.onAppActive;
+
+/**
+ * Prévient quand l'application est ouverte par un lien (Android App Links) ;
+ * sans objet sur le web, où le navigateur charge directement l'adresse.
+ * @type {(listener: (url: string) => void) => () => void} renvoie le désabonnement
+ */
+export const onAppUrlOpen = impl.onAppUrlOpen;

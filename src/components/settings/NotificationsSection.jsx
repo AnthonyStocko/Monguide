@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BatteryWarning, BellOff, Clock } from 'lucide-react';
+import { BatteryWarning, BellOff, BellRing, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useConfig } from '../../hooks/useConfig.js';
 import {
@@ -99,6 +99,13 @@ export default function NotificationsSection() {
             </Button>
           )}
         </div>
+      )}
+
+      {remoteReminders && permission === 'granted' && (
+        <p className="flex items-start gap-2 rounded-xl bg-primary-soft px-3 py-2 font-medium text-primary-on-soft">
+          <BellRing aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+          {t(prefs.device ? 'notifications.settings.web.active' : 'notifications.settings.web.paused')}
+        </p>
       )}
 
       {permission === 'granted' && exact === 'denied' && (

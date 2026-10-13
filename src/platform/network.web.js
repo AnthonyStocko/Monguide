@@ -1,5 +1,7 @@
 const currentType = () => (navigator.onLine ? 'unknown' : 'none');
 
+export const connectionTypeKnown = false;
+
 export async function getConnectionType() {
   return currentType();
 }

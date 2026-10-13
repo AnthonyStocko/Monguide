@@ -67,9 +67,9 @@ export function usePhoto({ image, illustration = 'landscape', alt = '', classNam
           aria-controls={panelId}
           aria-label={t(open ? 'image.hideCredit' : 'image.showCredit')}
           onClick={() => setOpen((o) => !o)}
-          className="absolute top-0 right-0 z-10 inline-flex size-12 items-center justify-center"
+          className="group absolute top-0 right-0 z-10 inline-flex size-12 items-center justify-center"
         >
-          <span className="flex size-8 items-center justify-center rounded-full bg-ink/75 text-white shadow-sm">
+          <span className="flex size-8 items-center justify-center rounded-full bg-ink/75 text-white shadow-sm group-hover:bg-ink">
             <Info aria-hidden="true" className="size-5" />
           </span>
         </button>

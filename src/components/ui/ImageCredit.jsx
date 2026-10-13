@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-const LINK = 'inline-flex min-h-12 items-center underline decoration-line-strong underline-offset-2';
+const LINK = 'inline-flex min-h-12 items-center underline decoration-line-strong underline-offset-2 hover:decoration-2';
 
 /**
  * Crédit d'une photo en clair : "Photo : Auteur · Licence · Source", avec les

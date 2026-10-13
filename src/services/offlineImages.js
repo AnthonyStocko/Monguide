@@ -1,7 +1,7 @@
 import * as settings from './settings.js';
 import { SETTINGS_KEYS } from './settings.js';
 import * as storage from './storage.js';
-import { connectionType } from './network.js';
+import { connectionType, connectionTypeKnown } from './network.js';
 import { isAllowedImageUrl } from '../config/images.js';
 
 /**
@@ -31,8 +31,13 @@ export const TRIP_BUDGET_BYTES = 5 * 1024 * 1024;
 /** Adresses d'objets déjà créées, une par photo (réutilisées d'un écran à l'autre). */
 const objectUrls = new Map();
 
-/** Réglage "Télécharger les images en Wi-Fi uniquement" (true par défaut). */
+/**
+ * Réglage "Télécharger les images en Wi-Fi uniquement" (true par défaut).
+ * Sur le web, le type de connexion est inconnu : le réglage n'existe pas et
+ * les photos sont enregistrées dès qu'il y a du réseau.
+ */
 export async function isWifiOnly() {
+  if (!connectionTypeKnown) return false;
   return (await settings.get(SETTINGS_KEYS.imagesWifiOnly, true).catch(() => true)) !== false;
 }
 

@@ -39,7 +39,7 @@ const preferences = await import('./preferences.native.js');
 const haptics = await import('./haptics.native.js');
 const geolocation = await import('./geolocation.native.js');
 const { shareFile } = await import('./shareFile.native.js');
-const { onAppActive } = await import('./lifecycle.native.js');
+const { onAppActive, onAppUrlOpen } = await import('./lifecycle.native.js');
 const network = await import('./network.native.js');
 
 beforeEach(() => {
@@ -95,7 +95,17 @@ describe('implémentations natives (plugins Capacitor)', () => {
     await vi.waitFor(() => expect(plugins.removed).toEqual(['appStateChange']));
   });
 
+  it('ouverture par un lien : adresse transmise, puis désabonnement', async () => {
+    const listener = vi.fn();
+    const stop = onAppUrlOpen(listener);
+    plugins.listeners.get('appUrlOpen')({ url: 'https://app.example.org/planning/t1' });
+    expect(listener).toHaveBeenCalledWith('https://app.example.org/planning/t1');
+    stop();
+    await vi.waitFor(() => expect(plugins.removed).toEqual(['appUrlOpen']));
+  });
+
   it('réseau : type de connexion du plugin et suivi des changements', async () => {
+    expect(network.connectionTypeKnown).toBe(true);
     expect(await network.getConnectionType()).toBe('wifi');
     const listener = vi.fn();
     const stop = network.onConnectionChange(listener);

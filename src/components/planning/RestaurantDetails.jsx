@@ -37,13 +37,13 @@ export default function RestaurantDetails({ place, date, countryCode, badges }) 
       {(food.phone || food.website) && (
         <div className="flex flex-wrap gap-2">
           {food.phone && (
-            <a href={telUrl(food.phone)} className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-secondary-strong px-4 font-semibold text-secondary-strong">
+            <a href={telUrl(food.phone)} className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-secondary-strong px-4 font-semibold text-secondary-strong hover:bg-secondary-soft">
               <Phone aria-hidden="true" className="size-5" />
               {t('restaurant.call')}
             </a>
           )}
           {food.website && (
-            <a href={webUrl(food.website)} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-secondary-strong px-4 font-semibold text-secondary-strong">
+            <a href={webUrl(food.website)} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-secondary-strong px-4 font-semibold text-secondary-strong hover:bg-secondary-soft">
               <Globe aria-hidden="true" className="size-5" />
               {t('restaurant.website')}
             </a>

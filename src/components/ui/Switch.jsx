@@ -15,7 +15,7 @@ export default function Switch({ id, label, checked, onChange }) {
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-12 w-20 shrink-0 items-center rounded-full border-2 ${
-          checked ? 'border-primary-strong bg-primary-strong' : 'border-line-strong bg-subtle'
+          checked ? 'border-primary-strong bg-primary-strong hover:border-primary-hover hover:bg-primary-hover' : 'border-line-strong bg-subtle hover:bg-line'
         }`}
       >
         <span

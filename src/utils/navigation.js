@@ -42,3 +42,23 @@ export function telUrl(phone) {
 export function webUrl(url) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 }
+
+/**
+ * Chemin interne correspondant à une adresse de la version web
+ * (https://app.…/planning/abc?day=… -> /planning/abc?day=…), ou null si
+ * l'adresse vient d'ailleurs. Sert à l'application Android quand elle est
+ * ouverte par un lien (Android App Links).
+ * @param {string} url adresse ouverte
+ * @param {string} webAppUrl adresse de la version web ("" : aucune)
+ * @returns {string | null}
+ */
+export function appPathFromUrl(url, webAppUrl) {
+  if (!webAppUrl) return null;
+  try {
+    const target = new URL(url);
+    if (target.origin !== new URL(webAppUrl).origin) return null;
+    return `${target.pathname}${target.search}`;
+  } catch {
+    return null;
+  }
+}

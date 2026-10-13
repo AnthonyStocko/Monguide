@@ -1,5 +1,7 @@
 import { Network } from '@capacitor/network';
 
+export const connectionTypeKnown = true;
+
 export async function getConnectionType() {
   return (await Network.getStatus()).connectionType;
 }
