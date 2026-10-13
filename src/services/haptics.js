@@ -1,4 +1,4 @@
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { hapticsAvailable, impactLight, notifyError, notifySuccess } from '../platform/haptics.js';
 import * as settings from './settings.js';
 import { SETTINGS_KEYS } from './settings.js';
 import { isAppReducedMotion } from './motion.js';
@@ -11,6 +11,9 @@ import { isAppReducedMotion } from './motion.js';
  * d'erreur. Jamais bloquant : une plateforme sans vibreur est ignorée.
  */
 let enabled = null;
+
+/** false sur le web (aucune vibration) : le réglage n'y est pas proposé. */
+export { hapticsAvailable };
 
 /** @returns {Promise<boolean>} */
 export async function getHapticsEnabled() {
@@ -38,15 +41,15 @@ async function run(essential, vibrate) {
 
 /** Étape validée : impact léger. */
 export function hapticStepValidated() {
-  return run(false, () => Haptics.impact({ style: ImpactStyle.Light }));
+  return run(false, impactLight);
 }
 
 /** Action importante confirmée (séjour créé, séjour supprimé). */
 export function hapticConfirm() {
-  return run(false, () => Haptics.notification({ type: NotificationType.Success }));
+  return run(false, notifySuccess);
 }
 
 /** Erreur (essentielle : gardée même avec les animations réduites). */
 export function hapticError() {
-  return run(true, () => Haptics.notification({ type: NotificationType.Error }));
+  return run(true, notifyError);
 }

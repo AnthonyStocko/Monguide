@@ -25,7 +25,8 @@ npm ci
 cp .env.example .env    # puis renseigner l'URL et la clé publique Supabase
 npm run dev             # application sur http://localhost:5173
 npm test                # tests Vitest (application, domaine partagé, serveur)
-npm run build           # build web dans dist/
+npm run build           # build de l'application Android dans dist/
+npm run build:web       # build de la version web dans dist-web/
 ```
 
 Variables d'environnement de l'application : **uniquement**
@@ -94,6 +95,57 @@ manifeste fusionné).
   `cd android && ./gradlew bundleRelease -PmonguideVersionCode=1 -PmonguideVersionName=1.0.0`.
 - **Fiche, sécurité des données, checklist** : dossier `store/`
   (`node store/check-listing.mjs` vérifie les longueurs de la fiche).
+
+## Version web (iPhone, Mac, PC)
+
+Le même code est publié comme application web, sans duplication d'écran ni
+de logique métier.
+
+- **Adaptateurs de plateforme** (`src/platform/`) : toute fonction qui dépend
+  d'un plugin Capacitor a deux implémentations, `*.native.js` (plugin,
+  application Android) et `*.web.js` (API du navigateur). Le reste de
+  l'application n'importe jamais `@capacitor/*`.
+
+  | Adaptateur | Android | Web |
+  |---|---|---|
+  | `preferences` | `@capacitor/preferences` | IndexedDB (base `mon-guide-settings`), jamais `localStorage` |
+  | `geolocation` | `@capacitor/geolocation` | `navigator.geolocation` (HTTPS), au toucher uniquement |
+  | `shareFile` (export PDF) | `@capacitor/filesystem` + `@capacitor/share` | partage avec fichier sur appareil tactile (iPhone), sinon téléchargement |
+  | `haptics` | `@capacitor/haptics` | sans effet ; réglage « Vibrations » masqué |
+  | `lifecycle` | `@capacitor/app` (`appStateChange`) | événement `visibilitychange` |
+  | `network` | `@capacitor/network` | `navigator.onLine`, événements `online`/`offline` |
+  | `directions` (« Itinéraire ») | lien `geo:` | Plans (`maps.apple.com`) sur iPhone, iPad et Mac ; Google Maps ailleurs |
+  | `notifications` | `@capacitor/local-notifications` | indisponibles pour l'instant |
+
+- **Build** : `npm run build:web` (mode Vite `web`, `VITE_TARGET=web` à la
+  compilation) écrit `dist-web/`, sans aucun plugin natif. `npm run
+  preview:web` sert ce dossier en local avec les en-têtes de sécurité de
+  l'hébergement. `npm run build` (Android, `dist/`) est inchangé.
+- **Hébergement** : Cloudflare Pages (trafic illimité en offre gratuite,
+  HTTPS et domaine personnalisé, en-têtes et réécriture par fichiers). Le
+  build écrit `dist-web/_headers` et `dist-web/_redirects`
+  (`scripts/web/hosting.js`) : Content-Security-Policy limitée à
+  l'application, au projet Supabase, aux tuiles de la carte et à
+  `upload.wikimedia.org` ; `X-Content-Type-Options` ; `Referrer-Policy` ;
+  cache d'un an pour `assets/` (noms avec empreinte), aucun cache pour
+  `index.html` et le service worker ; toutes les adresses renvoient vers
+  `index.html`.
+- **Déploiement** : `.github/workflows/deploy-web.yml`, à chaque push sur
+  `main` qui touche l'application. Secrets : `VITE_SUPABASE_URL` et
+  `VITE_SUPABASE_ANON_KEY` (les mêmes que pour Android),
+  `CLOUDFLARE_API_TOKEN` (droit « Cloudflare Pages : Edit ») et
+  `CLOUDFLARE_ACCOUNT_ID`. Variable facultative `CLOUDFLARE_PAGES_PROJECT`
+  (« mon-guide » par défaut). Le projet Pages est à créer une fois dans
+  Cloudflare (Workers & Pages > Create > Pages > Direct Upload), puis le
+  domaine à lui associer (Custom domains).
+- **À faire quand l'adresse est choisie** : ajouter l'origine
+  (`https://app.…`, sans barre finale) à `ALLOWED_ORIGINS` dans
+  `supabase/functions/_shared/cors.js` et à son test, puis, dans Supabase >
+  Authentication > URL Configuration, à « Redirect URLs ». Sans cela, le
+  navigateur bloque tous les appels au serveur (erreur CORS).
+- **Mise en page** : sur le web, l'application reste une colonne centrée de
+  480 px au plus, sur fond sable, avec le logo à gauche au-delà de 1024 px
+  (`data-target="web"` sur `<html>`, voir `src/index.css`).
 
 ## Pages web publiques
 

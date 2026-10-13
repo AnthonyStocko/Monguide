@@ -8,7 +8,12 @@ import { initI18n } from './i18n/index.js';
 import { initReducedMotion } from './services/motion.js';
 import { initOnboarding } from './services/onboarding.js';
 import { reconcileNotifications } from './services/notifications.js';
+import DesktopLogo from './components/layout/DesktopLogo.jsx';
+import { isNative } from './platform/target.js';
 import './index.css';
+
+// Version web : colonne centrée sur grand écran (index.css).
+if (!isNative) document.documentElement.dataset.target = 'web';
 
 // La langue est chargée avant le premier rendu : pas de texte dans la mauvaise langue.
 await initI18n();
@@ -18,7 +23,7 @@ await initReducedMotion().catch(() => {});
 await initOnboarding().catch(() => {});
 
 // Lancement à froid : rappels manquants reprogrammés avant le premier affichage
-// (App.addListener ne se déclenche pas au lancement). Jamais bloquant au-delà de 1,5 s.
+// (onAppActive ne se déclenche pas au lancement). Jamais bloquant au-delà de 1,5 s.
 await Promise.race([reconcileNotifications(), new Promise((resolve) => setTimeout(resolve, 1500))]);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -27,6 +32,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ConfigProvider>
         <AuthProvider>
           <App />
+          {!isNative && <DesktopLogo />}
         </AuthProvider>
       </ConfigProvider>
     </BrowserRouter>

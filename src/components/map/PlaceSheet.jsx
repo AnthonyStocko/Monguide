@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { illustrationForStep } from '../../illustrations/index.jsx';
 import { usePlaceName } from '../../i18n/usePlaceName.js';
-import { geoUrl, webUrl } from '../../utils/navigation.js';
+import { directionsLink } from '../../platform/directions.js';
+import { webUrl } from '../../utils/navigation.js';
 import Badge from '../ui/Badge.jsx';
 import BottomSheet from '../ui/BottomSheet.jsx';
 import Photo from '../ui/Photo.jsx';
@@ -36,7 +37,7 @@ export default function PlaceSheet({ step, order, date, onClose }) {
       )}
       {place.description && <p className="text-ink-muted">{place.description}</p>}
       <div className="flex flex-wrap gap-2">
-        <a href={geoUrl(place, name)} className={LINK}>
+        <a {...directionsLink(place, name)} className={LINK}>
           <Navigation aria-hidden="true" className="size-5" />
           {t('planning.directions')}
         </a>

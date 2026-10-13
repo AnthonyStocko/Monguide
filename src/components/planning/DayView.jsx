@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { reviewReasons } from '@domain/applyReview.js';
 import Illustration from '../../illustrations/index.jsx';
 import { cascadeProps, useFirstShow, useMotionAllowed } from '../../ui/motion.js';
-import { geoUrl } from '../../utils/navigation.js';
+import { directionsLink } from '../../platform/directions.js';
 import Button from '../ui/Button.jsx';
 import StepCard from './StepCard.jsx';
 import TravelTime from './TravelTime.jsx';
@@ -69,7 +69,7 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
       <div className="flex flex-wrap gap-2">
         {end && (
           <a
-            href={geoUrl(end, lodgingName(end))}
+            {...directionsLink(end, lodgingName(end))}
             className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary-strong px-4 font-semibold text-white hover:bg-primary-hover"
           >
             <House aria-hidden="true" className="size-5" />

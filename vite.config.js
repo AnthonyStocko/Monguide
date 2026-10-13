@@ -1,8 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { defineConfig, searchForWorkspaceRoot } from 'vite';
+import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { headersFile, REDIRECTS_FILE, securityHeaders } from './scripts/web/hosting.js';
+import { IMAGE_ORIGIN } from './src/config/images.js';
+import { TILE_URL } from './src/config/map.js';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 // Release : version = tag Git (MONGUIDE_VERSION, fournie par release.yml), sinon package.json.
@@ -14,30 +17,60 @@ const domainDir = fileURLToPath(
   new URL('./supabase/functions/_shared/domain', import.meta.url)
 );
 
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  define: {
-    // Version de l'application, envoyée au serveur (en-tête x-monguide-app).
-    __APP_VERSION__: JSON.stringify(version)
-  },
-  resolve: {
-    alias: {
-      '@domain': domainDir
+/**
+ * Version web (npm run build:web, mode "web") : fichiers d'hébergement
+ * _headers et _redirects ajoutés à dist-web/.
+ */
+function webHosting(sources) {
+  return {
+    name: 'monguide-web-hosting',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: '_headers', source: headersFile(sources) });
+      this.emitFile({ type: 'asset', fileName: '_redirects', source: REDIRECTS_FILE });
     }
-  },
-  server: {
-    fs: {
-      allow: [searchForWorkspaceRoot(process.cwd()), domainDir]
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  // Même code pour les deux cibles : Android (Capacitor, dist/) et web (dist-web/).
+  const web = mode === 'web' || process.env.VITE_TARGET === 'web';
+  const supabaseUrl = loadEnv(mode, process.cwd(), 'VITE_').VITE_SUPABASE_URL;
+  if (web && !supabaseUrl) throw new Error('VITE_SUPABASE_URL manquante : nécessaire à la Content-Security-Policy de la version web.');
+  const sources = { supabaseUrl, tileUrl: TILE_URL, imageOrigin: IMAGE_ORIGIN };
+
+  return {
+    plugins: [react(), tailwindcss(), ...(web ? [webHosting(sources)] : [])],
+    define: {
+      // Version de l'application, envoyée au serveur (en-tête x-monguide-app).
+      __APP_VERSION__: JSON.stringify(version),
+      // Cible connue à la compilation : le build web n'embarque aucun plugin natif (src/platform/).
+      'import.meta.env.VITE_TARGET': JSON.stringify(web ? 'web' : 'native')
+    },
+    resolve: {
+      alias: {
+        '@domain': domainDir
+      }
+    },
+    build: {
+      outDir: web ? 'dist-web' : 'dist'
+    },
+    // npm run preview:web : mêmes en-têtes de sécurité que l'hébergement.
+    preview: web ? { headers: securityHeaders(sources) } : {},
+    server: {
+      fs: {
+        allow: [searchForWorkspaceRoot(process.cwd()), domainDir]
+      }
+    },
+    test: {
+      // Domaine partagé et modules purs du serveur (_shared), l'application et
+      // les scripts (génération des tuiles OSM).
+      include: [
+        'src/**/*.test.{js,jsx}',
+        'supabase/functions/_shared/**/*.test.js',
+        'scripts/**/*.test.js'
+      ],
+      passWithNoTests: true
     }
-  },
-  test: {
-    // Domaine partagé et modules purs du serveur (_shared), l'application et
-    // les scripts (génération des tuiles OSM).
-    include: [
-      'src/**/*.test.{js,jsx}',
-      'supabase/functions/_shared/**/*.test.js',
-      'scripts/**/*.test.js'
-    ],
-    passWithNoTests: true
-  }
+  };
 });

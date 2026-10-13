@@ -1,6 +1,3 @@
-import { App } from '@capacitor/app';
-import { Capacitor } from '@capacitor/core';
-import { LocalNotifications } from '@capacitor/local-notifications';
 import i18n from 'i18next';
 import { planTripNotifications, reconcilePlan } from '@domain/notificationPlan.js';
 import { formatDate } from '../i18n/format.js';
@@ -8,9 +5,12 @@ import { getRules } from './rules.js';
 import * as settings from './settings.js';
 import { getTrip, listTrips, onTripsChanged } from './tripsStore.js';
 import { freeLabelKey } from '../utils/freeLabel.js';
+import { onAppActive } from '../platform/lifecycle.js';
+import { LocalNotifications } from '../platform/notifications.js';
+import { isAndroid } from '../platform/target.js';
 
 /**
- * Notifications locales des séjours (@capacitor/local-notifications) :
+ * Notifications locales des séjours (platform/notifications.js) :
  * résumé de la veille et rappel une heure avant chaque étape (voir
  * domain/notificationPlan.js). Identifiants stables : reprogrammer un
  * séjour ne crée jamais de doublon. Aucune erreur n'est bloquante : sans
@@ -37,8 +37,6 @@ const CHANNEL_ID = 'monguide-reminders';
  * summaryTime null : heure par défaut (rules.notifications.eveningSummaryTime).
  */
 const DEFAULT_PREFS = { device: true, summaries: true, reminders: true, summaryTime: null };
-
-const isAndroid = () => Capacitor.getPlatform() === 'android';
 
 /** Une seule opération de programmation à la fois (évite les courses entre événements). */
 let queue = Promise.resolve();
@@ -99,7 +97,7 @@ export async function markPermissionAsked() {
  * @returns {Promise<'granted' | 'denied' | 'unavailable'>}
  */
 export async function exactAlarmState() {
-  if (!isAndroid()) return 'unavailable';
+  if (!isAndroid) return 'unavailable';
   try {
     const { exact_alarm: state } = await LocalNotifications.checkExactNotificationSetting();
     return state === 'granted' ? 'granted' : 'denied';
@@ -145,7 +143,7 @@ export function notificationUrl(n) {
 }
 
 async function ensureChannel() {
-  if (!isAndroid()) return;
+  if (!isAndroid) return;
   try {
     await LocalNotifications.createChannel({ id: CHANNEL_ID, name: i18n.t('notifications.channel'), importance: 4, visibility: 1 });
   } catch {
@@ -169,7 +167,7 @@ async function schedule(list) {
       schedule: { at: n.at, allowWhileIdle: true },
       isExactNotification: exact,
       extra: { url: notificationUrl(n), tripId: n.tripId },
-      ...(isAndroid() ? { channelId: CHANNEL_ID } : {})
+      ...(isAndroid ? { channelId: CHANNEL_ID } : {})
     }))
   });
 }
@@ -282,7 +280,7 @@ let started = false;
  * modification, synchronisation ou suppression d'un séjour ; retour au
  * premier plan ; changement de langue ; appui sur une notification.
  * La réconciliation du lancement à froid est faite par main.jsx, avant le
- * premier affichage (App.addListener ne se déclenche pas au lancement).
+ * premier affichage (onAppActive ne se déclenche pas au lancement).
  * @param {{ onOpen: (url: string) => void }} handlers
  * @returns {() => void}
  */
@@ -304,9 +302,7 @@ export function initNotifications({ onOpen }) {
     clearTimeout(timers.get(id));
     timers.set(id, setTimeout(() => rescheduleTrip(id), 300));
   });
-  App.addListener('appStateChange', ({ isActive }) => {
-    if (isActive) reconcileNotifications();
-  }).catch(() => {});
+  onAppActive(() => reconcileNotifications());
   i18n.on('languageChanged', () => rescheduleAll());
   return () => handles.forEach((h) => h.then((x) => x.remove()).catch(() => {}));
 }

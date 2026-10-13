@@ -1,13 +1,11 @@
-import { Capacitor } from '@capacitor/core';
-import { Directory, Filesystem } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
 import i18n from 'i18next';
+import { shareFile } from '../../platform/shareFile.js';
 import { buildTripDocument, exportFileName } from './tripDocument.js';
 
 /**
- * Export PDF d'un séjour, dans la langue de l'interface. Sur mobile :
- * fichier enregistré dans le cache de l'application (@capacitor/filesystem)
- * puis partagé (@capacitor/share) ; sur le web : téléchargement direct.
+ * Export PDF d'un séjour, dans la langue de l'interface, remis par
+ * platform/shareFile.js : feuille de partage sur Android et sur iPhone,
+ * téléchargement sur ordinateur.
  * jsPDF et les polices sont chargés seulement au moment de l'export.
  * @param {import('@domain/model.js').Trip} trip
  * @param {{ includeAddresses: boolean }} options
@@ -21,17 +19,13 @@ export async function exportTripPdf(trip, { includeAddresses }) {
   const doc = renderPdf(content, { fonts: await loadFonts(), lang: locale, footer: (page, total) => t('export.footer', { page, total }) });
   const fileName = exportFileName(trip);
 
-  if (!Capacitor.isNativePlatform()) {
-    doc.save(fileName);
-    return { fileName, shared: false };
-  }
-  const data = doc.output('datauristring').split(',')[1];
-  const { uri } = await Filesystem.writeFile({ path: fileName, data, directory: Directory.Cache });
-  try {
-    await Share.share({ title: trip.title, dialogTitle: t('export.shareTitle'), files: [uri] });
-  } catch (error) {
-    // Partage annulé par l'utilisateur : le fichier reste disponible, rien à signaler.
-    if (!/cancel/i.test(String(error?.message ?? error))) throw error;
-  }
-  return { fileName, shared: true };
+  const { shared } = await shareFile({
+    fileName,
+    mimeType: 'application/pdf',
+    title: trip.title,
+    dialogTitle: t('export.shareTitle'),
+    toBase64: () => doc.output('datauristring').split(',')[1],
+    toBlob: () => doc.output('blob')
+  });
+  return { fileName, shared };
 }

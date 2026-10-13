@@ -1,0 +1,82 @@
+# Version web installable (iPhone, Mac, PC) : même code que l'application
+# Android, construit par `npm run build:web` (dist-web/) et publié sur
+# Cloudflare Pages.
+#
+# Secrets GitHub nécessaires (Settings > Secrets and variables > Actions) :
+#   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY : les mêmes que pour l'application
+#   Android (URL du projet Supabase et clé publique). Aucune autre clé dans
+#   l'application.
+#   CLOUDFLARE_API_TOKEN : jeton Cloudflare limité à « Cloudflare Pages : Edit ».
+#   CLOUDFLARE_ACCOUNT_ID : identifiant du compte Cloudflare.
+# Variable GitHub (onglet Variables) :
+#   CLOUDFLARE_PAGES_PROJECT : nom du projet Cloudflare Pages (« mon-guide » par défaut).
+#
+# En-têtes de sécurité, cache et réécriture vers index.html : fichiers _headers
+# et _redirects générés dans dist-web/ (scripts/web/hosting.js).
+
+name: Version web
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - 'scripts/web/**'
+      - 'supabase/functions/_shared/domain/**'
+      - '.github/workflows/deploy-web.yml'
+
+# Un seul déploiement à la fois ; le plus récent l'emporte.
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Build web
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Secrets GitHub VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY manquants (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          npm run build:web
+          test -f dist-web/_headers && test -f dist-web/_redirects
+
+      - name: Publier sur Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT || 'mon-guide' }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Secrets GitHub CLOUDFLARE_API_TOKEN et CLOUDFLARE_ACCOUNT_ID manquants."
+            exit 1
+          fi
+          npx --yes wrangler@4 pages deploy dist-web --project-name "$PAGES_PROJECT" --branch main --commit-dirty=true

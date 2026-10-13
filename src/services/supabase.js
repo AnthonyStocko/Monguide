@@ -5,7 +5,7 @@ const url = import.meta.env.VITE_SUPABASE_URL;
 const publicKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Session d'authentification persistée via le service settings
-// (@capacitor/preferences), jamais via localStorage directement.
+// (platform/preferences.js), jamais via localStorage.
 const preferencesStorage = {
   getItem: (key) => settings.get(key),
   setItem: (key, value) => settings.set(key, value),

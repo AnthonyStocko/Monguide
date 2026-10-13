@@ -22,7 +22,7 @@ export default function BottomSheet({ title, onClose, children, footer }) {
   return (
     <m.div
       {...backdrop}
-      className="fixed inset-0 z-[1200] flex items-end justify-center bg-ink/50"
+      className="fixed inset-0 z-[1200] flex items-end justify-center bg-ink/50 px-app"
       onMouseDown={(e) => e.target === e.currentTarget && requestClose()}
     >
       <m.div

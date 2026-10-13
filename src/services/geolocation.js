@@ -1,4 +1,4 @@
-import { Geolocation } from '@capacitor/geolocation';
+import { getCurrentPosition } from '../platform/geolocation.js';
 
 /**
  * Position de l'appareil ("Utiliser ma position"). La permission n'est
@@ -21,7 +21,7 @@ export class GeolocationError extends Error {
 /** @returns {Promise<{ lat: number, lon: number }>} */
 export async function currentPosition() {
   try {
-    const { coords } = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+    const { coords } = await getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
     return { lat: coords.latitude, lon: coords.longitude };
   } catch (err) {
     const text = `${err?.code ?? ''} ${err?.message ?? ''}`;

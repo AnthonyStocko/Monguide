@@ -1,14 +1,14 @@
-import { Network } from '@capacitor/network';
+import * as network from '../platform/network.js';
 
 /**
- * Type de connexion (@capacitor/network) : "wifi", "cellular", "none" ou
- * "unknown" (navigateur sans navigator.connection). Sert uniquement au
+ * Type de connexion (platform/network.js) : "wifi", "cellular", "none" ou
+ * "unknown" (toujours "unknown" en ligne sur le web). Sert uniquement au
  * réglage "Télécharger les images en Wi-Fi uniquement".
  * @returns {Promise<'wifi' | 'cellular' | 'none' | 'unknown'>}
  */
 export async function connectionType() {
   try {
-    return (await Network.getStatus()).connectionType;
+    return await network.getConnectionType();
   } catch {
     return 'unknown';
   }
@@ -20,8 +20,5 @@ export async function connectionType() {
  * @returns {() => void} désabonnement
  */
 export function onConnectionChange(listener) {
-  const handle = Network.addListener('networkStatusChange', (status) => listener(status.connectionType));
-  return () => {
-    handle.then((h) => h.remove()).catch(() => {});
-  };
+  return network.onConnectionChange(listener);
 }

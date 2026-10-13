@@ -4,7 +4,8 @@ import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { averageRain } from '@domain/weatherArbitration.js';
 import { usePlaceName } from '../../i18n/usePlaceName.js';
-import { geoUrl, webUrl } from '../../utils/navigation.js';
+import { directionsLink } from '../../platform/directions.js';
+import { webUrl } from '../../utils/navigation.js';
 import { illustrationForStep } from '../../illustrations/index.jsx';
 import Badge from '../ui/Badge.jsx';
 import Button from '../ui/Button.jsx';
@@ -135,7 +136,7 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
       <div className="flex flex-wrap gap-2">
         {place && (
           <a
-            href={geoUrl(place, title)}
+            {...directionsLink(place, title)}
             className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-secondary-strong px-4 font-semibold text-secondary-strong hover:bg-secondary-soft"
           >
             <Navigation aria-hidden="true" className="size-5" />

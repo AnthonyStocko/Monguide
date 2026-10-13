@@ -190,6 +190,41 @@
 
 :root {
   --nav-height: 4.5rem;
+  /* Marge de chaque côté de la colonne de l'application (0 sur Android). */
+  --app-gutter: 0px;
+}
+
+/*
+ * Version web (data-target posé par main.jsx) : sur grand écran, l'application
+ * reste une colonne centrée de 480 px au plus, sur fond sable ; aucune page ne
+ * s'étire en pleine largeur. Les éléments fixes (barre d'onglets, messages,
+ * fenêtres) s'alignent sur la colonne avec --app-gutter.
+ */
+:root[data-target="web"] {
+  --app-gutter: max(0px, calc(50% - 15rem));
+}
+
+:root[data-target="web"] #root {
+  max-width: 30rem;
+  min-height: 100dvh;
+  margin-inline: auto;
+  box-shadow: 0 0 0 1px var(--color-line);
+}
+
+/* Éléments fixes : bords gauche et droit alignés sur la colonne. */
+@utility inset-x-app {
+  left: var(--app-gutter);
+  right: var(--app-gutter);
+}
+
+@utility inset-x-app-4 {
+  left: calc(var(--app-gutter) + 1rem);
+  right: calc(var(--app-gutter) + 1rem);
+}
+
+/* Voile en plein écran dont le contenu reste dans la colonne. */
+@utility px-app {
+  padding-inline: var(--app-gutter);
 }
 
 @utility pt-safe {

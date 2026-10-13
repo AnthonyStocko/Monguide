@@ -28,7 +28,7 @@ export default function BottomNav() {
     return () => observer.disconnect();
   }, []);
   return (
-    <nav aria-label={t('nav.label')} className="fixed inset-x-0 bottom-0 z-[1100] border-t border-line bg-surface pb-safe">
+    <nav aria-label={t('nav.label')} className="fixed inset-x-app bottom-0 z-[1100] border-t border-line bg-surface pb-safe">
       <ul ref={listRef} className="mx-auto flex max-w-2xl">
         {TABS.map(({ to, label, icon: Icon, end }) => (
           <li key={to} className="min-w-0 flex-1">

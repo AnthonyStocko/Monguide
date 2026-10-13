@@ -22,7 +22,7 @@ export default function Dialog({ title, onClose, children, footer, fullScreen = 
   return (
     <m.div
       {...backdrop}
-      className={`fixed inset-0 z-[1200] flex justify-center bg-ink/50 ${fullScreen ? 'items-stretch' : 'items-end sm:items-center'}`}
+      className={`fixed inset-0 z-[1200] flex justify-center bg-ink/50 px-app ${fullScreen ? 'items-stretch' : 'items-end sm:items-center'}`}
       onMouseDown={(e) => !fullScreen && e.target === e.currentTarget && requestClose()}
     >
       <m.div

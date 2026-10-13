@@ -4,10 +4,11 @@ const prefs = new Map();
 let appReduced = false;
 const impact = vi.fn();
 const notification = vi.fn();
-vi.mock('@capacitor/haptics', () => ({
-  Haptics: { impact: (...a) => impact(...a), notification: (...a) => notification(...a) },
-  ImpactStyle: { Light: 'LIGHT' },
-  NotificationType: { Success: 'SUCCESS', Error: 'ERROR' }
+vi.mock('../platform/haptics.js', () => ({
+  hapticsAvailable: true,
+  impactLight: (...a) => impact(...a),
+  notifySuccess: () => notification('SUCCESS'),
+  notifyError: () => notification('ERROR')
 }));
 vi.mock('./settings.js', () => ({
   SETTINGS_KEYS: { haptics: 'haptics' },
@@ -30,8 +31,8 @@ describe('vibrations', () => {
     await hapticStepValidated();
     await hapticConfirm();
     await hapticError();
-    expect(impact).toHaveBeenCalledWith({ style: 'LIGHT' });
-    expect(notification.mock.calls).toEqual([[{ type: 'SUCCESS' }], [{ type: 'ERROR' }]]);
+    expect(impact).toHaveBeenCalledTimes(1);
+    expect(notification.mock.calls).toEqual([['SUCCESS'], ['ERROR']]);
   });
 
   it('"Réduire les animations" : seule la vibration d’erreur reste', async () => {
@@ -40,7 +41,7 @@ describe('vibrations', () => {
     await hapticConfirm();
     await hapticError();
     expect(impact).not.toHaveBeenCalled();
-    expect(notification.mock.calls).toEqual([[{ type: 'ERROR' }]]);
+    expect(notification.mock.calls).toEqual([['ERROR']]);
   });
 
   it('réglage "Vibrations" désactivé : aucune vibration', async () => {

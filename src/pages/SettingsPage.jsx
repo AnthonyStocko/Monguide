@@ -12,6 +12,7 @@ import Card from '../components/ui/Card.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 import { setLanguage } from '../i18n/index.js';
 import { SUPPORTED_LANGUAGES } from '../i18n/language.js';
+import { hapticsAvailable } from '../services/haptics.js';
 
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
@@ -54,8 +55,12 @@ export default function SettingsPage() {
         <h2 className="text-xl">{t('motion.title')}</h2>
         <p className="text-ink-muted">{t('motion.hint')}</p>
         <ReduceMotionSwitch />
-        <HapticsSwitch />
-        <p className="text-ink-muted">{t('motion.hapticsHint')}</p>
+        {hapticsAvailable && (
+          <>
+            <HapticsSwitch />
+            <p className="text-ink-muted">{t('motion.hapticsHint')}</p>
+          </>
+        )}
       </Card>
 
       <AiReviewSection />

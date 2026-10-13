@@ -15,7 +15,7 @@ export default function Toast({ message, tone = 'info', icon: Icon, action, onCl
     <div
       role="status"
       aria-live="polite"
-      className={`${inline ? '' : 'fixed inset-x-4 bottom-[calc(var(--nav-height)+env(safe-area-inset-bottom)+0.75rem)] z-[1100] sm:bottom-6'} mx-auto flex max-w-lg items-center gap-3 rounded-2xl bg-ink py-1 pr-1 pl-4 text-white shadow-xl motion-ok:animate-rise-in`}
+      className={`${inline ? '' : 'fixed inset-x-app-4 bottom-[calc(var(--nav-height)+env(safe-area-inset-bottom)+0.75rem)] z-[1100] sm:bottom-6'} mx-auto flex max-w-lg items-center gap-3 rounded-2xl bg-ink py-1 pr-1 pl-4 text-white shadow-xl motion-ok:animate-rise-in`}
     >
       {Icon && <Icon aria-hidden="true" className={`size-6 shrink-0 ${ICON_TONES[tone]}`} />}
       <p className="flex-1 py-2">{message}</p>

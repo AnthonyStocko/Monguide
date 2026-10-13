@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:web": "vite build --mode web",
     "preview": "vite preview",
+    "preview:web": "vite preview --mode web",
     "test": "vitest run",
     "test:watch": "vitest",
     "android": "vite build && cap sync android && cap open android",
