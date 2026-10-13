@@ -1,6 +1,6 @@
-// Fichiers d'hébergement de la version web (Cloudflare Pages), écrits dans
-// dist-web/ par vite.config.js : _headers (sécurité et cache) et _redirects
-// (toutes les adresses renvoient vers index.html).
+// Fichiers d'hébergement de la version web (Cloudflare), écrits dans
+// dist-web/ par vite.config.js : _headers (sécurité et cache). Le renvoi de
+// toutes les adresses vers index.html est réglé dans wrangler.jsonc.
 
 /** Origine (schéma + hôte) d'une adresse, modèle de tuiles compris. */
 const originOf = (url) => new URL(url.replace(/[{}]/g, '')).origin;
@@ -59,9 +59,6 @@ export function headersFile(sources) {
     ...NO_CACHE_PATHS.map((path) => block(path, { 'Cache-Control': 'no-cache' }))
   ].join('\n\n')}\n`;
 }
-
-/** Fichier _redirects : routage côté application (réécriture, code 200). */
-export const REDIRECTS_FILE = '/* /index.html 200\n';
 
 /**
  * Fichier /.well-known/assetlinks.json (Android App Links) : autorise

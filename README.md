@@ -123,27 +123,33 @@ de logique métier.
   compilation) écrit `dist-web/`, sans aucun plugin natif. `npm run
   preview:web` sert ce dossier en local avec les en-têtes de sécurité de
   l'hébergement. `npm run build` (Android, `dist/`) est inchangé.
-- **Hébergement** : Cloudflare Pages (trafic illimité en offre gratuite,
-  HTTPS et domaine personnalisé, en-têtes et réécriture par fichiers). Le
-  build écrit `dist-web/_headers` et `dist-web/_redirects`
+- **Hébergement** : Cloudflare Workers, fichiers statiques (trafic
+  illimité en offre gratuite, HTTPS et domaine personnalisé, en-têtes par
+  fichier). Le
+  build écrit `dist-web/_headers`
   (`scripts/web/hosting.js`) : Content-Security-Policy limitée à
   l'application, au projet Supabase, aux tuiles de la carte et à
   `upload.wikimedia.org` ; `X-Content-Type-Options` ; `Referrer-Policy` ;
   cache d'un an pour `assets/` (noms avec empreinte), aucun cache pour
-  `index.html` et le service worker ; toutes les adresses renvoient vers
-  `index.html`.
-- **Déploiement** : `.github/workflows/deploy-web.yml`, à chaque push sur
-  `main` qui touche l'application. Secrets : `VITE_SUPABASE_URL` et
-  `VITE_SUPABASE_ANON_KEY` (les mêmes que pour Android),
-  `CLOUDFLARE_API_TOKEN` (droit « Cloudflare Pages : Edit ») et
-  `CLOUDFLARE_ACCOUNT_ID`. Variable facultative `CLOUDFLARE_PAGES_PROJECT`
-  (« mon-guide » par défaut). Le projet Pages est à créer une fois dans
-  Cloudflare (Workers & Pages > Create > Pages > Direct Upload), puis le
-  domaine à lui associer (Custom domains).
-- **À faire quand l'adresse est choisie** : ajouter l'origine
-  (`https://app.…`, sans barre finale) à `ALLOWED_ORIGINS` dans
-  `supabase/functions/_shared/cors.js` et à son test, puis, dans Supabase >
-  Authentication > URL Configuration, à « Redirect URLs ». Sans cela, le
+  `index.html` et le service worker. Toutes les adresses renvoient vers
+  `index.html` (`wrangler.jsonc`).
+- **Déploiement par Cloudflare (Workers Builds)**, à chaque push sur
+  `main` : projet Workers « monguide » relié au dépôt, décrit par
+  `wrangler.jsonc` (fichiers statiques de `dist-web/`, toute adresse
+  inconnue renvoie `index.html`). Dans Cloudflare > Settings > Build :
+  commande de construction `npm run build:web` (et non `npm run build`, qui
+  écrit le build Android dans `dist/`), commande de déploiement
+  `npx wrangler deploy`, variables de construction `VITE_SUPABASE_URL` et
+  `VITE_SUPABASE_ANON_KEY` (les mêmes que pour Android), pour les rappels
+  `VITE_VAPID_PUBLIC_KEY`, et `MONGUIDE_VERSION` (x.y.z) pour le numéro
+  affiché dans « À propos » (sinon celui de `package.json`).
+- **Adresse autorisée par le serveur** : l'origine de la version web
+  (`https://monguide.<compte>.workers.dev`, sans barre finale ; plusieurs
+  adresses séparées par des virgules) va dans le secret Supabase
+  `WEB_APP_ORIGINS` (`npx supabase secrets set WEB_APP_ORIGINS=…` ou
+  tableau de bord > Edge Functions > Secrets ; lu par
+  `supabase/functions/_shared/cors.js`), puis, dans Supabase >
+  Authentication > URL Configuration, dans « Redirect URLs ». Sans cela, le
   navigateur bloque tous les appels au serveur (erreur CORS).
 - **Application installable (PWA)** : `vite-plugin-pwa` 2.0.0 (Workbox),
   actif dans le build web seulement ; réglages dans `scripts/web/pwa.js`.
@@ -178,7 +184,7 @@ de logique métier.
     ```
 
     La clé **publique** va dans `VITE_VAPID_PUBLIC_KEY` (`.env` en local,
-    secret GitHub pour `deploy-web.yml`). La clé **privée** va uniquement
+    variable de construction Cloudflare en ligne). La clé **privée** va uniquement
     dans les secrets Supabase, jamais dans le dépôt, GitHub ou l'application :
 
     ```
@@ -201,8 +207,8 @@ de logique métier.
     90 jours sans utilisation ou dès qu'ils sont révoqués.
   - Rotation des clés VAPID (clé privée compromise, ou changement
     d'expéditeur) : générer une nouvelle paire, remplacer les trois secrets
-    Supabase et le secret GitHub `VITE_VAPID_PUBLIC_KEY`, puis relancer
-    « Version web ». Les abonnements créés avec l'ancienne clé ne peuvent plus
+    Supabase et la variable Cloudflare `VITE_VAPID_PUBLIC_KEY`, puis relancer
+    le déploiement Cloudflare. Les abonnements créés avec l'ancienne clé ne peuvent plus
     recevoir de message : le service de push les refuse, `push-send` les
     supprime à la première tentative, et chaque appareil doit réactiver ses
     rappels (Réglages > Rappels). Vider `push_subscriptions` au moment du
@@ -233,8 +239,8 @@ de logique métier.
   sur Android.
 - **Sur le web, par rapport à Android** : pas de vibrations ni de réglage
   « Wi-Fi uniquement » (les photos d'un séjour sont enregistrées dès qu'il y
-  a du réseau) ; « À propos » affiche « Version web » (numéro du dernier tag
-  Git) et, sur un téléphone Android, un lien vers Google Play.
+  a du réseau) ; « À propos » affiche « Version web » (numéro fourni par
+  `MONGUIDE_VERSION`, sinon `package.json`) et, sur un téléphone Android, un lien vers Google Play.
 - **Limites connues sur iPhone** :
   - les rappels n'existent que dans l'application ajoutée à l'écran d'accueil
     (iOS 16.4 et plus) ; dans Safari, les réglages l'expliquent et renvoient

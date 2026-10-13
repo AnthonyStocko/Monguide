@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { IMAGE_ORIGIN } from '../../src/config/images.js';
 import { TILE_URL } from '../../src/config/map.js';
-import { assetLinksFile, contentSecurityPolicy, headersFile, REDIRECTS_FILE, securityHeaders } from './hosting.js';
+import { assetLinksFile, contentSecurityPolicy, headersFile, securityHeaders } from './hosting.js';
 
 const sources = { supabaseUrl: 'https://abc.supabase.co', tileUrl: TILE_URL, imageOrigin: IMAGE_ORIGIN };
 
@@ -37,10 +37,6 @@ describe('fichiers d’hébergement', () => {
     expect(blocks[0]).not.toContain('Cache-Control');
     expect(blocks).toContain('/assets/*\n  Cache-Control: public, max-age=31536000, immutable');
     for (const path of ['/', '/index.html', '/sw.js']) expect(blocks).toContain(`${path}\n  Cache-Control: no-cache`);
-  });
-
-  it('_redirects : toutes les adresses renvoient vers index.html', () => {
-    expect(REDIRECTS_FILE).toBe('/* /index.html 200\n');
   });
 });
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { corsHeaders, preflightResponse } from './cors.js';
 
 const request = (origin) =>
@@ -12,6 +12,22 @@ describe('corsHeaders', () => {
   it("n'autorise pas une autre origine", () => {
     expect(corsHeaders(request('https://evil.example'))).not.toHaveProperty('Access-Control-Allow-Origin');
     expect(corsHeaders(request())).not.toHaveProperty('Access-Control-Allow-Origin');
+  });
+
+  describe('version web (secret WEB_APP_ORIGINS)', () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('autorise les origines configurées, espaces et barre finale ignorés', () => {
+      vi.stubGlobal('Deno', { env: { get: (name) => (name === 'WEB_APP_ORIGINS' ? ' https://monguide.exemple.workers.dev/ , https://app.exemple.fr' : undefined) } });
+      for (const origin of ['https://monguide.exemple.workers.dev', 'https://app.exemple.fr', 'https://localhost']) {
+        expect(corsHeaders(request(origin))['Access-Control-Allow-Origin']).toBe(origin);
+      }
+      expect(corsHeaders(request('https://evil.example'))).not.toHaveProperty('Access-Control-Allow-Origin');
+    });
+
+    it("sans le secret, n'autorise aucune origine de plus", () => {
+      expect(corsHeaders(request('https://monguide.exemple.workers.dev'))).not.toHaveProperty('Access-Control-Allow-Origin');
+    });
   });
 
   it('autorise les en-têtes du SDK et ceux de Mon guide', () => {

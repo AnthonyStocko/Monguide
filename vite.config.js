@@ -5,7 +5,7 @@ import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import { assetLinksFile, headersFile, REDIRECTS_FILE, securityHeaders } from './scripts/web/hosting.js';
+import { assetLinksFile, headersFile, securityHeaders } from './scripts/web/hosting.js';
 import { WEB_HEAD_TAGS, WEB_ICONS, WEB_MANIFEST, workboxOptions } from './scripts/web/pwa.js';
 import { IMAGE_ORIGIN } from './src/config/images.js';
 import { TILE_URL } from './src/config/map.js';
@@ -27,8 +27,8 @@ const pushWorker = readFileSync(new URL('./scripts/web/push-sw.js', import.meta.
 const pushWorkerFile = `push-sw-${createHash('sha256').update(pushWorker).digest('hex').slice(0, 8)}.js`;
 
 /**
- * Version web (npm run build:web, mode "web") : fichiers d'hébergement
- * _headers et _redirects et icônes (assets/web/) ajoutés à dist-web/, balises
+ * Version web (npm run build:web, mode "web") : fichier d'hébergement
+ * _headers et icônes (assets/web/) ajoutés à dist-web/, balises
  * pour l'iPhone ajoutées à index.html. Le build Android n'en reçoit aucun.
  */
 function webHosting(sources) {
@@ -46,7 +46,6 @@ function webHosting(sources) {
         this.emitFile({ type: 'asset', fileName: '.well-known/assetlinks.json', source: assetLinksFile(process.env.ANDROID_CERT_SHA256, capacitor.appId) });
       }
       this.emitFile({ type: 'asset', fileName: '_headers', source: headersFile(sources) });
-      this.emitFile({ type: 'asset', fileName: '_redirects', source: REDIRECTS_FILE });
     }
   };
 }

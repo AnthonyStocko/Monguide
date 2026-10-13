@@ -6,6 +6,19 @@ import { corsHeaders as supabaseCorsHeaders } from '@supabase/supabase-js/cors';
  */
 export const ALLOWED_ORIGINS = ['https://localhost', 'capacitor://localhost', 'http://localhost:5173', 'https://anthonystocko.github.io'];
 
+/**
+ * Origines de la version web (https://monguide.<compte>.workers.dev, domaine
+ * personnalisé…) : secret Supabase WEB_APP_ORIGINS, adresses séparées par des
+ * virgules. Absent (tests, version web pas encore publiée) : aucune.
+ * @returns {string[]}
+ */
+export function webAppOrigins() {
+  return (globalThis.Deno?.env.get('WEB_APP_ORIGINS') ?? '')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+}
+
 // En-têtes envoyés par le SDK Supabase (liste tenue à jour par le SDK) + ceux de Mon guide.
 const ALLOWED_HEADERS = `${supabaseCorsHeaders['Access-Control-Allow-Headers']}, x-monguide-api, x-monguide-app`;
 
@@ -24,7 +37,7 @@ export function corsHeaders(req) {
     Vary: 'Origin'
   };
   const origin = req.headers.get('Origin');
-  if (origin && ALLOWED_ORIGINS.includes(origin)) headers['Access-Control-Allow-Origin'] = origin;
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || webAppOrigins().includes(origin))) headers['Access-Control-Allow-Origin'] = origin;
   return headers;
 }
 

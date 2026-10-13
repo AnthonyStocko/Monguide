@@ -1,0 +1,13 @@
+// Hébergement de la version web : projet Cloudflare Workers « monguide »
+// (Workers Builds). Fichiers statiques seulement, aucun code serveur.
+// Commande de construction à régler dans Cloudflare : npm run build:web
+// (dist-web/ ; « npm run build » écrit dist/, le build Android).
+{
+  "name": "monguide",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist-web",
+    // Routage côté application : toute adresse inconnue renvoie index.html.
+    "not_found_handling": "single-page-application"
+  }
+}
