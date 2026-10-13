@@ -9,6 +9,7 @@ import { initReducedMotion } from './services/motion.js';
 import { initOnboarding } from './services/onboarding.js';
 import { reconcileNotifications } from './services/notifications.js';
 import DesktopLogo from './components/layout/DesktopLogo.jsx';
+import { initAppUpdate } from './platform/appUpdate.js';
 import { isNative } from './platform/target.js';
 import './index.css';
 
@@ -38,3 +39,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+// Version web : service worker (démarrage hors ligne, bandeau de mise à jour).
+initAppUpdate();

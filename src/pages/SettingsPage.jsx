@@ -7,6 +7,7 @@ import AiReviewSection from '../components/settings/AiReviewSection.jsx';
 import NotificationsSection from '../components/settings/NotificationsSection.jsx';
 import PhotosSection from '../components/settings/PhotosSection.jsx';
 import HapticsSwitch from '../components/settings/HapticsSwitch.jsx';
+import InstallSection from '../components/settings/InstallSection.jsx';
 import ReduceMotionSwitch from '../components/settings/ReduceMotionSwitch.jsx';
 import Card from '../components/ui/Card.jsx';
 import { useAuth } from '../hooks/useAuth.js';
@@ -68,6 +69,8 @@ export default function SettingsPage() {
       <NotificationsSection />
 
       <PhotosSection />
+
+      <InstallSection />
 
       <Card as="section" className="space-y-1 p-2">
         {link('/account', UserRound, session ? t('auth.myAccount') : t('auth.title'))}

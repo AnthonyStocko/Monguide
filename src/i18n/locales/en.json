@@ -1315,5 +1315,30 @@
     },
     "day": "Day {{n}}",
     "stepChanged": "Changed by the AI assistant"
+  },
+  "appUpdate": {
+    "ready": "A new version of Mon guide is ready",
+    "apply": "Update"
+  },
+  "install": {
+    "title": "Install Mon guide",
+    "hint": "Once installed, the app opens from your home screen or desktop, even without a connection.",
+    "button": "Install the app",
+    "playStoreHint": "On Android, Mon guide is available on Google Play, with reminders for your trips.",
+    "playStore": "Install from Google Play",
+    "later": "Later",
+    "never": "Don’t ask again",
+    "storageTitle": "Keep your trips",
+    "storage": "To keep your trips on this device, add Mon guide to your home screen or sign in.",
+    "ios": {
+      "title": "Add Mon guide to your home screen",
+      "intro": "Three steps in Safari and Mon guide opens like an app, even without a connection.",
+      "step1": "Tap Share",
+      "step1Hint": "The Share button is in the Safari toolbar.",
+      "step2": "Add to Home Screen",
+      "step2Hint": "Scroll down the list, then tap “Add to Home Screen”.",
+      "step3": "Add",
+      "step3Hint": "Tap “Add” in the top right corner."
+    }
   }
 }

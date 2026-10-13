@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router';
 import Button from '../ui/Button.jsx';
 import OfflineBanner from '../ui/OfflineBanner.jsx';
 import SyncIndicator from './SyncIndicator.jsx';
+import UpdateBanner from './UpdateBanner.jsx';
 import Logo from '../brand/Logo.jsx';
 
 const TITLES = {
@@ -51,6 +52,7 @@ export default function TopBar() {
         )}
       </div>
       <OfflineBanner />
+      <UpdateBanner />
     </header>
   );
 }

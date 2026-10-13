@@ -9,8 +9,8 @@ describe('Content-Security-Policy de la version web', () => {
   const csp = contentSecurityPolicy(sources);
   const directive = (name) => csp.split('; ').find((d) => d.startsWith(`${name} `));
 
-  it('limite le réseau à Supabase et aux miniatures Wikimedia', () => {
-    expect(directive('connect-src')).toBe("connect-src 'self' https://abc.supabase.co wss://abc.supabase.co https://upload.wikimedia.org");
+  it('limite le réseau à Supabase, aux miniatures Wikimedia et aux tuiles de la carte', () => {
+    expect(directive('connect-src')).toBe("connect-src 'self' https://abc.supabase.co wss://abc.supabase.co https://upload.wikimedia.org https://tile.openstreetmap.org");
   });
 
   it('limite les images aux tuiles de la carte et à Wikimedia', () => {

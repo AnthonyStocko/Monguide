@@ -1,10 +1,15 @@
 import { TileLayer } from 'react-leaflet';
 import { useTranslation } from 'react-i18next';
 import { TILE_COPYRIGHT_URL, TILE_MAX_ZOOM, TILE_URL } from '../../config/map.js';
+import { isNative } from '../../platform/target.js';
+
+// Version web : tuiles demandées en mode CORS, pour que le service worker puisse vérifier
+// la réponse avant de la garder (cache limité des tuiles déjà affichées).
+const CROSS_ORIGIN = isNative ? undefined : 'anonymous';
 
 /** Fond de carte, avec l'attribution traduite (recréé au changement de langue). */
 export default function OsmTileLayer() {
   const { t, i18n } = useTranslation();
   const attribution = `&copy; <a href="${TILE_COPYRIGHT_URL}">${t('map.attribution')}</a>`;
-  return <TileLayer key={i18n.resolvedLanguage} url={TILE_URL} attribution={attribution} maxZoom={TILE_MAX_ZOOM} />;
+  return <TileLayer key={i18n.resolvedLanguage} url={TILE_URL} attribution={attribution} maxZoom={TILE_MAX_ZOOM} crossOrigin={CROSS_ORIGIN} />;
 }

@@ -14,6 +14,8 @@
 //  - assets/store/ : Play Store, icône 512 × 512 et image de présentation 1024 × 500 ;
 //  - android/app/src/main/res/drawable/ : icône monochrome (Android 13+, non gérée par
 //    @capacitor/assets) et icône de l'écran de démarrage, en vecteurs ;
+//  - assets/web/ : icônes de la version web installable (manifeste et iPhone), copiées
+//    dans dist-web/icons/ par le build web (vite.config.js) ;
 //  - public/favicon.svg, site/assets/favicon.svg, site/assets/logo.svg et logo-dark.svg.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -40,6 +42,8 @@ const opaquePng = async (path, svg, width, height = width) => out(path, await sh
  */
 const FOREGROUND_SCALE = 0.92;
 const FULL_ICON_SCALE = 0.8;
+// Icône « maskable » de la version web : le repère tient dans le cercle sûr (80 % du carré).
+const MASKABLE_SCALE = 0.6;
 const res = 'android/app/src/main/res';
 
 if (process.argv.includes('--android-finish')) {
@@ -85,6 +89,13 @@ await png('assets/store/play-icon-512.png', appIcon, 512);
 const feature = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500"><rect width="1024" height="500" fill="${C.sand}"/><path d="M0 400C180 330 330 350 470 395C610 340 820 330 1024 380L1024 500L0 500Z" fill="${C.green}"/><path d="M0 450C200 400 380 420 560 455C720 425 880 420 1024 440L1024 500L0 500Z" fill="${C.greenDark}"/><g transform="translate(${(1024 - 820) / 2} 110) scale(${820 / LOGO_SIZE.width})">${logoMarkup()}</g></svg>`;
 out('assets/store/play-feature-1024x500.svg', `${feature}\n`);
 await opaquePng('assets/store/play-feature-1024x500.png', feature, 1024, 500);
+
+// --- assets/web : version web installable (manifeste, écran d'accueil de l'iPhone) ---
+await png('assets/web/icon-192.png', appIcon, 192);
+await png('assets/web/icon-512.png', appIcon, 512);
+await png('assets/web/icon-maskable-512.png', iconSvg({ variant: 'onGreen', background: C.green, scale: MASKABLE_SCALE }), 512);
+// iPhone : 180 × 180 sans couche alpha (iOS remplace la transparence par du noir).
+await opaquePng('assets/web/apple-touch-icon.png', appIcon, 180);
 
 // --- Web : application et pages du site ---
 const favicon = iconSvg({ size: 64, scale: 1.2 });

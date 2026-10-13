@@ -116,6 +116,8 @@ de logique métier.
   | `network` | `@capacitor/network` | `navigator.onLine`, événements `online`/`offline` |
   | `directions` (« Itinéraire ») | lien `geo:` | Plans (`maps.apple.com`) sur iPhone, iPad et Mac ; Google Maps ailleurs |
   | `notifications` | `@capacitor/local-notifications` | indisponibles pour l'instant |
+  | `install` | sans objet (toujours installée) | `beforeinstallprompt`, mode `standalone`, `navigator.storage.persist()` |
+  | `appUpdate` | sans objet (Play Store) | service worker (`virtual:pwa-register`) |
 
 - **Build** : `npm run build:web` (mode Vite `web`, `VITE_TARGET=web` à la
   compilation) écrit `dist-web/`, sans aucun plugin natif. `npm run
@@ -143,6 +145,27 @@ de logique métier.
   `supabase/functions/_shared/cors.js` et à son test, puis, dans Supabase >
   Authentication > URL Configuration, à « Redirect URLs ». Sans cela, le
   navigateur bloque tous les appels au serveur (erreur CORS).
+- **Application installable (PWA)** : `vite-plugin-pwa` 2.0.0 (Workbox),
+  actif dans le build web seulement ; réglages dans `scripts/web/pwa.js`.
+  - Manifeste (`manifest.webmanifest`) et balises pour l'iPhone ajoutés au
+    build web. Icônes 192, 512, « maskable » et 180 × 180 générées par
+    `npm run brand` dans `assets/web/`, publiées dans `dist-web/icons/`.
+  - Service worker (`sw.js`) : l'application (HTML, JS, CSS, polices,
+    icônes) est mise en cache pour démarrer hors ligne. Aucune réponse de
+    Supabase n'y passe (l'application garde son cache IndexedDB). Tuiles de
+    la carte : seules celles déjà affichées, 200 au plus, 7 jours.
+  - Nouvelle version : bandeau « Une nouvelle version de Mon guide est
+    prête » et bouton « Mettre à jour » (`UpdateBanner`), jamais de
+    rechargement forcé.
+  - Stockage durable : `navigator.storage.persist()` demandé une fois, dès
+    le premier séjour enregistré. S'il est refusé, ou sur iPhone tant que
+    l'application n'est pas installée, un message invite une seule fois à
+    l'installer ou à se connecter (jamais avec un compte).
+  - Aide à l'installation (`InstallCoach`, et « Installer Mon guide » dans
+    les réglages) : bouton du navigateur sur ordinateur (Chrome, Edge), lien
+    vers Google Play sur Android, écran en trois étapes sur iPhone (Safari),
+    au plus une fois par semaine et refusable. Rien dans l'application
+    installée.
 - **Mise en page** : sur le web, l'application reste une colonne centrée de
   480 px au plus, sur fond sable, avec le logo à gauche au-delà de 1024 px
   (`data-target="web"` sur `<html>`, voir `src/index.css`).

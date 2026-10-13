@@ -1315,5 +1315,30 @@
     },
     "day": "Jour {{n}}",
     "stepChanged": "Modifié par l’assistant IA"
+  },
+  "appUpdate": {
+    "ready": "Une nouvelle version de Mon guide est prête",
+    "apply": "Mettre à jour"
+  },
+  "install": {
+    "title": "Installer Mon guide",
+    "hint": "Installée, l’application s’ouvre depuis l’écran d’accueil ou le bureau, même sans réseau.",
+    "button": "Installer l’application",
+    "playStoreHint": "Sur Android, Mon guide est disponible sur Google Play, avec les rappels de vos séjours.",
+    "playStore": "Installer depuis Google Play",
+    "later": "Plus tard",
+    "never": "Ne plus proposer",
+    "storageTitle": "Garder vos séjours",
+    "storage": "Pour garder vos séjours sur cet appareil, ajoutez Mon guide à l’écran d’accueil ou connectez-vous.",
+    "ios": {
+      "title": "Ajouter Mon guide à l’écran d’accueil",
+      "intro": "En trois étapes dans Safari, Mon guide s’ouvre comme une application, même sans réseau.",
+      "step1": "Touchez Partager",
+      "step1Hint": "Le bouton Partager est dans la barre de Safari.",
+      "step2": "Sur l’écran d’accueil",
+      "step2Hint": "Faites défiler la liste, puis touchez « Sur l’écran d’accueil ».",
+      "step3": "Ajouter",
+      "step3Hint": "Touchez « Ajouter », en haut à droite."
+    }
   }
 }

@@ -22,8 +22,9 @@ export function contentSecurityPolicy({ supabaseUrl, tileUrl, imageOrigin }) {
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
     `img-src 'self' data: blob: ${tiles} ${images}`,
-    // fetch : serveur Supabase (HTTPS et WebSocket) ; photos enregistrées pour le hors ligne.
-    `connect-src 'self' ${supabase} ${supabase.replace(/^http/, 'ws')} ${images}`,
+    // fetch : serveur Supabase (HTTPS et WebSocket) ; photos enregistrées pour le hors ligne ;
+    // tuiles de la carte, demandées par le service worker pour son cache.
+    `connect-src 'self' ${supabase} ${supabase.replace(/^http/, 'ws')} ${images} ${tiles}`,
     "worker-src 'self'",
     "manifest-src 'self'",
     "object-src 'none'",

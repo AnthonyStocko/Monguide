@@ -3,7 +3,9 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { VitePWA } from 'vite-plugin-pwa';
 import { headersFile, REDIRECTS_FILE, securityHeaders } from './scripts/web/hosting.js';
+import { WEB_HEAD_TAGS, WEB_ICONS, WEB_MANIFEST, workboxOptions } from './scripts/web/pwa.js';
 import { IMAGE_ORIGIN } from './src/config/images.js';
 import { TILE_URL } from './src/config/map.js';
 
@@ -19,13 +21,18 @@ const domainDir = fileURLToPath(
 
 /**
  * Version web (npm run build:web, mode "web") : fichiers d'hébergement
- * _headers et _redirects ajoutés à dist-web/.
+ * _headers et _redirects et icônes (assets/web/) ajoutés à dist-web/, balises
+ * pour l'iPhone ajoutées à index.html. Le build Android n'en reçoit aucun.
  */
 function webHosting(sources) {
   return {
     name: 'monguide-web-hosting',
     apply: 'build',
+    transformIndexHtml: () => WEB_HEAD_TAGS,
     generateBundle() {
+      for (const name of WEB_ICONS) {
+        this.emitFile({ type: 'asset', fileName: `icons/${name}`, source: readFileSync(new URL(`./assets/web/${name}`, import.meta.url)) });
+      }
       this.emitFile({ type: 'asset', fileName: '_headers', source: headersFile(sources) });
       this.emitFile({ type: 'asset', fileName: '_redirects', source: REDIRECTS_FILE });
     }
@@ -40,7 +47,21 @@ export default defineConfig(({ mode }) => {
   const sources = { supabaseUrl, tileUrl: TILE_URL, imageOrigin: IMAGE_ORIGIN };
 
   return {
-    plugins: [react(), tailwindcss(), ...(web ? [webHosting(sources)] : [])],
+    plugins: [
+      react(),
+      tailwindcss(),
+      ...(web ? [webHosting(sources)] : []),
+      // Service worker et manifeste : version web seulement. Désactivé ailleurs, le module
+      // virtual:pwa-register (src/platform/appUpdate.web.js) reste résolu, sans effet.
+      VitePWA({
+        disable: !web,
+        registerType: 'prompt',
+        injectRegister: false,
+        includeManifestIcons: false,
+        manifest: WEB_MANIFEST,
+        workbox: workboxOptions({ tileUrl: TILE_URL })
+      })
+    ],
     define: {
       // Version de l'application, envoyée au serveur (en-tête x-monguide-app).
       __APP_VERSION__: JSON.stringify(version),

@@ -1,7 +1,9 @@
 import { useRef } from 'react';
 import { m } from 'motion/react';
 import { Outlet, useLocation } from 'react-router';
+import { isNative } from '../../platform/target.js';
 import { EASE, useMotionAllowed } from '../../ui/motion.js';
+import InstallCoach from '../install/InstallCoach.jsx';
 import BottomNav from './BottomNav.jsx';
 import TopBar from './TopBar.jsx';
 
@@ -38,6 +40,7 @@ export default function AppLayout() {
         </m.div>
       </main>
       <BottomNav />
+      {!isNative && <InstallCoach />}
     </div>
   );
 }
