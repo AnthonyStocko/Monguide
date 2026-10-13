@@ -474,3 +474,20 @@ entrypoint = "./functions/images/index.js"
 verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/delete-account/index.js"
+
+# Rappels de la version web (Web Push). push-send est appelée chaque minute
+# par pg_cron avec le jeton service_role (voir la migration 20261013100000).
+[functions.push-subscribe]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/push-subscribe/index.js"
+
+[functions.push-schedule]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/push-schedule/index.js"
+
+[functions.push-send]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/push-send/index.js"

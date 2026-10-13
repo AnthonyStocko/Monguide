@@ -573,6 +573,62 @@ pg_cron `monguide-purge-deleted-trips` efface les marqueurs de plus de
   le sont en cascade.
 - **Erreurs** : codes communs ; `500 internal_error` si la suppression échoue.
 
+### Rappels de la version web (Web Push)
+
+Un navigateur ne sait pas programmer une notification : la version web
+envoie au serveur la liste des rappels attendus, et le serveur les envoie à
+l'heure prévue. L'application Android n'appelle aucune de ces fonctions
+(notifications locales). Tables `push_subscriptions` et
+`scheduled_reminders` : RLS activée sans règle, aucun accès direct.
+
+#### `push-subscribe` — abonnement de l'appareil
+
+- **Méthode** : `POST`, mode invité accepté.
+- **Entrée** : `{ "deviceId", "subscription": { "endpoint", "keys": { "p256dh", "auth" } }, "lang" }`.
+  `deviceId` : identifiant aléatoire créé par l'application (16 à 64 lettres,
+  chiffres ou tirets). `subscription` : `PushSubscription.toJSON()` du
+  navigateur ; `endpoint` doit appartenir à un service de push connu (Apple,
+  Google, Mozilla, Microsoft). `subscription: null` supprime l'abonnement et
+  ses rappels.
+- **Sortie** : `{ "subscribed": true }` (ou `false` après suppression).
+  Enregistre ou met à jour l'abonnement de cet appareil (un seul par
+  `deviceId`) ; note le compte s'il y en a un.
+- **Erreurs** : codes communs ; `400 invalid_request`.
+
+#### `push-schedule` — rappels d'un séjour
+
+- **Méthode** : `POST`, mode invité accepté.
+- **Entrée** : `{ "deviceId", "tripId", "reminders": [{ "key", "sendAt", "title", "body", "url" }] }`.
+  Liste **complète** des rappels du séjour pour cet appareil (200 au plus) :
+  elle remplace l'existant ; liste vide = séjour supprimé ou rappels
+  désactivés. `key` : identifiant stable du rappel (entier positif sur 31
+  bits, `notificationId` du domaine partagé, le même que sur Android).
+  `sendAt` : instant ISO 8601. `url` : lien vers le planning
+  (`/planning/<séjour>?day=…&step=…`), rien d'autre n'est accepté. `title` et
+  `body` sont mis en forme par l'application, sans adresse ni titre d'étape
+  personnelle.
+- **Réconciliation** : un rappel inchangé n'est pas réécrit (déjà envoyé, il
+  n'est pas renvoyé) ; nouveau ou modifié, il est écrit et sera envoyé ; en
+  attente et absent de la liste, il est supprimé. Clé unique par appareil :
+  aucun doublon. Un rappel dont l'heure est passée est ignoré.
+- **Sortie** : `{ "scheduled", "written", "removed" }` (rappels à venir de la
+  liste, lignes écrites, lignes supprimées).
+- **Erreurs** : codes communs ; `400 invalid_request` ; `404 not_subscribed`
+  si l'appareil est inconnu (abonnement expiré ou purgé) : l'application se
+  réabonne puis renvoie ses listes.
+
+#### `push-send` — tâche planifiée (interne)
+
+Appelée chaque minute par pg_cron + pg_net, seulement s'il y a un rappel à
+envoyer ; réservée au rôle `service_role` (`403 forbidden` sinon). `POST`,
+sans corps. Envoie les rappels dont `send_at` est passé depuis moins de 15
+minutes et les marque envoyés ; supprime les abonnements expirés ou révoqués
+(réponses 404 ou 410 du service de push) ; un échec passager est réessayé à
+l'exécution suivante. Sortie : `{ due, sent, retry, expired }`. Secrets
+requis : `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+(`500 not_configured` sinon). Purge quotidienne : rappels 7 jours après leur
+envoi, abonnements après 90 jours sans nouvelles de l'appareil.
+
 ### Fonctions prévues (à documenter avant d'être codées)
 
 | Fonction | Phase | Rôle |
@@ -594,3 +650,4 @@ pg_cron `monguide-purge-deleted-trips` efface les marqueurs de plus de
 | 1 | 2026-09-28 | Ajouts compatibles : lieux OSM de plusieurs pays (tuiles de tous les pays importés qui touchent la zone) ; source `osm` avec `status: "partial"`, `missingCountries`, `dataDates`, `tilesByCountry` ; alerte `places_partial` de `generate` ; `config.osm.countries` (date des données par pays importé). |
 | 1 | 2026-09-29 | Ajouts compatibles : fonction `images` (photos Wikimedia Commons et crédits) ; `Place.image`, `Trip.hero`, `Trip.destination.wikidata` ; `places` : `wikidata` des lieux Mérimée et Muséofile. |
 | 1 | 2026-09-29 | Ajout compatible : `generate` en flux NDJSON (`Accept: application/x-ndjson`), événements `start`, `step`, `result`, `error`. |
+| 1 | 2026-10-13 | Ajouts compatibles : rappels de la version web, fonctions `push-subscribe`, `push-schedule`, `push-send` ; code `404 not_subscribed`. |

@@ -1,12 +1,14 @@
 import i18n from 'i18next';
 import { planTripNotifications, reconcilePlan } from '@domain/notificationPlan.js';
-import { formatDate } from '../i18n/format.js';
+import { callFunction } from './api.js';
+import { onConnectionChange } from './network.js';
+import { remindersSignature, renderNotification } from './notificationText.js';
 import { getRules } from './rules.js';
 import * as settings from './settings.js';
 import { getTrip, listTrips, onTripsChanged } from './tripsStore.js';
-import { freeLabelKey } from '../utils/freeLabel.js';
+import { getInstallMode } from '../platform/install.js';
 import { onAppActive } from '../platform/lifecycle.js';
-import { LocalNotifications } from '../platform/notifications.js';
+import { LocalNotifications, remotePush } from '../platform/notifications.js';
 import { isAndroid } from '../platform/target.js';
 
 /**
@@ -23,6 +25,14 @@ import { isAndroid } from '../platform/target.js';
  * bloqué par le fabricant ou le retrait de l'autorisation des alarmes
  * exactes. La liste attendue est donc comparée à getPending au lancement
  * à froid et à chaque retour au premier plan.
+ *
+ * Version web (remotePush) : rien ne peut être programmé dans le navigateur.
+ * L'appareil s'abonne au Web Push et envoie au serveur, pour chaque séjour,
+ * la liste COMPLÈTE des rappels attendus (fonction push-schedule), qui
+ * remplace la précédente ; le serveur les envoie à l'heure prévue. Mêmes
+ * identifiants stables, mêmes réglages. Le texte envoyé ne contient ni
+ * adresse ni titre d'étape personnelle. Hors ligne, la liste reste à
+ * envoyer : nouvel essai au retour du réseau ou de l'application.
  */
 
 const PREFS_KEY = 'notifications.prefs';
@@ -30,6 +40,23 @@ const IDS_KEY = 'notifications.ids';
 const ASKED_KEY = 'notifications.asked';
 const EXACT_KEY = 'notifications.exact';
 const CHANNEL_ID = 'monguide-reminders';
+// Version web.
+/** Identifiant aléatoire de cet appareil, créé à l'abonnement (jamais lié à un compte par l'application). */
+const PUSH_DEVICE_KEY = 'notifications.push.deviceId';
+/** Dernier abonnement transmis au serveur : { endpoint, lang, at }. */
+const PUSH_SUBSCRIPTION_KEY = 'notifications.push.subscription';
+/** Empreinte de la dernière liste acceptée par le serveur, par séjour. */
+const PUSH_SENT_KEY = 'notifications.push.sent';
+/** L'abonnement est confirmé au serveur chaque semaine (un abonnement sans nouvelles est purgé après 90 jours). */
+const PUSH_REFRESH_MS = 7 * 24 * 60 * 60 * 1000;
+/** Limite de push-schedule par séjour (les rappels les plus proches d'abord). */
+const PUSH_MAX_REMINDERS = 200;
+
+/** true sur le web : les rappels sont envoyés par le serveur (Web Push). */
+export const remoteReminders = remotePush !== null;
+
+/** iPhone, version web ouverte dans Safari : les rappels n'existent que dans l'application ajoutée à l'écran d'accueil. */
+export const notificationsNeedInstall = () => remoteReminders && getInstallMode() === 'ios';
 
 /**
  * @typedef {{ device: boolean, summaries: boolean, reminders: boolean, summaryTime: string | null }} NotificationPrefs
@@ -71,14 +98,14 @@ export async function permissionState() {
 
 /** Demande l'autorisation d'afficher des notifications (Android 13 et plus). */
 export async function requestPermission() {
+  // Demande lancée avant toute attente : sur le web, elle doit partir dans le geste de l'utilisateur.
+  const request = Promise.resolve()
+    .then(() => LocalNotifications.requestPermissions())
+    .then(({ display }) => display, () => 'unavailable');
   await settings.set(ASKED_KEY, true).catch(() => {});
-  try {
-    const { display } = await LocalNotifications.requestPermissions();
-    if (display === 'granted') await reconcileNotifications();
-    return display;
-  } catch {
-    return 'unavailable';
-  }
+  const display = await request;
+  if (display === 'granted') await reconcileNotifications();
+  return display;
 }
 
 /** L'écran d'explication a-t-il déjà été présenté ? */
@@ -116,24 +143,9 @@ export async function openExactAlarmSetting() {
   return exactAlarmState();
 }
 
-/** Texte d'une notification, dans la langue choisie dans l'application. */
+/** Texte d'une notification, dans la langue choisie dans l'application (complet : il reste sur l'appareil). */
 function render(n) {
-  const t = i18n.t.bind(i18n);
-  const locale = i18n.resolvedLanguage;
-  const day = formatDate(`${n.date}T12:00:00Z`, locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
-  if (n.kind === 'summary') {
-    const lines = n.data.steps.map((s) => {
-      // Dîner mis en avant : « 19:30 Dîner : … », ou « 19:30 Soirée libre ».
-      if (s.type === 'dinner') return s.name ? t('notifications.summary.dinner', { start: s.start, name: s.name }) : t('notifications.summary.freeEvening', { start: s.start });
-      return `${s.start} ${s.name ?? t(freeLabelKey(s))}`;
-    });
-    if (n.data.departure) lines.unshift(t('notifications.summary.departure', n.data.departure));
-    return { title: t('notifications.summary.title', { date: day }), body: lines.join('\n') };
-  }
-  return {
-    title: t(n.data.type === 'dinner' ? 'notifications.reminder.dinnerTitle' : 'notifications.reminder.title', { name: n.data.name ?? t(freeLabelKey(n.data)) }),
-    body: t('notifications.reminder.body', { start: n.data.start, end: n.data.end, trip: n.data.tripTitle })
-  };
+  return renderNotification(n, { t: i18n.t.bind(i18n), locale: i18n.resolvedLanguage });
 }
 
 /** Lien ouvert par un appui sur la notification : onglet Planning, bon jour, bon créneau. */
@@ -203,11 +215,90 @@ async function pendingIds() {
 }
 
 /**
+ * Web : abonnement Web Push de cet appareil, transmis au serveur s'il est
+ * nouveau, modifié ou plus confirmé depuis une semaine.
+ * @returns {Promise<string | null>} identifiant de l'appareil, null sans permission
+ */
+async function pushDevice() {
+  const subscription = await remotePush.getSubscription();
+  if (!subscription) return null;
+  let deviceId = await settings.get(PUSH_DEVICE_KEY);
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    await settings.set(PUSH_DEVICE_KEY, deviceId);
+  }
+  const lang = i18n.resolvedLanguage;
+  const saved = await settings.get(PUSH_SUBSCRIPTION_KEY);
+  const current = saved && saved.endpoint === subscription.endpoint && saved.lang === lang && Date.now() - saved.at < PUSH_REFRESH_MS;
+  if (!current) {
+    await callFunction('push-subscribe', { body: { deviceId, subscription, lang } });
+    await settings.set(PUSH_SUBSCRIPTION_KEY, { endpoint: subscription.endpoint, lang, at: Date.now() });
+  }
+  return deviceId;
+}
+
+/** Rappel tel qu'il est envoyé au serveur : texte sans adresse ni titre d'étape personnelle. */
+function toPushReminder(n) {
+  const text = renderNotification(n, { t: i18n.t.bind(i18n), locale: i18n.resolvedLanguage, confidential: true });
+  return { key: n.id, sendAt: n.at.toISOString(), ...text, url: notificationUrl(n) };
+}
+
+/**
+ * Web : envoie au serveur la liste complète des rappels de chaque séjour dont
+ * la liste a changé (création, modification, recalcul, suppression, réglages,
+ * langue). Un envoi qui échoue (hors ligne, serveur) garde le séjour « à
+ * envoyer » pour l'essai suivant. Jamais bloquant.
+ * @param {string[] | null} tripIds séjours à vérifier ; null : tous, y compris les séjours disparus
+ * @returns {Promise<{ scheduled: number, cancelled: number, pending: number, error?: unknown }>}
+ */
+async function syncRemote(tripIds) {
+  let pending = 0;
+  try {
+    const expected = await expectedFor(await listTrips());
+    pending = expected.length;
+    const lists = {};
+    for (const n of expected) (lists[n.tripId] ??= []).push(toPushReminder(n));
+    const sent = (await settings.get(PUSH_SENT_KEY).catch(() => null)) ?? {};
+    const changed = (tripIds ?? [...new Set([...Object.keys(sent), ...Object.keys(lists)])])
+      .map((tripId) => ({ tripId, reminders: (lists[tripId] ?? []).slice(0, PUSH_MAX_REMINDERS) }))
+      .map((item) => ({ ...item, signature: remindersSignature(item.reminders) }))
+      .filter(({ tripId, signature }) => signature !== (sent[tripId] ?? ''));
+    if (!changed.length) return { scheduled: 0, cancelled: 0, pending };
+
+    // Sans permission, pas d'abonnement : rien à envoyer (un abonnement révoqué est supprimé par le serveur).
+    const deviceId = await pushDevice();
+    if (!deviceId) return { scheduled: 0, cancelled: 0, pending: 0 };
+    let scheduled = 0;
+    try {
+      for (const { tripId, reminders, signature } of changed) {
+        await callFunction('push-schedule', { body: { deviceId, tripId, reminders } });
+        if (signature) sent[tripId] = signature;
+        else delete sent[tripId];
+        scheduled += reminders.length;
+      }
+    } catch (error) {
+      // Abonnement inconnu du serveur (purgé) : il sera recréé, et toutes les listes renvoyées, au prochain essai.
+      if (error?.code === 'not_subscribed') {
+        await settings.remove(PUSH_SUBSCRIPTION_KEY).catch(() => {});
+        for (const tripId of Object.keys(sent)) delete sent[tripId];
+      }
+      throw error;
+    } finally {
+      await settings.set(PUSH_SENT_KEY, sent).catch(() => {});
+    }
+    return { scheduled, cancelled: 0, pending };
+  } catch (error) {
+    return { scheduled: 0, cancelled: 0, pending, error };
+  }
+}
+
+/**
  * Réconciliation : programme les rappels manquants et annule les orphelins
  * (identifiants stables : aucun doublon possible).
  * @returns {Promise<{ scheduled: number, cancelled: number, pending: number }>}
  */
 export function reconcileNotifications() {
+  if (remoteReminders) return serial(() => syncRemote(null));
   return serial(async () => {
     try {
       const expected = await expectedFor(await listTrips());
@@ -239,6 +330,7 @@ export function reconcileNotifications() {
  * supprimé ou terminé n'a plus de notification.
  */
 export function rescheduleTrip(tripId) {
+  if (remoteReminders) return serial(() => syncRemote([tripId]));
   return serial(async () => {
     try {
       const byTrip = (await settings.get(IDS_KEY).catch(() => null)) ?? {};
@@ -257,6 +349,8 @@ export function rescheduleTrip(tripId) {
 
 /** Annule toutes les notifications (effacement des séjours locaux, suppression du compte). */
 export function cancelAllNotifications() {
+  // Web : la liste de chaque séjour disparu (ou désactivé) est remplacée par une liste vide.
+  if (remoteReminders) return serial(() => syncRemote(null));
   return serial(async () => {
     try {
       await cancel(await pendingIds());
@@ -303,6 +397,8 @@ export function initNotifications({ onOpen }) {
     timers.set(id, setTimeout(() => rescheduleTrip(id), 300));
   });
   onAppActive(() => reconcileNotifications());
+  // Web : listes restées à envoyer (hors ligne) transmises au retour du réseau.
+  if (remoteReminders) onConnectionChange((type) => type !== 'none' && reconcileNotifications());
   i18n.on('languageChanged', () => rescheduleAll());
   return () => handles.forEach((h) => h.then((x) => x.remove()).catch(() => {}));
 }

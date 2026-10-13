@@ -5,12 +5,15 @@ import { useConfig } from '../../hooks/useConfig.js';
 import {
   exactAlarmState,
   getNotificationPrefs,
+  notificationsNeedInstall,
   openExactAlarmSetting,
   permissionState,
   reconcileNotifications,
+  remoteReminders,
   requestPermission,
   setNotificationPrefs
 } from '../../services/notifications.js';
+import IosInstallHelp from '../install/IosInstallHelp.jsx';
 import { TimeSelect } from '../planning/TimeEditorDialog.jsx';
 import Button from '../ui/Button.jsx';
 import Card from '../ui/Card.jsx';
@@ -21,6 +24,9 @@ import Switch from '../ui/Switch.jsx';
  * (et son heure), rappel avant chaque étape. Bandeaux explicatifs si la
  * permission est refusée ou si les alarmes exactes ne sont pas autorisées ;
  * aide sur l'optimisation de batterie des fabricants. Jamais bloquant.
+ * Version web : les rappels sont envoyés par le serveur ; la permission n'est
+ * demandée qu'à l'appui sur « Activer les rappels ». Sur iPhone, ils ne sont
+ * proposés que dans l'application ajoutée à l'écran d'accueil.
  */
 export default function NotificationsSection() {
   const { t } = useTranslation();
@@ -29,6 +35,7 @@ export default function NotificationsSection() {
   const [permission, setPermission] = useState('unavailable');
   const [exact, setExact] = useState('unavailable');
   const [pending, setPending] = useState(null);
+  const [help, setHelp] = useState(false);
 
   const refresh = useCallback(async () => {
     setPrefs(await getNotificationPrefs());
@@ -52,6 +59,23 @@ export default function NotificationsSection() {
   };
 
   if (!prefs) return null;
+  if (notificationsNeedInstall()) {
+    return (
+      <Card as="section" aria-labelledby="notifications-title" className="space-y-3">
+        <h2 id="notifications-title" className="text-xl font-semibold">
+          {t('notifications.settings.title')}
+        </h2>
+        <p className="flex items-start gap-2">
+          <BellOff aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+          {t('notifications.settings.web.needsInstall')}
+        </p>
+        <Button variant="secondary" onClick={() => setHelp(true)}>
+          {t('notifications.settings.web.showHelp')}
+        </Button>
+        {help && <IosInstallHelp onClose={() => setHelp(false)} />}
+      </Card>
+    );
+  }
   return (
     <Card as="section" aria-labelledby="notifications-title" className="space-y-3">
       <h2 id="notifications-title" className="text-xl font-semibold">
@@ -62,7 +86,7 @@ export default function NotificationsSection() {
         <div className="space-y-2 rounded-xl bg-warning-soft px-3 py-2 text-warning-on-soft">
           <p className="flex items-start gap-2 font-medium">
             <BellOff aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
-            {t(`notifications.settings.permission.${permission}`)}
+            {t(remoteReminders && permission !== 'unavailable' ? `notifications.settings.web.${permission}` : `notifications.settings.permission.${permission}`)}
           </p>
           {permission === 'prompt' && (
             <Button
@@ -71,7 +95,7 @@ export default function NotificationsSection() {
                 await refresh();
               }}
             >
-              {t('notifications.settings.allow')}
+              {t(remoteReminders ? 'notifications.explainer.allow' : 'notifications.settings.allow')}
             </Button>
           )}
         </div>
@@ -108,6 +132,7 @@ export default function NotificationsSection() {
       />
       {pending !== null && permission === 'granted' && <p className="text-ink-muted">{t('notifications.settings.pending', { count: pending })}</p>}
 
+      {!remoteReminders && (
       <details className="rounded-xl bg-subtle px-3 py-2">
         <summary className="flex min-h-12 cursor-pointer items-center gap-2 font-medium">
           <BatteryWarning aria-hidden="true" className="size-5 shrink-0" />
@@ -119,6 +144,7 @@ export default function NotificationsSection() {
           ))}
         </div>
       </details>
+      )}
     </Card>
   );
 }

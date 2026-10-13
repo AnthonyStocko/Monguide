@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Bell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { exactAlarmState, markPermissionAsked, openExactAlarmSetting, permissionState, requestPermission, wasPermissionAsked } from '../../services/notifications.js';
+import { exactAlarmState, markPermissionAsked, openExactAlarmSetting, permissionState, remoteReminders, requestPermission, wasPermissionAsked } from '../../services/notifications.js';
 import Button from '../ui/Button.jsx';
 import Dialog from '../ui/Dialog.jsx';
 
 /**
  * Écran d'explication présenté au premier enregistrement d'un séjour, avant
- * la demande d'autorisation des notifications (Android 13 et plus). Refuser
- * n'empêche rien : les réglages l'expliquent ensuite.
+ * la demande d'autorisation des notifications (Android 13 et plus ; version
+ * web : rappels envoyés par le serveur). Refuser n'empêche rien : les
+ * réglages l'expliquent ensuite.
  */
 export default function NotificationsExplainer() {
   const { t } = useTranslation();
@@ -48,7 +49,7 @@ export default function NotificationsExplainer() {
           </>
         }
       >
-        {t('notifications.explainer.text', { returnObjects: true }).map((p) => (
+        {t(remoteReminders ? 'notifications.explainer.textWeb' : 'notifications.explainer.text', { returnObjects: true }).map((p) => (
           <p key={p}>{p}</p>
         ))}
       </Dialog>

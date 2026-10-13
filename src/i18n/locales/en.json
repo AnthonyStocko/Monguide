@@ -723,6 +723,14 @@
         "Data sent: destination city and country, dates, number of travelers, travel mode, profile and meal preferences, names, categories and opening hours of the public places of the itinerary, distances, chance of rain and your wishes. Never an address (including your accommodation’s), coordinates, e-mail, or the title or note of your personal stops.",
         "Purpose: improving your itinerary. Our logs keep neither the text sent nor the answer; a daily counter, with no content, limits the number of reviews."
       ]
+    },
+    "push": {
+      "title": "Reminders in the web version",
+      "text": [
+        "In the web version, if you turn reminders on, your browser creates a notification subscription. Our servers store that subscription (a technical address supplied by your browser’s notification service: Apple, Google, Mozilla or Microsoft), a random device identifier, the language and, if you are signed in, the link to your account.",
+        "They also store the reminders to send: time, text and link to the itinerary. The text contains the trip title and the names of public places, never an address or the title of your personal stops. The message is encrypted: the browser’s notification service cannot read it.",
+        "Reminders are deleted 7 days after they are sent; the subscription is deleted after 90 days without use, or at the first delivery attempt after you withdraw permission. The Android app is not concerned: its reminders stay on the phone."
+      ]
     }
   },
   "tracking": {
@@ -871,7 +879,12 @@
       ],
       "allow": "Turn on reminders",
       "later": "Later",
-      "exactTitle": "Reminders on time"
+      "exactTitle": "Reminders on time",
+      "textWeb": [
+        "Mon guide can send you, the evening before, the next day’s programme with the suggested departure time, and a reminder one hour before each stop.",
+        "On the web, reminders are sent by our server at the scheduled time: they need a connection. Their text never contains an address or the title of your personal stops.",
+        "You can change your mind at any time in Settings."
+      ]
     },
     "settings": {
       "title": "Reminders",
@@ -895,7 +908,18 @@
         "Some manufacturers (Xiaomi, Huawei, Oppo, Samsung…) restrict background apps to save battery, which can delay or block reminders.",
         "To avoid this: phone Settings > Battery (or Apps > Mon guide > Battery), choose “Unrestricted” or “Not optimised”, and allow auto-start if the setting exists.",
         "Reopening Mon guide reschedules missing reminders."
-      ]
+      ],
+      "web": {
+        "prompt": "Reminders are not turned on. Mon guide can send you the next day’s programme and a reminder before each stop: they are sent by our server at the scheduled time, with no address and no title of your personal stops.",
+        "denied": "Notifications are blocked: no reminder will be shown. To allow them, open this site’s settings in your browser.",
+        "needsInstall": "Reminders are available once Mon guide has been added to your home screen.",
+        "showHelp": "See how"
+      }
+    },
+    "confidential": {
+      "personalTitle": "In 1 h: your personal stop",
+      "personalStep": "Personal stop",
+      "departure": "Suggested departure at {{time}}"
     }
   },
   "export": {

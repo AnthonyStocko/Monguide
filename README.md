@@ -115,7 +115,7 @@ de logique métier.
   | `lifecycle` | `@capacitor/app` (`appStateChange`) | événement `visibilitychange` |
   | `network` | `@capacitor/network` | `navigator.onLine`, événements `online`/`offline` |
   | `directions` (« Itinéraire ») | lien `geo:` | Plans (`maps.apple.com`) sur iPhone, iPad et Mac ; Google Maps ailleurs |
-  | `notifications` | `@capacitor/local-notifications` | indisponibles pour l'instant |
+  | `notifications` | `@capacitor/local-notifications` (rappels programmés sur le téléphone) | Web Push : abonnement de l'appareil, rappels envoyés par le serveur |
   | `install` | sans objet (toujours installée) | `beforeinstallprompt`, mode `standalone`, `navigator.storage.persist()` |
   | `appUpdate` | sans objet (Play Store) | service worker (`virtual:pwa-register`) |
 
@@ -166,6 +166,39 @@ de logique métier.
     vers Google Play sur Android, écran en trois étapes sur iPhone (Safari),
     au plus une fois par semaine et refusable. Rien dans l'application
     installée.
+- **Rappels (Web Push)** : un navigateur ne sait pas programmer une
+  notification. Sur le web, l'application envoie au serveur la liste des
+  rappels attendus de chaque séjour (fonction `push-schedule`), et le
+  serveur les envoie à l'heure prévue (`push-send`, chaque minute par
+  pg_cron). Sur Android, rien ne change : notifications locales.
+  - Clés VAPID, à générer **une seule fois** :
+
+    ```
+    npx web-push generate-vapid-keys
+    ```
+
+    La clé **publique** va dans `VITE_VAPID_PUBLIC_KEY` (`.env` en local,
+    secret GitHub pour `deploy-web.yml`). La clé **privée** va uniquement
+    dans les secrets Supabase, jamais dans le dépôt, GitHub ou l'application :
+
+    ```
+    npx supabase secrets set VAPID_PUBLIC_KEY=<clé publique> VAPID_PRIVATE_KEY=<clé privée> VAPID_SUBJECT=mailto:<adresse de contact>
+    ```
+
+    (ou tableau de bord Supabase > Edge Functions > Secrets). Changer de clés
+    invalide tous les abonnements existants.
+  - Tâche planifiée : elle réutilise les secrets Vault `monguide_project_url`
+    et `monguide_service_role_key` (voir « Mise en place de Supabase »).
+  - Envoi : chiffrement et signature écrits avec l'API Web Crypto
+    (`supabase/functions/_shared/push/webPush.js`), sans bibliothèque côté
+    serveur ; les tests les vérifient contre la bibliothèque de référence
+    `web-push` (dépendance de développement).
+  - Permission demandée seulement à l'appui sur « Activer les rappels »,
+    après l'écran d'explication. Sur iPhone, les rappels ne sont proposés que
+    dans l'application ajoutée à l'écran d'accueil.
+  - Confidentialité : le texte envoyé ne contient ni adresse ni titre d'étape
+    personnelle ; rappels supprimés 7 jours après l'envoi, abonnements après
+    90 jours sans utilisation ou dès qu'ils sont révoqués.
 - **Mise en page** : sur le web, l'application reste une colonne centrée de
   480 px au plus, sur fond sable, avec le logo à gauche au-delà de 1024 px
   (`data-target="web"` sur `<html>`, voir `src/index.css`).

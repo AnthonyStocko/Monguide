@@ -114,3 +114,60 @@ describe('mise à jour (web)', () => {
     await expect(update.applyUpdate()).resolves.toBeUndefined();
   });
 });
+
+describe('rappels (web)', () => {
+  const KEY = 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM';
+
+  /** Charge l'adaptateur dans un faux navigateur compatible Web Push. */
+  async function load({ permission = 'default', existing = null } = {}) {
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', KEY);
+    const subscription = { toJSON: () => ({ endpoint: 'https://fcm.googleapis.com/fcm/send/abc', keys: { p256dh: 'p', auth: 'a' } }) };
+    const pushManager = { getSubscription: vi.fn(async () => existing && subscription), subscribe: vi.fn(async () => subscription) };
+    const serviceWorker = { ...eventTarget(), removeEventListener: vi.fn(), getRegistration: async () => ({}), ready: Promise.resolve({ pushManager }) };
+    const notification = { permission, requestPermission: vi.fn(async () => 'granted') };
+    vi.stubGlobal('Notification', notification);
+    vi.stubGlobal('PushManager', function PushManager() {});
+    vi.stubGlobal('navigator', { serviceWorker });
+    return { pushManager, serviceWorker, notification, adapter: await import('./notifications.web.js') };
+  }
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('permission jamais demandée au chargement : seulement par requestPermissions', async () => {
+    const { notification, adapter } = await load();
+    await expect(adapter.LocalNotifications.checkPermissions()).resolves.toEqual({ display: 'prompt' });
+    expect(notification.requestPermission).not.toHaveBeenCalled();
+    await expect(adapter.remotePush.getSubscription()).resolves.toBeNull();
+    await expect(adapter.LocalNotifications.requestPermissions()).resolves.toEqual({ display: 'granted' });
+    expect(notification.requestPermission).toHaveBeenCalledTimes(1);
+  });
+
+  it('permission accordée : abonnement créé avec la clé publique du serveur, puis réutilisé', async () => {
+    const created = await load({ permission: 'granted' });
+    await expect(created.adapter.remotePush.getSubscription()).resolves.toEqual({ endpoint: 'https://fcm.googleapis.com/fcm/send/abc', keys: { p256dh: 'p', auth: 'a' } });
+    const options = created.pushManager.subscribe.mock.calls[0][0];
+    expect(options.userVisibleOnly).toBe(true);
+    expect(options.applicationServerKey).toHaveLength(65);
+    vi.resetModules();
+    const reused = await load({ permission: 'granted', existing: true });
+    await reused.adapter.remotePush.getSubscription();
+    expect(reused.pushManager.subscribe).not.toHaveBeenCalled();
+  });
+
+  it('sans clé VAPID configurée : rappels indisponibles', async () => {
+    const { adapter } = await load({ permission: 'granted' });
+    vi.resetModules();
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', '');
+    const unconfigured = await import('./notifications.web.js');
+    await expect(unconfigured.LocalNotifications.checkPermissions()).resolves.toEqual({ display: 'unavailable' });
+    await expect(adapter.LocalNotifications.checkPermissions()).resolves.toEqual({ display: 'granted' });
+  });
+
+  it('appui sur une notification, application ouverte : le lien du service worker est transmis', async () => {
+    const { serviceWorker, adapter } = await load({ permission: 'granted' });
+    const listener = vi.fn();
+    await adapter.LocalNotifications.addListener('localNotificationActionPerformed', listener);
+    serviceWorker.emit('message', { data: { type: 'autre' } });
+    serviceWorker.emit('message', { data: { type: 'monguide:open-url', url: '/planning/t1?day=2026-10-20&step=s1' } });
+    expect(listener.mock.calls).toEqual([[{ notification: { extra: { url: '/planning/t1?day=2026-10-20&step=s1' } } }]]);
+  });
+});

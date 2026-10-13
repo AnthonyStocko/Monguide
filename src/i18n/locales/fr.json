@@ -723,6 +723,14 @@
         "Données transmises : ville et pays de destination, dates, nombre de voyageurs, mode de déplacement, profil et préférences de repas, noms, catégories et horaires des lieux publics du planning, distances, probabilité de pluie et vos envies. Jamais d’adresse (ni celle de votre hébergement), de coordonnées, d’e-mail, ni le titre ou la note de vos étapes personnelles.",
         "Finalité : améliorer votre planning. Nos journaux ne conservent ni le texte envoyé ni la réponse ; un compteur quotidien, sans contenu, limite le nombre de relectures."
       ]
+    },
+    "push": {
+      "title": "Rappels de la version web",
+      "text": [
+        "Dans la version web, si vous activez les rappels, votre navigateur crée un abonnement aux notifications. Nos serveurs enregistrent cet abonnement (une adresse technique fournie par le service de notifications de votre navigateur : Apple, Google, Mozilla ou Microsoft), un identifiant aléatoire de l’appareil, la langue et, si vous êtes connecté, le lien avec votre compte.",
+        "Ils enregistrent aussi les rappels à envoyer : heure, texte et lien vers le planning. Ce texte contient le titre du séjour et le nom des lieux publics, jamais d’adresse ni le titre de vos étapes personnelles. Le message est chiffré : le service de notifications du navigateur ne peut pas le lire.",
+        "Les rappels sont supprimés 7 jours après leur envoi ; l’abonnement l’est après 90 jours sans utilisation, ou à la première tentative d’envoi après le retrait de l’autorisation. L’application Android n’est pas concernée : ses rappels restent sur le téléphone."
+      ]
     }
   },
   "tracking": {
@@ -871,7 +879,12 @@
       ],
       "allow": "Activer les rappels",
       "later": "Plus tard",
-      "exactTitle": "Rappels à l’heure exacte"
+      "exactTitle": "Rappels à l’heure exacte",
+      "textWeb": [
+        "Mon guide peut vous envoyer, la veille au soir, le programme du lendemain avec l’heure de départ conseillée, et un rappel une heure avant chaque étape.",
+        "Sur le web, les rappels sont envoyés par notre serveur à l’heure prévue : ils demandent une connexion. Leur texte ne contient ni adresse, ni titre de vos étapes personnelles.",
+        "Vous pourrez changer d’avis à tout moment dans les réglages."
+      ]
     },
     "settings": {
       "title": "Rappels",
@@ -895,7 +908,18 @@
         "Certains fabricants (Xiaomi, Huawei, Oppo, Samsung…) limitent les applications en arrière-plan pour économiser la batterie, ce qui peut retarder ou bloquer les rappels.",
         "Pour l’éviter : Paramètres du téléphone > Batterie (ou Applications > Mon guide > Batterie), choisissez « Aucune restriction » ou « Non optimisée », et autorisez le démarrage automatique si le réglage existe.",
         "Rouvrir Mon guide reprogramme les rappels manquants."
-      ]
+      ],
+      "web": {
+        "prompt": "Les rappels ne sont pas activés. Mon guide peut vous envoyer le programme du lendemain et un rappel avant chaque étape : ils sont envoyés par notre serveur à l’heure prévue, sans adresse ni titre de vos étapes personnelles.",
+        "denied": "Les notifications sont refusées : aucun rappel ne sera affiché. Pour les autoriser, ouvrez les réglages de ce site dans votre navigateur.",
+        "needsInstall": "Les rappels sont disponibles une fois Mon guide ajouté à l’écran d’accueil.",
+        "showHelp": "Voir comment faire"
+      }
+    },
+    "confidential": {
+      "personalTitle": "Dans 1 h : votre étape personnelle",
+      "personalStep": "Étape personnelle",
+      "departure": "Départ conseillé à {{time}}"
     }
   },
   "export": {

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite';
@@ -19,6 +20,11 @@ const domainDir = fileURLToPath(
   new URL('./supabase/functions/_shared/domain', import.meta.url)
 );
 
+// Rappels de la version web : script du service worker (push, appui sur une notification),
+// publié sous un nom qui change avec son contenu pour que les navigateurs le mettent à jour.
+const pushWorker = readFileSync(new URL('./scripts/web/push-sw.js', import.meta.url));
+const pushWorkerFile = `push-sw-${createHash('sha256').update(pushWorker).digest('hex').slice(0, 8)}.js`;
+
 /**
  * Version web (npm run build:web, mode "web") : fichiers d'hébergement
  * _headers et _redirects et icônes (assets/web/) ajoutés à dist-web/, balises
@@ -33,6 +39,7 @@ function webHosting(sources) {
       for (const name of WEB_ICONS) {
         this.emitFile({ type: 'asset', fileName: `icons/${name}`, source: readFileSync(new URL(`./assets/web/${name}`, import.meta.url)) });
       }
+      this.emitFile({ type: 'asset', fileName: pushWorkerFile, source: pushWorker });
       this.emitFile({ type: 'asset', fileName: '_headers', source: headersFile(sources) });
       this.emitFile({ type: 'asset', fileName: '_redirects', source: REDIRECTS_FILE });
     }
@@ -59,7 +66,7 @@ export default defineConfig(({ mode }) => {
         injectRegister: false,
         includeManifestIcons: false,
         manifest: WEB_MANIFEST,
-        workbox: workboxOptions({ tileUrl: TILE_URL })
+        workbox: workboxOptions({ tileUrl: TILE_URL, importScripts: [`/${pushWorkerFile}`] })
       })
     ],
     define: {

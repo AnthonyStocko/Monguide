@@ -6,6 +6,9 @@
 #   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY : les mêmes que pour l'application
 #   Android (URL du projet Supabase et clé publique). Aucune autre clé dans
 #   l'application.
+#   VITE_VAPID_PUBLIC_KEY : clé PUBLIQUE VAPID des rappels (Web Push). Sans elle, la
+#   version web est publiée sans rappels. La clé privée n'est jamais dans GitHub :
+#   uniquement dans les secrets Supabase.
 #   CLOUDFLARE_API_TOKEN : jeton Cloudflare limité à « Cloudflare Pages : Edit ».
 #   CLOUDFLARE_ACCOUNT_ID : identifiant du compte Cloudflare.
 # Variable GitHub (onglet Variables) :
@@ -62,10 +65,14 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
         run: |
           if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
             echo "::error::Secrets GitHub VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY manquants (Settings > Secrets and variables > Actions)."
             exit 1
+          fi
+          if [ -z "$VITE_VAPID_PUBLIC_KEY" ]; then
+            echo "::warning::Secret VITE_VAPID_PUBLIC_KEY absent : version web publiée sans rappels."
           fi
           npm run build:web
           test -f dist-web/_headers && test -f dist-web/_redirects

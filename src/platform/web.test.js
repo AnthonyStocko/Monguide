@@ -3,7 +3,7 @@ import { getCurrentPosition } from './geolocation.web.js';
 import { hapticsAvailable, impactLight, notifyError, notifySuccess } from './haptics.web.js';
 import { onAppActive } from './lifecycle.web.js';
 import { getConnectionType, onConnectionChange } from './network.web.js';
-import { LocalNotifications } from './notifications.web.js';
+import { LocalNotifications, remotePush } from './notifications.web.js';
 import { shareFile } from './shareFile.web.js';
 
 /** Cible d'événements minimale (document, window). */
@@ -86,8 +86,11 @@ describe('réseau (web)', () => {
 });
 
 describe('notifications (web)', () => {
-  it('indisponibles : permission en erreur, rien en attente, rien de programmé', async () => {
-    await expect(LocalNotifications.checkPermissions()).rejects.toThrow('unavailable');
+  it('navigateur sans Web Push : indisponibles, rien en attente, rien de programmé', async () => {
+    vi.stubGlobal('navigator', {});
+    await expect(LocalNotifications.checkPermissions()).resolves.toEqual({ display: 'unavailable' });
+    await expect(LocalNotifications.requestPermissions()).resolves.toEqual({ display: 'unavailable' });
+    await expect(remotePush.getSubscription()).resolves.toBeNull();
     await expect(LocalNotifications.getPending()).resolves.toEqual({ notifications: [] });
     await expect(LocalNotifications.schedule({ notifications: [{ id: 1 }] })).resolves.toBeUndefined();
     const handle = await LocalNotifications.addListener('localNotificationActionPerformed', () => {});

@@ -47,6 +47,11 @@ describe('service worker', () => {
     expect(cached('https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/X.jpg/500px-X.jpg')).toBe(false);
   });
 
+  it('charge le script des rappels dans le service worker', () => {
+    expect(options.importScripts).toEqual([]);
+    expect(workboxOptions({ tileUrl: TILE_URL, importScripts: ['/push-sw-abc.js'] }).importScripts).toEqual(['/push-sw-abc.js']);
+  });
+
   it('nouvelle version : attend l’accord de l’utilisateur', () => {
     expect(options.skipWaiting).toBe(false);
     expect(options.clientsClaim).toBe(false);

@@ -53,9 +53,11 @@ export const TILE_CACHE = { cacheName: 'map-tiles', maxEntries: 200, maxAgeSecon
  *   tuiles OpenStreetMap).
  * - Nouvelle version : le service worker attend l'accord de l'utilisateur
  *   (bandeau « Mettre à jour »), jamais de rechargement forcé.
- * @param {{ tileUrl: string }} options
+ * - Rappels (Web Push) : affichage et appui sur une notification, dans un script
+ *   chargé par le service worker (scripts/web/push-sw.js).
+ * @param {{ tileUrl: string, importScripts?: string[] }} options importScripts : scripts ajoutés au service worker
  */
-export function workboxOptions({ tileUrl }) {
+export function workboxOptions({ tileUrl, importScripts = [] }) {
   const tileOrigin = new URL(tileUrl.replace(/[{}]/g, '')).origin;
   return {
     globPatterns: ['**/*.{js,css,html,svg,png,woff2,ttf}'],
@@ -65,6 +67,7 @@ export function workboxOptions({ tileUrl }) {
     navigateFallback: '/index.html',
     cleanupOutdatedCaches: true,
     skipWaiting: false,
+    importScripts,
     clientsClaim: false,
     runtimeCaching: [
       {
