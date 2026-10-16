@@ -356,6 +356,83 @@ export const tripsRemote = {
   }
 };
 
+/**
+ * Partage des séjours (Prompt 8.0, Bloc C) : invitations par les fonctions
+ * trip-invite-link, trip-invite-email, trip-join, trip-invites-claim ;
+ * participants, invitations (owner) et profils lus directement (RLS).
+ */
+export const sharingRemote = {
+  /** @returns {Promise<{ inviteId: string, url: string, expiresAt: string }>} */
+  async createLink(tripId) {
+    return (await callFunction('trip-invite-link', { method: 'POST', body: { tripId } })).data;
+  },
+  async inviteEmail(tripId, email) {
+    return (await callFunction('trip-invite-email', { method: 'POST', body: { tripId, email } })).data;
+  },
+  async previewJoin(token) {
+    return (await callFunction('trip-join', { method: 'POST', body: { token, preview: true } })).data;
+  },
+  /** @returns {Promise<{ tripId: string, joined: boolean }>} */
+  async join(token) {
+    return (await callFunction('trip-join', { method: 'POST', body: { token } })).data;
+  },
+  /** @returns {Promise<{ added: { tripId: string, title: string, ownerName: string | null }[] }>} */
+  async claimInvites() {
+    return (await callFunction('trip-invites-claim', { method: 'POST', body: {} })).data;
+  },
+  /** Participants d'un séjour, avec prénom et couleur (profil absent : null). */
+  async members(tripId) {
+    ensureOnline();
+    const timeout = getRules().api.timeoutMs;
+    const { data, error } = await withTimeout(supabase.from('trip_members').select('user_id, role, joined_at').eq('trip_id', tripId).order('joined_at'), timeout);
+    if (error) throw new ApiError('server');
+    const ids = data.map((m) => m.user_id);
+    const { data: profiles, error: profileError } = ids.length
+      ? await withTimeout(supabase.from('profiles').select('user_id, display_name, avatar_color').in('user_id', ids), timeout)
+      : { data: [], error: null };
+    if (profileError) throw new ApiError('server');
+    const byId = new Map(profiles.map((p) => [p.user_id, p]));
+    return data.map((m) => ({ ...m, profile: byId.get(m.user_id) ?? null }));
+  },
+  /** Invitations d'un séjour (owner seulement ; empreinte jamais lue). */
+  async invites(tripId) {
+    ensureOnline();
+    const { data, error } = await withTimeout(
+      supabase.from('trip_invites').select('id, kind, email_normalized, expires_at, revoked_at, accepted_at, created_at').eq('trip_id', tripId).order('created_at', { ascending: false }),
+      getRules().api.timeoutMs
+    );
+    if (error) throw new ApiError('server');
+    return data;
+  },
+  async revokeInvite(inviteId) {
+    ensureOnline();
+    const { error } = await withTimeout(supabase.from('trip_invites').update({ revoked_at: new Date().toISOString() }).eq('id', inviteId), getRules().api.timeoutMs);
+    if (error) throw new ApiError('server');
+  },
+  /** Retire un participant (owner) ou quitte le séjour (sa propre ligne). @returns {Promise<boolean>} */
+  async removeMember(tripId, userId) {
+    ensureOnline();
+    const { data, error } = await withTimeout(supabase.from('trip_members').delete().eq('trip_id', tripId).eq('user_id', userId).select('user_id'), getRules().api.timeoutMs);
+    if (error) throw new ApiError('server');
+    return data.length > 0;
+  },
+  /** Profil de l'utilisateur connecté (null si jamais renseigné). */
+  async myProfile(userId) {
+    ensureOnline();
+    const { data, error } = await withTimeout(supabase.from('profiles').select('display_name, avatar_color').eq('user_id', userId).maybeSingle(), getRules().api.timeoutMs);
+    if (error) throw new ApiError('server');
+    return data;
+  },
+  async saveProfile(userId, { displayName, avatarColor }) {
+    ensureOnline();
+    const { error } = await withTimeout(
+      supabase.from('profiles').upsert({ user_id: userId, display_name: displayName, avatar_color: avatarColor }, { onConflict: 'user_id' }),
+      getRules().api.timeoutMs
+    );
+    if (error) throw new ApiError('server');
+  }
+};
+
 /** Suppression du compte et de tous ses séjours (fonction delete-account). */
 export async function deleteAccount() {
   await callFunction('delete-account', { method: 'POST', body: {} });

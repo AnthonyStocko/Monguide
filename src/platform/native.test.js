@@ -32,7 +32,8 @@ vi.mock('@capacitor/haptics', () => ({
 vi.mock('@capacitor/geolocation', () => ({ Geolocation: { getCurrentPosition: plugins.getPosition } }));
 vi.mock('@capacitor/filesystem', () => ({ Directory: { Cache: 'CACHE' }, Filesystem: { writeFile: plugins.writeFile } }));
 vi.mock('@capacitor/share', () => ({ Share: { share: plugins.share } }));
-vi.mock('@capacitor/app', () => ({ App: { addListener } }));
+const launch = { url: 'https://app.example.org/rejoindre/jeton' };
+vi.mock('@capacitor/app', () => ({ App: { addListener, getLaunchUrl: async () => launch } }));
 vi.mock('@capacitor/network', () => ({ Network: { getStatus: async () => ({ connectionType: 'wifi' }), addListener } }));
 
 const preferences = await import('./preferences.native.js');
@@ -95,13 +96,18 @@ describe('implémentations natives (plugins Capacitor)', () => {
     await vi.waitFor(() => expect(plugins.removed).toEqual(['appStateChange']));
   });
 
-  it('ouverture par un lien : adresse transmise, puis désabonnement', async () => {
+  it('ouverture par un lien : adresse de lancement (une seule fois), puis liens suivants, puis désabonnement', async () => {
     const listener = vi.fn();
     const stop = onAppUrlOpen(listener);
+    await vi.waitFor(() => expect(listener).toHaveBeenCalledWith('https://app.example.org/rejoindre/jeton'));
     plugins.listeners.get('appUrlOpen')({ url: 'https://app.example.org/planning/t1' });
     expect(listener).toHaveBeenCalledWith('https://app.example.org/planning/t1');
+    const again = vi.fn();
+    onAppUrlOpen(again)();
+    await Promise.resolve();
+    expect(again).not.toHaveBeenCalledWith('https://app.example.org/rejoindre/jeton');
     stop();
-    await vi.waitFor(() => expect(plugins.removed).toEqual(['appUrlOpen']));
+    await vi.waitFor(() => expect(plugins.removed).toEqual(['appUrlOpen', 'appUrlOpen']));
   });
 
   it('réseau : type de connexion du plugin et suivi des changements', async () => {

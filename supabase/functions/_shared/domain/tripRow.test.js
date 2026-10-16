@@ -52,7 +52,9 @@ describe('tripToRow / rowToTrip', () => {
 
   it('reconstruit exactement le séjour', () => {
     const row = { ...tripToRow(trip), user_id: 'u', updated_at: '2026-09-24T11:00:00+00:00' };
-    expect(rowToTrip(row)).toEqual(trip);
+    // ownerId : owner lu dans user_id, jamais renvoyé dans params.
+    expect(rowToTrip(row)).toEqual({ ...trip, ownerId: 'u' });
+    expect(tripToRow(rowToTrip(row)).params).not.toHaveProperty('ownerId');
   });
 
   it('n\'envoie aucun contenu pour un séjour supprimé', () => {

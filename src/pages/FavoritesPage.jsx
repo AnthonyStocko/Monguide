@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CirclePlus, CloudCheck, Trash2, UserRound } from 'lucide-react';
+import { CirclePlus, CloudCheck, LogOut, Trash2, UserRound } from 'lucide-react';
 import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -12,6 +12,7 @@ import EmptyState from '../components/ui/EmptyState.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 import { hapticConfirm } from '../services/haptics.js';
+import { leaveTrip } from '../services/sharing.js';
 import { deleteTrip, listTrips, onTripsChanged } from '../services/tripsStore.js';
 import { cascadeProps, useFirstShow, useMotionAllowed } from '../ui/motion.js';
 
@@ -33,8 +34,18 @@ export default function FavoritesPage() {
     return onTripsChanged(load);
   }, []);
 
+  // Séjour d'un autre owner (séjour partagé) : on le quitte, on ne le supprime pas.
+  const notMine = (trip) => Boolean(trip.ownerId && session?.user?.id && trip.ownerId !== session.user.id);
+  const [failed, setFailed] = useState(false);
   const remove = async () => {
-    await deleteTrip(confirm.id);
+    setFailed(false);
+    try {
+      if (notMine(confirm)) await leaveTrip(confirm.id);
+      else await deleteTrip(confirm.id);
+    } catch {
+      setFailed(true);
+      return;
+    }
     hapticConfirm();
     setConfirm(null);
     load();
@@ -82,29 +93,43 @@ export default function FavoritesPage() {
         {trips?.map((trip, i) => (
           <m.li key={trip.id} {...cascadeProps(i, animate)}>
             <TripImageCard trip={trip} showStatus headingLevel={3}>
-              <Button variant="secondary" icon={Trash2} onClick={() => setConfirm(trip)} aria-label={t('trips.deleteNamed', { name: trip.title })}>
-                {t('trips.delete')}
-              </Button>
+              {notMine(trip) ? (
+                <Button variant="secondary" icon={LogOut} onClick={() => setConfirm(trip)} aria-label={t('trips.leaveNamed', { name: trip.title })}>
+                  {t('sharing.leave')}
+                </Button>
+              ) : (
+                <Button variant="secondary" icon={Trash2} onClick={() => setConfirm(trip)} aria-label={t('trips.deleteNamed', { name: trip.title })}>
+                  {t('trips.delete')}
+                </Button>
+              )}
             </TripImageCard>
           </m.li>
         ))}
       </ul>
       {confirm && (
         <Dialog
-          title={t('trips.confirmTitle')}
-          onClose={() => setConfirm(null)}
+          title={notMine(confirm) ? t('sharing.confirm.leave.title') : t('trips.confirmTitle')}
+          onClose={() => {
+            setConfirm(null);
+            setFailed(false);
+          }}
           footer={
             <>
               <Button variant="secondary" onClick={() => setConfirm(null)}>
                 {t('common.cancel')}
               </Button>
-              <Button icon={Trash2} onClick={remove}>
-                {t('trips.confirm')}
+              <Button icon={notMine(confirm) ? LogOut : Trash2} onClick={remove}>
+                {notMine(confirm) ? t('sharing.confirm.leave.action') : t('trips.confirm')}
               </Button>
             </>
           }
         >
-          <p>{t('trips.confirmText', { name: confirm.title })}</p>
+          <p>{notMine(confirm) ? t('sharing.confirm.leave.text', { title: confirm.title }) : t('trips.confirmText', { name: confirm.title })}</p>
+          {failed && (
+            <p role="alert" className="mt-2 text-danger-on-soft">
+              {t('sharing.errors.leaveOffline')}
+            </p>
+          )}
         </Dialog>
       )}
     </Page>

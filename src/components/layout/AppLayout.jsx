@@ -4,6 +4,7 @@ import { Outlet, useLocation } from 'react-router';
 import { isNative } from '../../platform/target.js';
 import { EASE, useMotionAllowed } from '../../ui/motion.js';
 import InstallCoach from '../install/InstallCoach.jsx';
+import JoinedNotice from '../sharing/JoinedNotice.jsx';
 import BottomNav from './BottomNav.jsx';
 import TopBar from './TopBar.jsx';
 
@@ -28,6 +29,7 @@ export default function AppLayout() {
     <div className="flex min-h-dvh flex-col">
       <TopBar />
       <main className="flex flex-1 flex-col pb-nav">
+        <JoinedNotice />
         {/* Changement d'onglet : fondu et léger glissement (200 ms). */}
         <m.div
           key={section}

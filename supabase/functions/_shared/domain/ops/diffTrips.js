@@ -57,7 +57,7 @@ export function diffTrips(before, after, { makeId = () => crypto.randomUUID() } 
   return { ops, unsupported };
 }
 
-const IGNORED_TRIP_KEYS = new Set(['id', 'title', 'days', 'lodgings', 'candidates', 'review', 'hero', 'updatedAt', 'createdAt', 'version', 'deleted']);
+const IGNORED_TRIP_KEYS = new Set(['id', 'title', 'days', 'lodgings', 'candidates', 'review', 'hero', 'updatedAt', 'createdAt', 'version', 'ownerId', 'deleted']);
 
 function diffLodgings(base, after, emit) {
   const next = after.lodgings ?? [];

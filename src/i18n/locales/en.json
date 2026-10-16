@@ -50,6 +50,99 @@
     "tripLength_one": "{{count}} day · {{month}}",
     "tripLength_other": "{{count}} days · {{month}}"
   },
+  "sharing": {
+    "title": "Participants",
+    "members_one": "{{count}} participant",
+    "members_other": "{{count}} participants",
+    "you": "(you)",
+    "roles": {
+      "owner": "Organiser",
+      "editor": "Participant"
+    },
+    "remove": "Remove",
+    "leave": "Leave this trip",
+    "linkTitle": "Invitation link",
+    "linkHelp": "Anyone with the link can join the trip and edit it, for 7 days. 10 participants at most.",
+    "linkActive": "Link active until {{date}}",
+    "linkOtherDevice": "This link was created on another device: create a new link to copy or share it here.",
+    "createLink": "Create an invitation link",
+    "newLink": "Create a new link",
+    "revoke": "Disable the link",
+    "copy": "Copy",
+    "share": "Share",
+    "copied": "Link copied.",
+    "copyFailed": "The link could not be copied.",
+    "shareTitle": "Mon guide invitation",
+    "inviteText": "Join me to plan our trip to {{city}} on Mon guide: {{url}}",
+    "mailSubject": "Our trip to {{city}} on Mon guide",
+    "emailTitle": "Invite by e-mail",
+    "emailHelp": "The person joins the trip as soon as they open Mon guide with this address (existing account or created later). No e-mail is sent automatically.",
+    "invite": "Invite",
+    "emailRecorded": "Invitation saved.",
+    "sendLinkToPerson": "Send the link to this person",
+    "pendingUntil": "Pending, until {{date}}",
+    "cancelInvite": "Cancel",
+    "offline": "Connect to the internet to manage participants.",
+    "signInFirst": "Sign in to share this trip.",
+    "notSynced": "This trip is not saved to your account yet. Try again once syncing is done.",
+    "addedBy": "{{name}} added you to the trip “{{title}}”",
+    "added": "You were added to the trip “{{title}}”",
+    "openTrip": "View the trip",
+    "confirm": {
+      "remove": {
+        "title": "Remove this participant?",
+        "text": "{{name}} will no longer have access to the trip “{{title}}”, which will disappear from their devices.",
+        "action": "Remove"
+      },
+      "leave": {
+        "title": "Leave this trip?",
+        "text": "You will no longer have access to the trip “{{title}}”. You will need a new invitation to join it again.",
+        "action": "Leave"
+      },
+      "revoke": {
+        "title": "Disable the link?",
+        "text": "The link will no longer let anyone join the trip. Current participants stay.",
+        "action": "Disable"
+      }
+    },
+    "errors": {
+      "load": "Could not load the participants. Please try again later.",
+      "inviteLimit": "Limit reached: 20 e-mail invitations per day.",
+      "emailInvalid": "Invalid e-mail address.",
+      "leaveOffline": "Could not leave the trip: check your internet connection."
+    }
+  },
+  "profile": {
+    "nameLabel": "Display name",
+    "nameHelp": "Visible to the participants of your shared trips.",
+    "nameInvalid": "Enter a first name of 1 to {{max}} characters.",
+    "save": "Save",
+    "saved": "Saved",
+    "offline": "Internet connection required.",
+    "askTitle": "Your first name",
+    "askText": "It will be shown to the people you invite."
+  },
+  "join": {
+    "title": "Join a trip",
+    "signInIntro": "Sign in to see the invitation and join the trip. You will receive a code by e-mail.",
+    "organizer": "Organised by {{name}}",
+    "memberCount_one": "{{count}} participant",
+    "memberCount_other": "{{count}} participants",
+    "join": "Join this trip",
+    "alreadyMember": "You are already part of this trip.",
+    "openTrip": "Open the trip",
+    "home": "Back to home",
+    "androidApp": "On Android, join the trip from the app:",
+    "playStore": "Mon guide on Google Play",
+    "errors": {
+      "expired": "This invitation link has expired. Ask the trip organiser for a new link.",
+      "revoked": "This invitation link was disabled by the trip organiser.",
+      "full": "This trip is full: 10 participants at most.",
+      "invalid": "This invitation link is not valid. Check that it was copied in full.",
+      "offline": "Connect to the internet to join the trip.",
+      "generic": "The invitation could not be opened. Please try again later."
+    }
+  },
   "changes": {
     "button": "Changes",
     "title": "Changes",
@@ -226,7 +319,9 @@
       "schema": "Response schema",
       "sizeShort": "{{chars}} characters, ≈ {{tokens}} tokens",
       "show": "Show the summary sent (anonymised)"
-    }
+    },
+    "contactEmail": "Contact address",
+    "webApp": "Web version address"
   },
   "categories": {
     "museum": "Museum",
@@ -296,9 +391,7 @@
     },
     "fuel": {
       "failed": "Fuel price temporarily unavailable."
-    },
-    "contactEmail": "Contact address",
-    "webApp": "Web version address"
+    }
   },
   "food": {
     "cuisine": "Cuisine",
@@ -621,6 +714,7 @@
     "open": "Open",
     "delete": "Delete",
     "deleteNamed": "Delete the trip {{name}}",
+    "leaveNamed": "Leave the trip {{name}}",
     "confirmTitle": "Delete this trip?",
     "confirmText": "The trip to {{name}} will be deleted from this phone.",
     "confirm": "Delete"

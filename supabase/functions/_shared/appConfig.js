@@ -12,6 +12,24 @@ export const MIN_APP_VERSION_KEY = 'minAppVersion';
 const DEFAULT_MIN_APP_VERSION = '0.0.0';
 
 /**
+ * Clé réservée de app_config : adresse de la version web (JSON "https://…",
+ * sans barre finale), base des liens d'invitation (…/rejoindre/<jeton>).
+ */
+export const WEB_URL_KEY = 'web_url';
+const RESERVED_KEYS = [MIN_APP_VERSION_KEY, WEB_URL_KEY];
+
+/** Adresse https valide, sans barre finale ; null sinon. */
+export function readWebUrl(value) {
+  if (typeof value !== 'string') return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.pathname === '/' && !url.search && !url.hash ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Configuration effective : règles par défaut de rules.js + surcharges de la
  * table app_config (clé = chemin pointé). Mise en cache 5 minutes
  * (RULES.cacheTtlSec.config) dans api_cache sous la clé "config" ; un
@@ -19,7 +37,7 @@ const DEFAULT_MIN_APP_VERSION = '0.0.0';
  * aussi le pointeur des tuiles OSM en service (osmPointer), relu avec la
  * configuration : places connaît ainsi la date des données sans autre
  * lecture.
- * @returns {Promise<{ minAppVersion: string, rules: typeof RULES, osmPointer: { dataDate: string, manifest: string } | null }>}
+ * @returns {Promise<{ minAppVersion: string, webUrl: string | null, rules: typeof RULES, osmPointer: { dataDate: string, manifest: string } | null }>}
  */
 export function loadAppConfig() {
   return cached('config', {}, RULES.cacheTtlSec.config, async () => {
@@ -30,7 +48,7 @@ export function loadAppConfig() {
     }
 
     const overrides = Object.fromEntries(
-      data.filter((row) => row.key !== MIN_APP_VERSION_KEY).map((row) => [row.key, row.value])
+      data.filter((row) => !RESERVED_KEYS.includes(row.key)).map((row) => [row.key, row.value])
     );
     const { rules, ignored } = mergeRules(RULES, overrides);
     if (ignored.length) log('warn', 'app_config_ignored', { keys: ignored });
@@ -39,6 +57,10 @@ export function loadAppConfig() {
     if (minRow && !isValidVersion(minRow.value)) log('warn', 'app_config_ignored', { keys: [MIN_APP_VERSION_KEY] });
     const minAppVersion = isValidVersion(minRow?.value) ? minRow.value : DEFAULT_MIN_APP_VERSION;
 
-    return { minAppVersion, rules, osmPointer: await readOsmPointer(rules) };
+    const webRow = data.find((row) => row.key === WEB_URL_KEY);
+    const webUrl = readWebUrl(webRow?.value);
+    if (webRow && !webUrl) log('warn', 'app_config_ignored', { keys: [WEB_URL_KEY] });
+
+    return { minAppVersion, webUrl, rules, osmPointer: await readOsmPointer(rules) };
   });
 }

@@ -10,7 +10,16 @@ export function onAppActive(listener) {
   };
 }
 
+let launchHandled = false;
+
 export function onAppUrlOpen(listener) {
+  // Lancement à froid par un lien (lien d'invitation) : adresse de lancement, prise en compte une seule fois.
+  if (!launchHandled) {
+    launchHandled = true;
+    App.getLaunchUrl()
+      .then((launch) => launch?.url && listener(launch.url))
+      .catch(() => {});
+  }
   const handle = App.addListener('appUrlOpen', ({ url }) => listener(url));
   handle.catch(() => {});
   return () => {

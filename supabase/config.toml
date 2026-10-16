@@ -496,3 +496,23 @@ entrypoint = "./functions/push-send/index.js"
 verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/trip-apply-ops/index.js"
+
+[functions.trip-invite-link]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/trip-invite-link/index.js"
+
+[functions.trip-invite-email]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/trip-invite-email/index.js"
+
+[functions.trip-join]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/trip-join/index.js"
+
+[functions.trip-invites-claim]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/trip-invites-claim/index.js"

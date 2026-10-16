@@ -12,7 +12,9 @@ import DebugPage from './pages/DebugPage.jsx';
 import FavoritesPage from './pages/FavoritesPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import IllustrationsDebugPage from './pages/IllustrationsDebugPage.jsx';
+import JoinPage from './pages/JoinPage.jsx';
 import MapPage from './pages/MapPage.jsx';
+import ParticipantsPage from './pages/ParticipantsPage.jsx';
 import PlanningPage from './pages/PlanningPage.jsx';
 import PrivacyPage from './pages/PrivacyPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
@@ -74,6 +76,8 @@ export default function App() {
           <Route path="planning" element={<PlanningPage />} />
           <Route path="planning/:tripId" element={<PlanningPage />} />
           <Route path="planning/:tripId/changes" element={<ChangesPage />} />
+          <Route path="planning/:tripId/participants" element={<ParticipantsPage />} />
+          <Route path="rejoindre/:token" element={<JoinPage />} />
           <Route path="map" element={<MapPage />} />
           <Route path="favorites" element={<FavoritesPage />} />
           <Route path="settings" element={<SettingsPage />} />

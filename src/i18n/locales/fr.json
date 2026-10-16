@@ -50,6 +50,99 @@
     "tripLength_one": "{{count}} jour · {{month}}",
     "tripLength_other": "{{count}} jours · {{month}}"
   },
+  "sharing": {
+    "title": "Participants",
+    "members_one": "{{count}} participant",
+    "members_other": "{{count}} participants",
+    "you": "(vous)",
+    "roles": {
+      "owner": "Organisateur",
+      "editor": "Participant"
+    },
+    "remove": "Retirer",
+    "leave": "Quitter ce séjour",
+    "linkTitle": "Lien d’invitation",
+    "linkHelp": "Toute personne qui a le lien peut rejoindre le séjour et le modifier, pendant 7 jours. 10 participants au plus.",
+    "linkActive": "Lien actif jusqu’au {{date}}",
+    "linkOtherDevice": "Ce lien a été créé sur un autre appareil : créez un nouveau lien pour le copier ou le partager ici.",
+    "createLink": "Créer un lien d’invitation",
+    "newLink": "Créer un nouveau lien",
+    "revoke": "Désactiver le lien",
+    "copy": "Copier",
+    "share": "Partager",
+    "copied": "Lien copié.",
+    "copyFailed": "Le lien n’a pas pu être copié.",
+    "shareTitle": "Invitation Mon guide",
+    "inviteText": "Je t'invite à préparer notre séjour à {{city}} sur Mon guide : {{url}}",
+    "mailSubject": "Notre séjour à {{city}} sur Mon guide",
+    "emailTitle": "Inviter par e-mail",
+    "emailHelp": "La personne rejoint le séjour dès qu’elle ouvre Mon guide avec cette adresse (compte existant ou créé ensuite). Aucun e-mail n’est envoyé automatiquement.",
+    "invite": "Inviter",
+    "emailRecorded": "Invitation enregistrée.",
+    "sendLinkToPerson": "Envoyer le lien à cette personne",
+    "pendingUntil": "En attente, jusqu’au {{date}}",
+    "cancelInvite": "Annuler",
+    "offline": "Connectez-vous à internet pour gérer les participants.",
+    "signInFirst": "Connectez-vous pour partager ce séjour.",
+    "notSynced": "Ce séjour n’est pas encore enregistré sur votre compte. Réessayez une fois la synchronisation terminée.",
+    "addedBy": "{{name}} vous a ajouté au séjour « {{title}} »",
+    "added": "Vous avez été ajouté au séjour « {{title}} »",
+    "openTrip": "Voir le séjour",
+    "confirm": {
+      "remove": {
+        "title": "Retirer ce participant ?",
+        "text": "{{name}} n’aura plus accès au séjour « {{title}} », qui disparaîtra de ses appareils.",
+        "action": "Retirer"
+      },
+      "leave": {
+        "title": "Quitter ce séjour ?",
+        "text": "Vous n’aurez plus accès au séjour « {{title}} ». Il faudra une nouvelle invitation pour le rejoindre.",
+        "action": "Quitter"
+      },
+      "revoke": {
+        "title": "Désactiver le lien ?",
+        "text": "Le lien ne permettra plus de rejoindre le séjour. Les participants actuels restent.",
+        "action": "Désactiver"
+      }
+    },
+    "errors": {
+      "load": "Impossible de charger les participants. Réessayez plus tard.",
+      "inviteLimit": "Limite atteinte : 20 invitations par e-mail par jour.",
+      "emailInvalid": "Adresse e-mail invalide.",
+      "leaveOffline": "Impossible de quitter le séjour : vérifiez votre connexion internet."
+    }
+  },
+  "profile": {
+    "nameLabel": "Prénom affiché",
+    "nameHelp": "Visible par les participants de vos séjours partagés.",
+    "nameInvalid": "Saisissez un prénom de 1 à {{max}} caractères.",
+    "save": "Enregistrer",
+    "saved": "Enregistré",
+    "offline": "Connexion internet nécessaire.",
+    "askTitle": "Votre prénom",
+    "askText": "Il sera affiché aux personnes que vous invitez."
+  },
+  "join": {
+    "title": "Rejoindre un séjour",
+    "signInIntro": "Connectez-vous pour voir l’invitation et rejoindre le séjour. Vous recevrez un code par e-mail.",
+    "organizer": "Organisé par {{name}}",
+    "memberCount_one": "{{count}} participant",
+    "memberCount_other": "{{count}} participants",
+    "join": "Rejoindre ce séjour",
+    "alreadyMember": "Vous participez déjà à ce séjour.",
+    "openTrip": "Ouvrir le séjour",
+    "home": "Retour à l’accueil",
+    "androidApp": "Sur Android, rejoignez le séjour depuis l’application :",
+    "playStore": "Mon guide sur Google Play",
+    "errors": {
+      "expired": "Ce lien d’invitation a expiré. Demandez un nouveau lien à l’organisateur du séjour.",
+      "revoked": "Ce lien d’invitation a été désactivé par l’organisateur du séjour.",
+      "full": "Ce séjour est complet : 10 participants au plus.",
+      "invalid": "Ce lien d’invitation n’est pas valide. Vérifiez qu’il a été copié en entier.",
+      "offline": "Connectez-vous à internet pour rejoindre le séjour.",
+      "generic": "L’invitation n’a pas pu être ouverte. Réessayez plus tard."
+    }
+  },
   "changes": {
     "button": "Modifications",
     "title": "Modifications",
@@ -226,7 +319,9 @@
       "schema": "Schéma de réponse",
       "sizeShort": "{{chars}} caractères, ≈ {{tokens}} jetons",
       "show": "Voir le résumé envoyé (anonymisé)"
-    }
+    },
+    "contactEmail": "Adresse de contact",
+    "webApp": "Adresse de la version web"
   },
   "categories": {
     "museum": "Musée",
@@ -296,9 +391,7 @@
     },
     "fuel": {
       "failed": "Prix du carburant momentanément indisponible."
-    },
-    "contactEmail": "Adresse de contact",
-    "webApp": "Adresse de la version web"
+    }
   },
   "food": {
     "cuisine": "Cuisine",
@@ -621,6 +714,7 @@
     "open": "Ouvrir",
     "delete": "Supprimer",
     "deleteNamed": "Supprimer le séjour {{name}}",
+    "leaveNamed": "Quitter le séjour {{name}}",
     "confirmTitle": "Supprimer ce séjour ?",
     "confirmText": "Le séjour à {{name}} sera supprimé de ce téléphone.",
     "confirm": "Supprimer"

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CirclePlus, FileDown, History, ImageOff } from 'lucide-react';
+import { CirclePlus, FileDown, History, ImageOff, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { applyChanges } from '@domain/applyChanges.js';
@@ -294,6 +294,11 @@ export default function PlanningPage() {
         <Button variant="secondary" icon={FileDown} onClick={() => setDialog({ kind: 'export' })}>
           {t('export.button')}
         </Button>
+        {synced && (
+          <Button variant="secondary" icon={Users} onClick={() => navigate(`/planning/${trip.id}/participants`)}>
+            {t('sharing.title')}
+          </Button>
+        )}
         {shared && (
           <Button variant="secondary" icon={History} onClick={() => navigate(`/planning/${trip.id}/changes`)}>
             {t('changes.button')}

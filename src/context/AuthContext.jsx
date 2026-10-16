@@ -1,5 +1,6 @@
 import { createContext, useEffect, useMemo, useState } from 'react';
 import { authApi } from '../services/api.js';
+import { startInviteClaims } from '../services/sharing.js';
 import { getSyncStatus, initSync, onSyncStatus } from '../services/sync.js';
 
 export const AuthContext = createContext(null);
@@ -21,6 +22,8 @@ export function AuthProvider({ children }) {
     const offAuth = authApi.onChange((s) => setSession(s ?? null));
     const offSync = onSyncStatus(setSyncStatus);
     initSync();
+    // Invitations e-mail : rattachées au compte à l'ouverture et à chaque connexion.
+    startInviteClaims();
     return () => {
       alive = false;
       offAuth();

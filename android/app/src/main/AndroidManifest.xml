@@ -23,6 +23,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Liens d'invitation (Android App Links) : https://monguide.mgapp.workers.dev/rejoindre/<jeton>
+                 ouvre l'application si elle est installée. Vérifié par public/.well-known/assetlinks.json
+                 (empreinte SHA-256 du certificat de signature Google Play). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="monguide.mgapp.workers.dev" android:pathPrefix="/rejoindre/" />
+            </intent-filter>
+
         </activity>
 
         <provider

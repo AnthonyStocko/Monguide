@@ -604,16 +604,6 @@ non-participant), `shares_trip_with(user_id)` ; elles ne renseignent que sur
 l'utilisateur appelant. Tests : `supabase/tests/database/shared_trips.test.sql`
 (pgTAP, job `db-tests` du workflow de déploiement du serveur).
 
-### `delete-account` — suppression du compte
-
-- **Méthode** : `POST`, sans corps ; utilisateur connecté uniquement
-  (`401 unauthorized` en mode invité).
-- **Sortie** : `{ "deleted": true }`. Le compte est supprimé. Chaque séjour
-  dont il était owner passe au participant le plus ancien, ou est supprimé
-  s'il en était le seul participant (déclencheur sur `auth.users`) ; ses
-  entrées d'historique restent, sans auteur.
-- **Erreurs** : codes communs ; `500 internal_error` si la suppression échoue.
-
 ### `trip-apply-ops` — modifications d'un séjour par opérations
 
 Seul chemin d'écriture des séjours pour l'application (Prompt 8.0, Bloc B).
@@ -672,6 +662,62 @@ L'application produit ces opérations par différence entre le séjour avant
 et après l'action (`domain/ops/diffTrips.js`) : chaque action de l'écran
 (réajustement, report, « Annuler »…) devient une suite d'opérations
 atomiques sur des identifiants.
+
+### Inviter et rejoindre (Prompt 8.0, Bloc C)
+
+Utilisateur connecté uniquement (`401 unauthorized` sinon). Adresse des liens
+lue dans `app_config`, clé réservée `web_url` (JSON `"https://…"`, sans
+barre finale) ; absente : `503 not_configured`.
+
+#### `trip-invite-link` — lien d'invitation
+
+- **Entrée** : `{ "tripId" }`. Owner seulement (`403 forbidden` ; non-participant : `404 trip_not_found`).
+- **Sortie** : `{ "inviteId", "url": "<web_url>/rejoindre/<jeton>", "expiresAt" }`.
+  Jeton : 32 octets aléatoires en base64url ; seule son empreinte SHA-256
+  (hexadécimal) est enregistrée (`trip_invites.token_hash`) : l'adresse
+  n'existe en clair que dans cette réponse. Valable 7 jours, utilisable par
+  plusieurs personnes ; le lien actif précédent est désactivé.
+
+#### `trip-invite-email` — invitation réservée à une adresse
+
+- **Entrée** : `{ "tripId", "email" }`. Owner seulement. Adresse normalisée
+  (minuscules, espaces retirés) ; invalide : `400 invalid_input`.
+- **Sortie** : toujours `{ "status": "recorded" }`, que l'adresse ait un
+  compte ou non. Invitation valable 30 jours (renouvelée si elle existe déjà).
+  Aucun e-mail n'est envoyé. Limite : 20 invitations par jour et par
+  utilisateur (`429 invite_limit`).
+
+#### `trip-invites-claim` — rattachement à l'ouverture
+
+- **Entrée** : `{}` ; appelée par l'application au lancement et à chaque connexion.
+- **Sortie** : `{ "added": [{ "tripId", "title", "ownerName" }] }` : séjours
+  dont une invitation e-mail visait l'adresse confirmée du compte (compte
+  existant ou créé depuis) ; l'utilisateur y est maintenant editor. Une
+  invitation n'est rattachée qu'une fois ; séjour complet : elle reste en attente.
+
+#### `trip-join` — rejoindre par lien
+
+- **Entrée** : `{ "token", "preview"?: true }`.
+- **Sortie** : aperçu (`preview`) `{ "tripId", "title", "destination", "startDate", "endDate", "ownerName", "memberCount", "alreadyMember", "full" }` ;
+  sinon `{ "tripId", "joined" }` (`joined: false` : déjà participant, sans effet).
+  Ajout : `trip_add_editor` (verrou du séjour, plafond de 10, historique
+  « a rejoint le séjour »).
+- **Erreurs** : `404 invite_invalid` (jeton inconnu, modifié ou séjour
+  supprimé), `410 invite_revoked`, `410 invite_expired`, `409 trip_full`.
+
+Quitter (editor) et retirer (owner) : suppression directe de la ligne
+`trip_members` (RLS). La personne perd l'accès tout de suite ; le séjour
+disparaît de ses appareils à la synchronisation suivante.
+
+### `delete-account` — suppression du compte
+
+- **Méthode** : `POST`, sans corps ; utilisateur connecté uniquement
+  (`401 unauthorized` en mode invité).
+- **Sortie** : `{ "deleted": true }`. Le compte est supprimé. Chaque séjour
+  dont il était owner passe au participant le plus ancien, ou est supprimé
+  s'il en était le seul participant (déclencheur sur `auth.users`) ; ses
+  entrées d'historique restent, sans auteur.
+- **Erreurs** : codes communs ; `500 internal_error` si la suppression échoue.
 
 ### Rappels de la version web (Web Push)
 
@@ -753,3 +799,4 @@ envoi, abonnements après 90 jours sans nouvelles de l'appareil.
 | 1 | 2026-10-13 | Ajouts compatibles : rappels de la version web, fonctions `push-subscribe`, `push-schedule`, `push-send` ; code `404 not_subscribed`. |
 | 1 | 2026-10-16 | Ajouts compatibles : séjours partagés, Bloc A (tables `profiles`, `trip_members`, `trip_invites`, `trip_changes`, colonne `trips.version`, RLS par participant) ; `Day.id` (schemaVersion 3) dans les séjours de `generate`. |
 | 1 | 2026-10-16 | Ajout compatible : fonction `trip-apply-ops` (modifications par opérations, idempotentes) ; `version` dans les séjours lus. |
+| 1 | 2026-10-16 | Ajouts compatibles : fonctions `trip-invite-link`, `trip-invite-email`, `trip-invites-claim`, `trip-join` ; clé réservée `web_url` de `app_config` ; `ownerId` dans les séjours lus. |
