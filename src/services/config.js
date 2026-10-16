@@ -10,6 +10,7 @@ import { setRules } from './rules.js';
  * @property {'server' | 'saved' | 'defaults'} source d'où viennent les règles
  * @property {number | null} apiVersion version du contrat annoncée par le serveur
  * @property {string | null} minAppVersion
+ * @property {number} minSharedSchemaVersion version de schéma nécessaire pour modifier un séjour partagé (1 : aucune restriction)
  * @property {typeof RULES} rules règles effectives
  * @property {{ source: string, dataDate: string | null, countries: Record<string, string> | null } | null} osm source des lieux OSM, date de la version en service et des données de chaque pays importé (écran À propos, /debug)
  * @property {string | null} fetchedAt date de réception par le serveur (ISO)
@@ -23,6 +24,7 @@ export function defaultConfig(error) {
     source: 'defaults',
     apiVersion: null,
     minAppVersion: null,
+    minSharedSchemaVersion: 1,
     rules: RULES,
     osm: null,
     fetchedAt: null,
@@ -60,6 +62,7 @@ function fromServer(data, source, fetchedAt, error) {
     source,
     apiVersion: Number.isInteger(data?.apiVersion) ? data.apiVersion : null,
     minAppVersion,
+    minSharedSchemaVersion: Number.isInteger(data?.minSharedSchemaVersion) && data.minSharedSchemaVersion >= 1 ? data.minSharedSchemaVersion : 1,
     rules,
     osm: readOsm(data?.osm),
     fetchedAt,

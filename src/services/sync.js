@@ -2,11 +2,14 @@ import { migrate } from '@domain/migrations.js';
 import { applyOps } from '@domain/ops/applyOps.js';
 import { diffTrips } from '@domain/ops/diffTrips.js';
 import { MAX_OPS_PER_CALL } from '@domain/ops/opTypes.js';
+import { SCHEMA_VERSION } from '@domain/model.js';
+import { stepName } from '@domain/stepTiming.js';
 import { rowToTrip } from '@domain/tripRow.js';
 import { authApi, tripsRemote } from './api.js';
 import { getRules } from './rules.js';
 import * as settings from './settings.js';
 import * as storage from './storage.js';
+import { addSyncNotice } from './syncNotices.js';
 import { allTripRecords, detachAllTrips, getQueue, hasPendingOps, onTripsChanged, purgeAllTrips, purgeTrip, saveTrip, setQueue, withTripLock } from './tripsStore.js';
 
 /**
@@ -21,6 +24,12 @@ import { allTripRecords, detachAllTrips, getQueue, hasPendingOps, onTripsChanged
  *     le séjour entier) ; séjour inconnu du serveur : opération createTrip.
  * Conflits : le serveur applique chaque opération sur sa dernière version ;
  * deux modifications de deux étapes différentes sont toutes deux gardées.
+ *
+ * Rien n'est perdu en silence (services/syncNotices.js) : modification
+ * refusée (étape supprimée entre-temps par un autre participant), séjour
+ * devenu inaccessible ou supprimé par son owner (file abandonnée, séjour
+ * retiré de l'appareil), application trop ancienne pour un séjour partagé
+ * (file gardée jusqu'à la mise à jour).
  *
  * Reprise d'une copie sans version (séjour enregistré avant les opérations,
  * ou gardé après une déconnexion) : l'état "syncState" (updatedAt déjà
@@ -55,6 +64,41 @@ export function onSyncStatus(listener) {
 const KEY = (id) => `trip:${id}`;
 const hasVersion = (trip) => Number.isInteger(trip?.version);
 
+/** Utilisateur connecté (pour ne pas se prévenir de ses propres suppressions). */
+let me = null;
+
+/** Prénom de l'owner d'un séjour, d'après les participants gardés sur l'appareil (services/sharing.js). */
+async function ownerName(tripId) {
+  const members = (await settings.get(`members:${tripId}`).catch(() => null)) ?? [];
+  return members.find((m) => m.role === 'owner')?.name ?? null;
+}
+
+/**
+ * Séjour qui disparaît du compte : retiré de l'appareil, file abandonnée,
+ * utilisateur prévenu (sauf s'il l'a supprimé lui-même).
+ * @param {object} trip copie de l'appareil
+ * @param {'removed' | 'deleted'} kind
+ */
+async function lose(trip, kind) {
+  const mine = trip.deleted || (kind === 'deleted' && (!trip.ownerId || trip.ownerId === me));
+  if (!mine) await addSyncNotice({ kind, tripId: trip.id, tripTitle: trip.title, ...(kind === 'deleted' ? { by: await ownerName(trip.id) } : {}) });
+  await purgeTrip(trip.id);
+}
+
+/** Modifications refusées par le serveur : un message par refus, sans jargon. */
+async function reportRejections(trip, sent, rejected = []) {
+  const ops = new Map(sent.map((o) => [o.opId, o]));
+  for (const { opId, code, by } of rejected) {
+    const op = ops.get(opId);
+    // Doublon sans effet (renvoi après coupure) : rien à signaler.
+    if (!op || code === 'EXISTS' || code === 'TRIP_DELETED') continue;
+    const step = op.params?.stepId ? trip?.days?.flatMap((d) => d.steps).find((s) => s.id === op.params.stepId) : null;
+    const name = op.label ?? (step ? stepName(step) : null);
+    if (code === 'TARGET_GONE' && op.params?.stepId) await addSyncNotice({ kind: 'rejected', tripId: trip.id, tripTitle: trip.title, stepName: name, by: by ?? null });
+    else await addSyncNotice({ kind: 'rejectedOther', tripId: trip.id, tripTitle: trip.title });
+  }
+}
+
 /**
  * Copie de l'appareil à partir de la version du serveur : opérations en
  * file réappliquées par-dessus.
@@ -88,7 +132,8 @@ async function pull(legacy) {
   const wanted = [];
   for (const trip of local) {
     const r = remote.get(trip.id);
-    if (r?.deleted || (!r && hasVersion(trip))) await purgeTrip(trip.id);
+    if (r?.deleted) await lose(trip, 'deleted');
+    else if (!r && hasVersion(trip)) await lose(trip, 'removed');
     else if (r && (!hasVersion(trip) || r.version > trip.version)) wanted.push(trip.id);
   }
   for (const r of remote.values()) if (!r.deleted && !known.has(r.id)) wanted.push(r.id);
@@ -98,13 +143,21 @@ async function pull(legacy) {
 /** Réponse de trip-apply-ops : version du serveur, opérations envoyées retirées de la file. */
 function acknowledge(id, sent, response) {
   return withTripLock(id, async () => {
-    if (response.trip.deleted) return purgeTrip(id);
+    const stored = await storage.get(KEY(id));
+    if (response.trip.deleted) {
+      // Supprimé par cet appareil (deleteTrip envoyé) ou par l'owner entre-temps.
+      const ownDelete = sent.some((o) => o.type === 'deleteTrip');
+      return ownDelete || !stored ? purgeTrip(id) : lose(stored, 'deleted');
+    }
     const done = new Set(sent.map((o) => o.opId));
     const queue = (await getQueue(id)).filter((o) => !done.has(o.opId));
-    if (import.meta.env?.DEV && response.rejected?.length) console.warn('trip-apply-ops : opérations refusées', response.rejected);
+    await reportRejections(stored ?? response.trip, sent, response.rejected);
     await storeRemote({ ...response.trip, version: response.version }, queue);
   });
 }
+
+/** Application trop ancienne pour ce séjour partagé : file gardée, un seul message. */
+const outdated = new Set();
 
 async function sendQueue(trip) {
   for (;;) {
@@ -115,10 +168,17 @@ async function sendQueue(trip) {
     const batch = queue.slice(0, MAX_OPS_PER_CALL);
     let response;
     try {
-      response = await tripsRemote.applyOps({ tripId: trip.id, baseVersion: current.version, ops: batch });
+      // label (nom de l'étape pour les messages) reste sur l'appareil.
+      const ops = batch.map(({ label: _label, ...op }) => op);
+      response = await tripsRemote.applyOps({ tripId: trip.id, baseVersion: current.version, ops, schemaVersion: SCHEMA_VERSION });
     } catch (err) {
-      // Séjour supprimé ou plus accessible : effacé de l'appareil.
-      if (err?.code === 'trip_not_found') return purgeTrip(trip.id);
+      // Plus participant (retiré pendant que l'appareil était hors ligne) : file abandonnée, séjour retiré.
+      if (err?.code === 'trip_not_found') return lose(current, 'removed');
+      if (err?.code === 'shared_schema_outdated') {
+        if (!outdated.has(trip.id)) await addSyncNotice({ kind: 'outdated', tripId: trip.id, tripTitle: current.title });
+        outdated.add(trip.id);
+        return undefined;
+      }
       // Lot refusé par le serveur (malformé) : abandonné, sinon il bloquerait la file.
       if (err?.code === 'invalid_input') {
         const sent = new Set(batch.map((o) => o.opId));
@@ -137,7 +197,7 @@ async function create(trip) {
   const { version: _v, ...content } = migrate(trip).trip;
   let response;
   try {
-    response = await tripsRemote.applyOps({ tripId: trip.id, baseVersion: 0, ops: [{ opId: crypto.randomUUID(), type: 'createTrip', params: { trip: content } }] });
+    response = await tripsRemote.applyOps({ tripId: trip.id, baseVersion: 0, schemaVersion: SCHEMA_VERSION, ops: [{ opId: crypto.randomUUID(), type: 'createTrip', params: { trip: content } }] });
   } catch (err) {
     // Identifiant déjà pris par un séjour d'un autre compte (copie gardée après une déconnexion) : nouvel identifiant.
     if (err?.code === 'trip_not_found') return renameLocal(trip);
@@ -177,6 +237,7 @@ async function push() {
 async function run() {
   const session = await authApi.getSession().catch(() => null);
   if (!session) return setStatus('guest');
+  me = session.user?.id ?? null;
   if (!navigator.onLine) return setStatus('offline');
   setStatus('syncing');
   try {
@@ -201,7 +262,8 @@ export async function refreshTrip(tripId) {
   if (!navigator.onLine) return;
   const [row] = await tripsRemote.fetchRows([tripId]);
   if (!row || row.deleted) {
-    await purgeTrip(tripId);
+    const stored = await storage.get(KEY(tripId));
+    if (stored) await lose(stored, row ? 'deleted' : 'removed');
     return;
   }
   const stored = await storage.get(KEY(tripId));

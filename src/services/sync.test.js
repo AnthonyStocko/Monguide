@@ -26,11 +26,12 @@ vi.mock('./offlineImages.js', () => ({ deleteTripPhotos: async () => {}, deleteA
 
 // Serveur : la vraie fonction applyBatch (trip-apply-ops) sur une base en mémoire.
 const ME = 'aaaaaaaa-0000-4000-8000-00000000000a';
-const server = { rows: new Map(), members: new Map(), applied: new Set(), calls: 0, failAfterApply: false };
+const server = { rows: new Map(), members: new Map(), applied: new Set(), calls: 0, failAfterApply: false, minShared: 1, removedBy: {} };
 const store = {
   loadTrip: async (id) => (server.rows.has(id) ? structuredClone(server.rows.get(id)) : null),
   membership: async (id, user) => (server.members.get(id)?.[user] ? { role: server.members.get(id)[user], memberCount: Object.keys(server.members.get(id)).length } : null),
   appliedOpIds: async (ids) => new Set(ids.filter((i) => server.applied.has(i))),
+  whoRemoved: async (_trip, stepId) => server.removedBy[stepId] ?? null,
   commit: async ({ tripId, expectedVersion, row, opIds }) => {
     const current = server.rows.get(tripId);
     if (current.version !== expectedVersion) return null;
@@ -50,9 +51,9 @@ const store = {
 const tripsRemote = {
   listVersions: async () => [...server.rows.values()].filter((r) => server.members.get(r.id)?.[ME]).map((r) => ({ id: r.id, version: r.version, deleted: r.deleted })),
   fetchRows: async (ids) => ids.map((id) => structuredClone(server.rows.get(id))),
-  applyOps: async ({ tripId, ops }) => {
+  applyOps: async ({ tripId, ops, schemaVersion }) => {
     server.calls += 1;
-    const res = await applyBatch({ store, userId: ME, tripId, ops, rules });
+    const res = await applyBatch({ store, userId: ME, tripId, ops, rules, schemaVersion, minSharedSchemaVersion: server.minShared });
     if (server.failAfterApply) {
       server.failAfterApply = false;
       throw Object.assign(new Error('network'), { code: 'network' });
@@ -60,9 +61,10 @@ const tripsRemote = {
     return structuredClone(res);
   }
 };
-vi.mock('./api.js', () => ({ authApi: { getSession: async () => ({ user: {} }), signOut: async () => {}, onChange: () => () => {} }, tripsRemote }));
+vi.mock('./api.js', () => ({ authApi: { getSession: async () => ({ user: { id: 'aaaaaaaa-0000-4000-8000-00000000000a' } }), signOut: async () => {}, onChange: () => () => {} }, tripsRemote }));
 
 const { refreshTrip, syncNow } = await import('./sync.js');
+const { syncNotices } = await import('./syncNotices.js');
 const { getQueue, loadTrip, onTripsChanged, updateTrip, deleteTrip } = await import('./tripsStore.js');
 
 const TRIP = '0b9d6a7e-1c2f-4e3a-8b5d-6f7a8b9c0d1e';
@@ -94,6 +96,8 @@ beforeEach(() => {
   server.members.clear();
   server.applied.clear();
   server.calls = 0;
+  server.minShared = 1;
+  server.removedBy = {};
   vi.stubGlobal('navigator', { onLine: true });
 });
 
@@ -238,5 +242,100 @@ describe('synchronisation par opérations', () => {
     spy.mockRestore();
     // Le résultat local est bien celui d'applyOps sur la version du serveur.
     expect(await local()).toEqual({ ...applyOps(serverTrip(), [], { rules }).trip, version: 2 });
+  });
+});
+
+describe('hors ligne (Bloc E)', () => {
+  const offline = () => vi.stubGlobal('navigator', { onLine: false });
+  const online = () => vi.stubGlobal('navigator', { onLine: true });
+  const allIds = (t) => t.days.flatMap((d) => d.steps.map((st) => st.id));
+
+  it('mode avion sur A, trois modifications ; B modifie d\u2019autres étapes ; A se reconnecte : les quatre partout, sans doublon', async () => {
+    const trip = seed();
+    offline();
+    let t = await updateTrip(setStepStatus(trip, 0, 'culture', 'done', '11:20'), trip);
+    t = await updateTrip(replaceStepPlace(t, 0, 3, near, rules), t);
+    const day = { ...t.days[0], steps: t.days[0].steps.map((st) => (st.id === 'outdoor' ? { ...st, start: '14:45', end: '16:15' } : st)) };
+    await updateTrip({ ...t, days: [recomputeTravel(day, t, rules)] }, t);
+    await syncNow();
+    expect(server.calls).toBe(0);
+    // Trois actions à l'écran : plusieurs opérations (lieu remplacé = étape + réserve).
+    expect((await getQueue(TRIP)).length).toBeGreaterThanOrEqual(3);
+
+    await otherDevice([{ opId: crypto.randomUUID(), type: 'setStepDone', params: { stepId: 'lunch', status: 'done', completedAt: '13:30' } }]);
+    online();
+    await syncNow();
+    await syncNow();
+    for (const result of [serverTrip(), await local()]) {
+      expect(step(result, 'culture').status).toBe('done');
+      expect(step(result, 'relax').place.id).toBe('near');
+      expect(step(result, 'outdoor').start).toBe('14:45');
+      expect(step(result, 'lunch').status).toBe('done');
+      expect(new Set(allIds(result)).size).toBe(allIds(result).length);
+    }
+    expect(await getQueue(TRIP)).toEqual([]);
+    // Version 1 + B + un seul lot de A : rien n'a été appliqué deux fois.
+    expect(server.rows.get(TRIP).version).toBe(3);
+    expect(await syncNotices()).toEqual([]);
+  });
+
+  it('A supprime une étape pendant que B (hors ligne) change son horaire : message prévu, rien d\u2019autre n\u2019est perdu', async () => {
+    const trip = seed();
+    offline();
+    const day = { ...trip.days[0], steps: trip.days[0].steps.map((st) => (st.id === 'outdoor' ? { ...st, start: '15:00', end: '16:30' } : st)) };
+    let t = await updateTrip({ ...trip, days: [recomputeTravel(day, trip, rules)] }, trip);
+    await updateTrip(setStepStatus(t, 0, 'culture', 'done', '11:00'), t);
+    await otherDevice([{ opId: crypto.randomUUID(), type: 'removeStep', params: { stepId: 'outdoor' } }]);
+    server.removedBy.outdoor = 'Paul';
+    online();
+    await syncNow();
+    t = await local();
+    expect(step(t, 'outdoor')).toBeUndefined();
+    expect(step(t, 'culture').status).toBe('done');
+    expect(await syncNotices()).toEqual([expect.objectContaining({ kind: 'rejected', tripId: TRIP, stepName: 'Parc Vermorel', by: 'Paul' })]);
+  });
+
+  it('accès retiré pendant l\u2019absence de réseau : file abandonnée, séjour retiré, utilisateur prévenu', async () => {
+    const trip = seed();
+    offline();
+    await updateTrip(setStepStatus(trip, 0, 'culture', 'done', '11:00'), trip);
+    server.members.set(TRIP, { other: 'owner' });
+    online();
+    await syncNow();
+    expect(db.has(`trip:${TRIP}`)).toBe(false);
+    expect(await getQueue(TRIP)).toEqual([]);
+    expect(await syncNotices()).toEqual([expect.objectContaining({ kind: 'removed', tripId: TRIP, tripTitle: 'Villefranche' })]);
+  });
+
+  it('séjour supprimé par l\u2019owner : retiré de l\u2019appareil, « supprimé par Anthony »', async () => {
+    const trip = seed();
+    db.set(`trip:${TRIP}`, { ...db.get(`trip:${TRIP}`), ownerId: 'owner-anthony' });
+    prefs.set(`members:${TRIP}`, [{ userId: 'owner-anthony', name: 'Anthony', role: 'owner' }, { userId: ME, name: 'Moi', role: 'editor' }]);
+    offline();
+    await updateTrip(setStepStatus(trip, 0, 'culture', 'done', '11:00'), trip);
+    server.rows.set(TRIP, { ...server.rows.get(TRIP), deleted: true, planning: [], version: 2 });
+    online();
+    await syncNow();
+    expect(db.has(`trip:${TRIP}`)).toBe(false);
+    expect(await syncNotices()).toEqual([expect.objectContaining({ kind: 'deleted', tripId: TRIP, by: 'Anthony' })]);
+  });
+
+  it('supprimé par moi-même sur un autre appareil : pas de message', async () => {
+    seed();
+    db.set(`trip:${TRIP}`, { ...db.get(`trip:${TRIP}`), ownerId: ME });
+    server.rows.set(TRIP, { ...server.rows.get(TRIP), deleted: true, planning: [], version: 2 });
+    await syncNow();
+    expect(db.has(`trip:${TRIP}`)).toBe(false);
+    expect(await syncNotices()).toEqual([]);
+  });
+
+  it('application trop ancienne pour un séjour partagé : modifications gardées, message de mise à jour', async () => {
+    const trip = seed();
+    server.minShared = 99;
+    await updateTrip(setStepStatus(trip, 0, 'culture', 'done', '11:00'), trip);
+    await syncNow();
+    expect(await getQueue(TRIP)).toHaveLength(1);
+    expect(step(await local(), 'culture').status).toBe('done');
+    expect(await syncNotices()).toEqual([expect.objectContaining({ kind: 'outdated', tripId: TRIP })]);
   });
 });

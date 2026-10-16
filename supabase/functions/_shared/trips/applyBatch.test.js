@@ -44,6 +44,7 @@ function memoryStore({ trip = baseTrip(), members = { [A]: 'owner', [B]: 'editor
       return write({ ...db.row, ...row }, rest);
     },
     notifyOthers: async (tripId, author) => void db.notified.push({ tripId, author }),
+    whoRemoved: async (_trip, stepId) => db.removedBy?.[stepId] ?? null,
     create: async ({ owner, row, ...rest }) => {
       if (db.row) return null;
       db.members = { [owner]: 'owner' };
@@ -94,12 +95,13 @@ describe('applyBatch', () => {
     expect(db.row.version).toBe(2);
   });
 
-  it('étape disparue : TARGET_GONE pour cette opération, les autres du lot appliquées', async () => {
-    const { store } = memoryStore();
+  it('étape disparue : TARGET_GONE pour cette opération (avec qui l\u2019a supprimée), les autres du lot appliquées', async () => {
+    const { db, store } = memoryStore();
     await call(store, A, [op('removeStep', { stepId: 'outdoor' })]);
+    db.removedBy = { outdoor: 'Paul' };
     const late = op('setStepTime', { stepId: 'outdoor', start: '15:00', end: '16:00' });
     const res = await call(store, B, [late, op('setStepDone', { stepId: 'culture', status: 'done', completedAt: '11:30' })]);
-    expect(res.rejected).toEqual([{ opId: late.opId, code: 'TARGET_GONE' }]);
+    expect(res.rejected).toEqual([{ opId: late.opId, code: 'TARGET_GONE', by: 'Paul' }]);
     expect(stepOf(res.trip, 'culture').status).toBe('done');
     expect(res.version).toBe(3);
   });
@@ -170,6 +172,28 @@ describe('applyBatch', () => {
     const res = await call(store, A, [op('setStepTime', { stepId: 'relax', start: '20:30', end: '21:30' })]);
     expect(res.rejected).toEqual([]);
     expect(Object.values(res.warnings)[0].relax.map((w) => w.code)).toContain('STARTS_TOO_LATE');
+  });
+});
+
+describe('version de schéma des séjours partagés', () => {
+  it('application trop ancienne : modifications d\u2019un séjour partagé refusées (rien n\u2019est appliqué)', async () => {
+    const { db, store } = memoryStore();
+    const batch = [op('removeStep', { stepId: 'lunch' })];
+    await expect(applyBatch({ store, userId: B, tripId: TRIP, ops: batch, rules, schemaVersion: 2, minSharedSchemaVersion: 3 })).rejects.toMatchObject({ status: 409, code: 'shared_schema_outdated' });
+    expect(db.row.version).toBe(1);
+    expect((await applyBatch({ store, userId: B, tripId: TRIP, ops: batch, rules, schemaVersion: 3, minSharedSchemaVersion: 3 })).version).toBe(2);
+  });
+
+  it('séjour non partagé : pas de restriction', async () => {
+    const { store } = memoryStore({ members: { [A]: 'owner' } });
+    expect((await applyBatch({ store, userId: A, tripId: TRIP, ops: [op('removeStep', { stepId: 'lunch' })], rules, schemaVersion: 1, minSharedSchemaVersion: 3 })).version).toBe(2);
+  });
+
+  it('readBatch : schemaVersion facultatif (1 par défaut), entier', () => {
+    const base = { tripId: TRIP, baseVersion: 1, ops: [op('removeStep', { stepId: 'x' })] };
+    expect(readBatch(base).schemaVersion).toBe(1);
+    expect(readBatch({ ...base, schemaVersion: 3 }).schemaVersion).toBe(3);
+    expect(() => readBatch({ ...base, schemaVersion: 'x' })).toThrow('schemaVersion');
   });
 });
 

@@ -2,13 +2,15 @@ import { API_VERSION } from '../_shared/domain/version.js';
 import { serveFunction } from '../_shared/handler.js';
 import { osmInfo } from '../_shared/services/osmSource.js';
 
-// GET /functions/v1/config -> { apiVersion, minAppVersion, rules, contact, osm } (docs/api.md).
+// GET /functions/v1/config -> { apiVersion, minAppVersion, minSharedSchemaVersion, rules, contact, osm } (docs/api.md).
 serveFunction({
   name: 'config',
   methods: ['GET'],
   handle: ({ appConfig }) => ({
     apiVersion: API_VERSION,
     minAppVersion: appConfig.minAppVersion,
+    // Version de schéma nécessaire pour modifier un séjour partagé (app_config, min_shared_schema_version).
+    minSharedSchemaVersion: appConfig.minSharedSchemaVersion,
     rules: appConfig.rules,
     // Contact de l'équipe (écran Confidentialité), repris du secret MONGUIDE_CONTACT.
     contact: globalThis.Deno?.env.get('MONGUIDE_CONTACT') || null,

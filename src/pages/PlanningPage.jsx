@@ -3,6 +3,7 @@ import { CirclePlus, FileDown, History, ImageOff, Share2, Users } from 'lucide-r
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { applyChanges } from '@domain/applyChanges.js';
+import { SCHEMA_VERSION } from '@domain/model.js';
 import { switchToOriginal, switchToReviewed } from '@domain/applyReview.js';
 import { checkDayInvariants } from '@domain/checkDayInvariants.js';
 import { clearResolvedConflicts } from '@domain/conflicts.js';
@@ -26,6 +27,8 @@ import TimeEditorDialog from '../components/planning/TimeEditorDialog.jsx';
 import TripHero from '../components/planning/TripHero.jsx';
 import UndoBar from '../components/planning/UndoBar.jsx';
 import LiveToast from '../components/sharing/LiveToast.jsx';
+import PendingBanner from '../components/sync/PendingBanner.jsx';
+import UpdateForTrip from '../components/sync/UpdateForTrip.jsx';
 import MembersStrip from '../components/sharing/MembersStrip.jsx';
 import Button from '../components/ui/Button.jsx';
 import Card from '../components/ui/Card.jsx';
@@ -62,7 +65,7 @@ export default function PlanningPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const format = useFormat();
-  const { rules } = useConfig().config;
+  const { rules, minSharedSchemaVersion } = useConfig().config;
   const { status, trip, readOnly, save } = useCurrentTrip(tripId);
   const [dayIndex, setDayIndex] = useState(0);
   const [dialog, setDialog] = useState(null);
@@ -196,6 +199,19 @@ export default function PlanningPage() {
       </Page>
     );
   }
+
+  // Séjour enregistré par une version plus récente de l'application : il ne peut pas être affiché.
+  if (readOnly) {
+    return (
+      <Page>
+        <h2 className="text-2xl font-bold">{trip.title}</h2>
+        <UpdateForTrip text={t('tripUpdate.tooNew')} />
+      </Page>
+    );
+  }
+  // Séjour partagé, application trop ancienne pour le modifier (min_shared_schema_version) : consultation seule.
+  const sharedOutdated = shared && SCHEMA_VERSION < (minSharedSchemaVersion ?? 1);
+  const locked = sharedOutdated;
 
   const day = Math.min(dayIndex, trip.days.length - 1);
   const current = trip.days[day];
@@ -384,17 +400,14 @@ export default function PlanningPage() {
         </p>
       )}
 
-      {readOnly && (
-        <p role="status" className="rounded-xl bg-warning-soft px-3 py-2 font-medium text-warning-on-soft">
-          {t('planning.readOnly')}
-        </p>
-      )}
+      {sharedOutdated && <UpdateForTrip text={t('tripUpdate.sharedOutdated')} />}
+      {synced && <PendingBanner tripId={trip.id} />}
 
       {/* Relecture par l'assistant IA : version relue ou d'origine (hors ligne compris ; notifications
           reprogrammées par l'enregistrement du séjour). */}
       <AiReviewCard
         trip={trip}
-        readOnly={readOnly || shared}
+        readOnly={locked || shared}
         onShowOriginal={() => {
           save(switchToOriginal(trip), trip);
           sendAiFeedback('revert_original');
@@ -432,16 +445,16 @@ export default function PlanningPage() {
           dayIndex={day}
           rules={rules}
           isToday={isToday}
-          readOnly={readOnly}
+          readOnly={locked}
           highlightId={highlightId}
           flash={flash}
           stepRefs={stepRefs}
-          onEditTime={(i) => !readOnly && setDialog({ kind: 'time', stepIndex: i })}
-          onReplace={(i) => !readOnly && setDialog({ kind: 'replace', stepIndex: i })}
-          onLodging={() => !readOnly && setDialog({ kind: 'lodging' })}
-          onAddStep={(afterIndex) => !readOnly && openAddFlow(afterIndex)}
-          onEditPersonal={(i) => !readOnly && setDialog({ kind: 'personal', stepIndex: i })}
-          onTrack={(i, s) => !readOnly && track(i, s)}
+          onEditTime={(i) => !locked && setDialog({ kind: 'time', stepIndex: i })}
+          onReplace={(i) => !locked && setDialog({ kind: 'replace', stepIndex: i })}
+          onLodging={() => !locked && setDialog({ kind: 'lodging' })}
+          onAddStep={(afterIndex) => !locked && openAddFlow(afterIndex)}
+          onEditPersonal={(i) => !locked && setDialog({ kind: 'personal', stepIndex: i })}
+          onTrack={(i, s) => !locked && track(i, s)}
         />
       </section>
 

@@ -18,7 +18,15 @@ serveFunction({
   rateLimitKind: 'tripOps',
   handle: async ({ req, caller, appConfig }) => {
     if (caller.type !== 'user') throw new AppError(401, 'unauthorized', 'A signed-in user is required');
-    const { tripId, ops } = readBatch(await readJsonBody(req));
-    return applyBatch({ store: createTripStore(getAdminClient()), userId: caller.userId, tripId, ops, rules: appConfig.rules });
+    const { tripId, ops, schemaVersion } = readBatch(await readJsonBody(req));
+    return applyBatch({
+      store: createTripStore(getAdminClient()),
+      userId: caller.userId,
+      tripId,
+      ops,
+      rules: appConfig.rules,
+      schemaVersion,
+      minSharedSchemaVersion: appConfig.minSharedSchemaVersion
+    });
   }
 });

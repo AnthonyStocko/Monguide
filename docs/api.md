@@ -103,6 +103,7 @@ Appelée au lancement de l'application.
   {
     "apiVersion": 1,
     "minAppVersion": "0.0.0",
+    "minSharedSchemaVersion": 3,
     "rules": { "weather": { "rainThresholdPct": 50 }, "…": "…" },
     "contact": "contact@exemple.org",
     "osm": { "source": "tiles", "dataDate": "2026-09-28", "countries": { "BE": "2026-09-28", "FR": "2026-09-24" } }
@@ -113,6 +114,7 @@ Appelée au lancement de l'application.
   |---|---|---|
   | `apiVersion` | entier | version courante du contrat côté serveur |
   | `minAppVersion` | chaîne `x.y.z` | version minimale de l'application (`0.0.0` si non définie) |
+  | `minSharedSchemaVersion` | entier | version de schéma des séjours nécessaire pour modifier un séjour partagé (clé `min_shared_schema_version` de `app_config` ; 1 si non définie) |
   | `rules` | objet | règles effectives : valeurs par défaut de `rules.js` fusionnées avec `app_config` |
   | `contact` | chaîne ? | contact de l'équipe (secret `MONGUIDE_CONTACT`) ; `null` si non défini. Conservé pour les versions antérieures et les pages GitHub Pages (`site/`) : l'application lit désormais `rules.public.contactEmail` |
   | `osm` | objet | source des lieux OSM (`tiles`, `overpass`, `off`) et `dataDate` (`YYYY-MM-DD`) de la version des tuiles en service, `null` si inconnue ; `countries` : date des données de chaque pays importé (`null` hors mode tuiles ou manifeste illisible) ; affichés dans « À propos et sources » (par pays) et sur `/debug` |
@@ -611,7 +613,7 @@ Seul chemin d'écriture des séjours pour l'application (Prompt 8.0, Bloc B).
 - **Méthode** : `POST`, utilisateur connecté et participant du séjour
   (`401 unauthorized` en mode invité). Limite : 120 appels par minute et par
   utilisateur (`rules.rateLimits.tripOpsPerMinute`, `429 rate_limited`).
-- **Entrée** : `{ "tripId": uuid, "baseVersion": entier, "ops": [{ "opId": uuid, "type", "params" }] }`,
+- **Entrée** : `{ "tripId": uuid, "baseVersion": entier, "schemaVersion"?: entier, "ops": [{ "opId": uuid, "type", "params" }] }`,
   1 à 50 opérations, `opId` créé par l'appareil et unique. `baseVersion` :
   version de la copie de l'appareil (information ; les opérations sont
   toujours appliquées sur la dernière version).
@@ -636,7 +638,12 @@ Seul chemin d'écriture des séjours pour l'application (Prompt 8.0, Bloc B).
   présente), `TRIP_DELETED`, `INVALID` (forme).
 - **Erreurs** : codes communs ; `400 invalid_input` (lot mal formé) ;
   `404 trip_not_found` (séjour inconnu ou utilisateur non participant :
-  réponse identique).
+  réponse identique) ; `409 shared_schema_outdated` : séjour partagé et
+  `schemaVersion` (version de schéma connue de l'application, 1 si absente)
+  inférieure à la clé `min_shared_schema_version` de `app_config` ; rien
+  n'est appliqué, l'application garde ses opérations jusqu'à sa mise à jour.
+- **Refus `TARGET_GONE` d'une étape** : champ `by`, prénom de qui l'a
+  supprimée (dernière ligne de `trip_changes` qui la touche ; null si inconnu).
 
 | Opération | Paramètres | Effet |
 |---|---|---|
@@ -733,6 +740,27 @@ disparaît de ses appareils à la synchronisation suivante.
   appareil ; envoi par `push-send`). Aucune notification sur Android dans
   cette version.
 
+### Sans réseau (Prompt 8.0, Bloc E)
+
+- **File** : hors ligne, chaque modification est appliquée tout de suite à
+  la copie de l'appareil et ses opérations (avec leur `opId`) sont gardées
+  dans IndexedDB (`tripq:<séjour>`, également dans la WebView Android).
+  Au retour du réseau : envoi dans l'ordre à `trip-apply-ops`, puis la
+  version du serveur remplace la copie (opérations restantes réappliquées).
+  Le nom de l'étape visée reste avec l'opération en file (`label`, jamais
+  envoyé) pour les messages.
+- **Messages** (gardés sur l'appareil jusqu'à leur fermeture,
+  `src/services/syncNotices.js`) : modification refusée (`TARGET_GONE`, avec
+  qui a supprimé l'étape), séjour devenu inaccessible (file abandonnée,
+  séjour retiré de l'appareil), séjour supprimé par son owner, application
+  trop ancienne (`shared_schema_outdated`).
+- **Versions** : un séjour d'une `schemaVersion` plus récente que
+  l'application n'est pas affiché (« Mettez à jour Mon guide pour voir ce
+  séjour », lien Google Play). `config` renvoie `minSharedSchemaVersion`
+  (clé réservée `min_shared_schema_version` de `app_config`, 3 à la
+  migration `20261016180000_shared_schema.sql`) : en dessous, un séjour
+  partagé est en consultation seule.
+
 ### `delete-account` — suppression du compte
 
 - **Méthode** : `POST`, sans corps ; utilisateur connecté uniquement
@@ -827,3 +855,4 @@ envoi, abonnements après 90 jours sans nouvelles de l'appareil.
 | 1 | 2026-10-16 | Ajout compatible : fonction `trip-apply-ops` (modifications par opérations, idempotentes) ; `version` dans les séjours lus. |
 | 1 | 2026-10-16 | Ajouts compatibles : fonctions `trip-invite-link`, `trip-invite-email`, `trip-invites-claim`, `trip-join` ; clé réservée `web_url` de `app_config` ; `ownerId` dans les séjours lus. |
 | 1 | 2026-10-16 | Ajouts compatibles : `trip_changes` en direct (Realtime), `step_ids` et `summary_count` ; `last_seen_version` modifiable par chacun ; `push-subscribe` : `tripChanges`. |
+| 1 | 2026-10-16 | Ajouts compatibles : `config.minSharedSchemaVersion` (clé `min_shared_schema_version`) ; `trip-apply-ops` : `schemaVersion`, `409 shared_schema_outdated`, `rejected[].by`. |

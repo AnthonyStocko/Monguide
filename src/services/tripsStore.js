@@ -1,6 +1,7 @@
 import { migrate } from '@domain/migrations.js';
 import { applyOps } from '@domain/ops/applyOps.js';
 import { diffTrips } from '@domain/ops/diffTrips.js';
+import { stepName } from '@domain/stepTiming.js';
 import { deleteAllTripPhotos, deleteTripPhotos } from './offlineImages.js';
 import { getRules } from './rules.js';
 import * as settings from './settings.js';
@@ -84,10 +85,23 @@ export function updateTrip(next, base) {
     if (!ops.length) return latest;
     const saved = { ...applyOps(latest, ops, { rules: getRules() }).trip, updatedAt: now };
     await storage.set(`${PREFIX}${next.id}`, saved);
-    if (Number.isInteger(latest.version)) await setQueue(next.id, [...(await getQueue(next.id)), ...ops]);
+    if (Number.isInteger(latest.version)) await setQueue(next.id, [...(await getQueue(next.id)), ...ops.map((op) => withLabel(op, latest, next))]);
     notify(next.id, false);
     return saved;
   });
+}
+
+/**
+ * Nom de l'étape visée, gardé avec l'opération en file (label, jamais envoyé) :
+ * si l'étape est supprimée entre-temps par un autre participant, le message
+ * peut encore la nommer (services/syncNotices.js).
+ */
+function withLabel(op, ...trips) {
+  const id = op.params?.stepId;
+  if (!id) return op;
+  const step = trips.flatMap((t) => t.days.flatMap((d) => d.steps)).find((s) => s.id === id);
+  const label = step ? stepName(step) : null;
+  return label ? { ...op, label } : op;
 }
 
 /** Opérations en attente d'envoi d'un séjour. @param {string} id @returns {Promise<object[]>} */
@@ -95,10 +109,23 @@ export async function getQueue(id) {
   return (await storage.get(`${QUEUE_PREFIX}${id}`)) ?? [];
 }
 
+const queueListeners = new Set();
+
+/**
+ * Prévient à chaque changement de la file d'un séjour : listener(id, count),
+ * count = opérations encore en attente d'envoi.
+ * @returns {() => void}
+ */
+export function onQueueChanged(listener) {
+  queueListeners.add(listener);
+  return () => queueListeners.delete(listener);
+}
+
 /** @param {string} id @param {object[]} ops */
 export async function setQueue(id, ops) {
   if (ops.length) await storage.set(`${QUEUE_PREFIX}${id}`, ops);
   else await storage.remove(`${QUEUE_PREFIX}${id}`);
+  queueListeners.forEach((l) => l(id, ops.length));
 }
 
 /** Des opérations attendent-elles d'être envoyées ? */
@@ -165,6 +192,7 @@ async function forgetPhotos(id) {
 async function removeTrip(id) {
   await storage.remove(`${PREFIX}${id}`);
   await storage.remove(`${QUEUE_PREFIX}${id}`);
+  queueListeners.forEach((l) => l(id, 0));
   notify(id, true);
 }
 

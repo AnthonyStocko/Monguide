@@ -5,6 +5,7 @@ import { isNative } from '../../platform/target.js';
 import { EASE, useMotionAllowed } from '../../ui/motion.js';
 import InstallCoach from '../install/InstallCoach.jsx';
 import JoinedNotice from '../sharing/JoinedNotice.jsx';
+import SyncNoticesBar from '../sync/SyncNoticesBar.jsx';
 import BottomNav from './BottomNav.jsx';
 import TopBar from './TopBar.jsx';
 
@@ -30,6 +31,7 @@ export default function AppLayout() {
       <TopBar />
       <main className="flex flex-1 flex-col pb-nav">
         <JoinedNotice />
+        <SyncNoticesBar />
         {/* Changement d'onglet : fondu et léger glissement (200 ms). */}
         <m.div
           key={section}

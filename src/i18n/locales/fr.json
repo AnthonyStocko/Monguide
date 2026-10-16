@@ -157,6 +157,29 @@
     "sinceVisit_other": "{{count}} modifications depuis votre dernière visite",
     "seeChanges": "Voir"
   },
+  "pending": {
+    "offline_one": "Hors ligne · {{count}} modification en attente",
+    "offline_other": "Hors ligne · {{count}} modifications en attente",
+    "sending_one": "{{count}} modification en cours d’envoi",
+    "sending_other": "{{count}} modifications en cours d’envoi",
+    "sent": "Modifications envoyées"
+  },
+  "syncNotices": {
+    "someone": "un autre participant",
+    "rejected": "Votre modification de « {{step}} » n’a pas pu être appliquée : {{name}} a supprimé cette étape.",
+    "rejectedUnnamed": "Une de vos modifications n’a pas pu être appliquée : {{name}} a supprimé l’étape concernée.",
+    "rejectedOther": "Une de vos modifications du séjour « {{title}} » n’a pas pu être appliquée.",
+    "removed": "Vous ne participez plus au séjour « {{title}} ». Il a été retiré de cet appareil.",
+    "deleted": "Le séjour « {{title}} » a été supprimé par {{name}}.",
+    "deletedByOwner": "Le séjour « {{title}} » a été supprimé par son organisateur.",
+    "outdated": "Mettez à jour Mon guide pour envoyer vos modifications du séjour « {{title}} ». Elles sont gardées sur cet appareil."
+  },
+  "tripUpdate": {
+    "tooNew": "Mettez à jour Mon guide pour voir ce séjour.",
+    "sharedOutdated": "Mettez à jour Mon guide pour modifier ce séjour partagé.",
+    "playStore": "Mettre à jour sur Google Play",
+    "reload": "Recharger la page"
+  },
   "changes": {
     "button": "Modifications",
     "title": "Modifications",

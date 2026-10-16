@@ -46,6 +46,13 @@ export function createTripStore(db) {
       return saved(data);
     },
 
+    async whoRemoved(tripId, stepId) {
+      const { data, error } = await db.from('trip_changes').select('author_id').eq('trip_id', tripId).contains('step_ids', [stepId]).order('id', { ascending: false }).limit(1).maybeSingle();
+      if (error || !data?.author_id) return null;
+      const { data: profile } = await db.from('profiles').select('display_name').eq('user_id', data.author_id).maybeSingle();
+      return profile?.display_name ?? null;
+    },
+
     async notifyOthers(tripId, author) {
       const { error } = await db.rpc('trip_queue_change_pushes', { p_trip_id: tripId, p_author: author });
       if (error) log('warn', 'trip_change_push_failed', { code: error.code ?? null });

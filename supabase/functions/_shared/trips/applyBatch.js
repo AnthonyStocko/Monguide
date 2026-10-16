@@ -31,6 +31,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * @property {(args: { tripId: string, owner: string, row: object, opIds: string[], opType: string, summary: string | null }) => Promise<{ version: number, updatedAt: string } | null>} create
  *   null : le séjour existe déjà
  * @property {(tripId: string, author: string) => Promise<void>} [notifyOthers] notifications web des autres participants (après écriture)
+ * @property {(tripId: string, stepId: string) => Promise<string | null>} [whoRemoved] prénom de qui a supprimé une étape
  */
 
 /**
@@ -39,7 +40,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * @returns {{ tripId: string, baseVersion: number, ops: object[] }}
  */
 export function readBatch(body) {
-  const { tripId, baseVersion, ops } = body ?? {};
+  const { tripId, baseVersion, ops, schemaVersion } = body ?? {};
   if (typeof tripId !== 'string' || !UUID.test(tripId)) throw new AppError(400, 'invalid_input', 'tripId: uuid required');
   if (!Number.isInteger(baseVersion) || baseVersion < 0) throw new AppError(400, 'invalid_input', 'baseVersion: integer >= 0 required');
   if (!Array.isArray(ops) || ops.length === 0) throw new AppError(400, 'invalid_input', 'ops: non-empty array required');
@@ -47,17 +48,22 @@ export function readBatch(body) {
   const ids = ops.map((o) => o?.opId);
   if (ids.some((id) => typeof id !== 'string' || !UUID.test(id))) throw new AppError(400, 'invalid_input', 'ops[].opId: uuid required');
   if (new Set(ids).size !== ids.length) throw new AppError(400, 'invalid_input', 'ops[].opId: duplicate');
-  return { tripId: tripId.toLowerCase(), baseVersion, ops };
+  // schemaVersion : version de schéma connue de l'application (absente : application d'avant le Bloc E).
+  if (schemaVersion !== undefined && (!Number.isInteger(schemaVersion) || schemaVersion < 1)) throw new AppError(400, 'invalid_input', 'schemaVersion: integer >= 1 required');
+  return { tripId: tripId.toLowerCase(), baseVersion, ops, schemaVersion: schemaVersion ?? 1 };
 }
 
 /** "setStepTime" -> "set_step_time" (contrainte de trip_changes.op_type). */
 export const opTypeColumn = (type) => type.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
 /**
- * @param {{ store: TripStore, userId: string, tripId: string, ops: object[], rules: any, maxAttempts?: number }} input
- * @returns {Promise<{ version: number, trip: object, rejected: { opId: string | null, code: string }[], warnings: Record<string, object> }>}
+ * @param {{ store: TripStore, userId: string, tripId: string, ops: object[], rules: any, schemaVersion?: number, minSharedSchemaVersion?: number, maxAttempts?: number }} input
+ *   schemaVersion : version de schéma de l'application ; séjour partagé et version inférieure à
+ *   minSharedSchemaVersion : 409 shared_schema_outdated (rien n'est appliqué, l'application doit être mise à jour)
+ * @returns {Promise<{ version: number, trip: object, rejected: { opId: string | null, code: string, by?: string | null }[], warnings: Record<string, object> }>}
+ *   rejected[].by : TARGET_GONE d'une étape, prénom de qui l'a supprimée (null : inconnu)
  */
-export async function applyBatch({ store, userId, tripId, ops, rules, maxAttempts = 5 }) {
+export async function applyBatch({ store, userId, tripId, ops, rules, schemaVersion = Number.POSITIVE_INFINITY, minSharedSchemaVersion = 1, maxAttempts = 5 }) {
   const opIds = ops.map((o) => o.opId);
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const row = await store.loadTrip(tripId);
@@ -79,10 +85,14 @@ export async function applyBatch({ store, userId, tripId, ops, rules, maxAttempt
     const member = await store.membership(tripId, userId);
     // Non-participant : même réponse qu'un séjour inexistant (rien n'est révélé).
     if (!member) throw notFound();
+    if (member.memberCount > 1 && schemaVersion < minSharedSchemaVersion) {
+      throw new AppError(409, 'shared_schema_outdated', `Shared trips need schema version ${minSharedSchemaVersion}`);
+    }
     const current = migrate(rowToTrip(row)).trip;
     if (!fresh.length) return { version: row.version, trip: rowToTrip(row), rejected: [], warnings: {} };
 
     const result = applyOps(current, fresh, { rules, role: member.role, memberCount: member.memberCount });
+    result.rejected = await explainRejections(store, tripId, fresh, result.rejected);
     if (!result.applied.length) return { version: row.version, trip: rowToTrip(row), rejected: result.rejected, warnings: {} };
 
     const next = tripToRow(result.trip);
@@ -96,6 +106,18 @@ export async function applyBatch({ store, userId, tripId, ops, rules, maxAttempt
 }
 
 const notFound = () => new AppError(404, 'trip_not_found', 'Unknown trip');
+
+/** Étape disparue : qui l'a supprimée (dernière modification qui l'a touchée), pour le message de l'application. */
+async function explainRejections(store, tripId, ops, rejected) {
+  const byId = new Map(ops.map((o) => [o.opId, o]));
+  return Promise.all(
+    rejected.map(async (r) => {
+      const stepId = byId.get(r.opId)?.params?.stepId;
+      if (r.code !== 'TARGET_GONE' || typeof stepId !== 'string' || !store.whoRemoved) return r;
+      return { ...r, by: await store.whoRemoved(tripId, stepId).catch(() => null) };
+    })
+  );
+}
 
 /**
  * Une ligne d'historique par lot : type de la première opération résumée,

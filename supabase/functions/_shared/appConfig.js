@@ -16,7 +16,19 @@ const DEFAULT_MIN_APP_VERSION = '0.0.0';
  * sans barre finale), base des liens d'invitation (…/rejoindre/<jeton>).
  */
 export const WEB_URL_KEY = 'web_url';
-const RESERVED_KEYS = [MIN_APP_VERSION_KEY, WEB_URL_KEY];
+
+/**
+ * Clé réservée de app_config : version de schéma des séjours (schemaVersion,
+ * domain/model.js) qu'une application doit connaître pour modifier un séjour
+ * partagé (entier ; absente : 1, aucune restriction).
+ */
+export const MIN_SHARED_SCHEMA_KEY = 'min_shared_schema_version';
+const RESERVED_KEYS = [MIN_APP_VERSION_KEY, WEB_URL_KEY, MIN_SHARED_SCHEMA_KEY];
+
+/** Entier de 1 à 1000, sinon null. */
+export function readSchemaVersion(value) {
+  return Number.isInteger(value) && value >= 1 && value <= 1000 ? value : null;
+}
 
 /** Adresse https valide, sans barre finale ; null sinon. */
 export function readWebUrl(value) {
@@ -37,7 +49,7 @@ export function readWebUrl(value) {
  * aussi le pointeur des tuiles OSM en service (osmPointer), relu avec la
  * configuration : places connaît ainsi la date des données sans autre
  * lecture.
- * @returns {Promise<{ minAppVersion: string, webUrl: string | null, rules: typeof RULES, osmPointer: { dataDate: string, manifest: string } | null }>}
+ * @returns {Promise<{ minAppVersion: string, webUrl: string | null, minSharedSchemaVersion: number, rules: typeof RULES, osmPointer: { dataDate: string, manifest: string } | null }>}
  */
 export function loadAppConfig() {
   return cached('config', {}, RULES.cacheTtlSec.config, async () => {
@@ -61,6 +73,10 @@ export function loadAppConfig() {
     const webUrl = readWebUrl(webRow?.value);
     if (webRow && !webUrl) log('warn', 'app_config_ignored', { keys: [WEB_URL_KEY] });
 
-    return { minAppVersion, webUrl, rules, osmPointer: await readOsmPointer(rules) };
+    const schemaRow = data.find((row) => row.key === MIN_SHARED_SCHEMA_KEY);
+    const minSharedSchemaVersion = readSchemaVersion(schemaRow?.value) ?? 1;
+    if (schemaRow && !readSchemaVersion(schemaRow.value)) log('warn', 'app_config_ignored', { keys: [MIN_SHARED_SCHEMA_KEY] });
+
+    return { minAppVersion, webUrl, minSharedSchemaVersion, rules, osmPointer: await readOsmPointer(rules) };
   });
 }

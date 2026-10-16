@@ -157,6 +157,29 @@
     "sinceVisit_other": "{{count}} changes since your last visit",
     "seeChanges": "View"
   },
+  "pending": {
+    "offline_one": "Offline · {{count}} change waiting",
+    "offline_other": "Offline · {{count}} changes waiting",
+    "sending_one": "Sending {{count}} change",
+    "sending_other": "Sending {{count}} changes",
+    "sent": "Changes sent"
+  },
+  "syncNotices": {
+    "someone": "another participant",
+    "rejected": "Your change to “{{step}}” could not be applied: {{name}} deleted this step.",
+    "rejectedUnnamed": "One of your changes could not be applied: {{name}} deleted the step.",
+    "rejectedOther": "One of your changes to the trip “{{title}}” could not be applied.",
+    "removed": "You are no longer part of the trip “{{title}}”. It was removed from this device.",
+    "deleted": "The trip “{{title}}” was deleted by {{name}}.",
+    "deletedByOwner": "The trip “{{title}}” was deleted by its organiser.",
+    "outdated": "Update Mon guide to send your changes to the trip “{{title}}”. They are kept on this device."
+  },
+  "tripUpdate": {
+    "tooNew": "Update Mon guide to see this trip.",
+    "sharedOutdated": "Update Mon guide to edit this shared trip.",
+    "playStore": "Update on Google Play",
+    "reload": "Reload the page"
+  },
   "changes": {
     "button": "Changes",
     "title": "Changes",
