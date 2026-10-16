@@ -12,7 +12,7 @@ données.
 |---|---|
 | L'application collecte-t-elle ou partage-t-elle des types de données utilisateur obligatoires ? | **Oui** |
 | Toutes les données sont-elles chiffrées en transit ? | **Oui** (HTTPS uniquement : Supabase, fonctions, tuiles de carte) |
-| Les utilisateurs peuvent-ils demander la suppression de leurs données ? | **Oui** : dans l'application (Réglages > Supprimer mon compte) et sur le web : https://anthonystocko.github.io/Monguide/fr/suppression-compte.html |
+| Les utilisateurs peuvent-ils demander la suppression de leurs données ? | **Oui** : dans l'application (Réglages > Supprimer mon compte) et sur le web : https://monguide.mgapp.workers.dev/suppression-compte.html |
 | Publicité | **Aucune** (ni SDK publicitaire, ni identifiant publicitaire) |
 | Suivi, mesure d'audience, profilage | **Aucun** (ni Firebase, ni Analytics, ni SDK tiers de suivi) |
 | Revue de sécurité indépendante | Non |
@@ -76,9 +76,8 @@ autres » (collectés, non partagés, fonctionnalités de l'application).
   - garder « Autre contenu généré par l'utilisateur ».
   La politique de confidentialité le décrit dans la section « Séjours
   partagés ». Elle doit être en ligne **avant** l'envoi de la 1.2.0 :
-  - https://anthonystocko.github.io/Monguide/fr/confidentialite.html
-    (adresse déclarée sur Google Play) ;
-  - https://monguide.mgapp.workers.dev/confidentialite.html.
+  https://monguide.mgapp.workers.dev/confidentialite.html (adresse à déclarer sur Google
+  Play, `docs/liens-publics.md`).
 
 - **Position et adresses : déclarées « partagées »** (décision du 24 septembre
   2026) : la position précise (« Utiliser ma position ») et le texte des

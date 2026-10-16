@@ -44,14 +44,14 @@ de la soumission.
 - [ ] Visuels : icône 512 × 512, image de présentation 1024 × 500, captures
       d'écran (liste dans `store/listing.md`).
 - [ ] Catégorie : Voyages et infos locales. Application gratuite, sans achat intégré.
-- [ ] Coordonnées : e-mail de contact, site web https://anthonystocko.github.io/Monguide/
+- [ ] Coordonnées : e-mail de contact, site web https://monguide.mgapp.workers.dev/decouvrir.html
 
 ## 4. Contenu de l'application (Play Console > Règles et programmes > Contenu de l'application)
 
-- [ ] **Règles de confidentialité** : https://anthonystocko.github.io/Monguide/fr/confidentialite.html
-      (version anglaise : `/en/privacy.html`).
+- [ ] **Règles de confidentialité** : https://monguide.mgapp.workers.dev/confidentialite.html
+      (`docs/liens-publics.md` ; l'ancienne adresse GitHub Pages n'est plus en ligne).
 - [ ] **Suppression de compte** (création de compte dans l'application) :
-      URL https://anthonystocko.github.io/Monguide/fr/suppression-compte.html ;
+      URL https://monguide.mgapp.workers.dev/suppression-compte.html ;
       suppression aussi possible dans l'application (Réglages).
 - [ ] **Accès à l'application** : toutes les fonctionnalités sont disponibles
       sans compte (mode invité) ; le compte ne sert qu'à la synchronisation.
@@ -100,11 +100,11 @@ de la soumission.
 avant l'envoi sur Google Play.
 
 1. [ ] **Pages en ligne** après le push sur `main` :
-   - <https://anthonystocko.github.io/Monguide/fr/confidentialite.html> et
-     `/en/privacy.html` (workflow `pages.yml`, adresse déclarée sur Google
-     Play) ;
-   - <https://monguide.mgapp.workers.dev/confidentialite.html> (Cloudflare) ;
-   - sur chacune : section « Séjours partagés » et date du 16 octobre 2026 ;
+   - <https://monguide.mgapp.workers.dev/confidentialite.html> (Cloudflare) : section « Séjours
+     partagés » et date du 16 octobre 2026 ;
+   - dans la Play Console, vérifier que « Règles de confidentialité » et
+     « Suppression des données » pointent vers les adresses Cloudflare
+     (`docs/liens-publics.md`), et non plus vers GitHub Pages, désactivé ;
    - suppression de compte : phrase sur le transfert des séjours partagés.
 2. [ ] **Cloudflare** : variable `ANDROID_CERT_SHA256`, l'empreinte SHA-256
    du certificat de signature de l'application (Play Console > Intégrité de
