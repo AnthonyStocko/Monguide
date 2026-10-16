@@ -296,23 +296,63 @@ export const authApi = {
   }
 };
 
-/** Table trips (RLS : uniquement les séjours de l'utilisateur connecté). */
+/**
+ * Séjours des comptes. Lecture directe (RLS : séjours dont l'utilisateur est
+ * participant) ; écriture uniquement par opérations, fonction
+ * trip-apply-ops (docs/api.md).
+ */
 export const tripsRemote = {
-  /** Lignes modifiées depuis `since` (ISO), de la plus ancienne à la plus récente. */
-  async pullSince(since) {
+  /** Identifiant, version et suppression de chaque séjour accessible (synchronisation). */
+  async listVersions() {
     ensureOnline();
-    let query = supabase.from('trips').select('*').order('updated_at', { ascending: true });
-    if (since) query = query.gt('updated_at', since);
-    const { data, error } = await withTimeout(query, getRules().api.timeoutMs);
+    const { data, error } = await withTimeout(supabase.from('trips').select('id, version, deleted'), getRules().api.timeoutMs);
     if (error) throw new ApiError('server', { status: error.code ? 500 : null });
     return data;
   },
-  /** Envoie des lignes (création ou mise à jour). */
-  async push(rows) {
-    if (!rows.length) return;
+  /** Lignes complètes des séjours demandés. @param {string[]} ids */
+  async fetchRows(ids) {
+    if (!ids.length) return [];
     ensureOnline();
-    const { error } = await withTimeout(supabase.from('trips').upsert(rows, { onConflict: 'id' }), getRules().api.timeoutMs);
+    const { data, error } = await withTimeout(supabase.from('trips').select('*').in('id', ids), getRules().api.timeoutMs);
+    if (error) throw new ApiError('server', { status: error.code ? 500 : null });
+    return data;
+  },
+  /**
+   * Envoie des opérations (50 au plus).
+   * @param {{ tripId: string, baseVersion: number, ops: object[] }} batch
+   * @returns {Promise<{ version: number, trip: object, rejected: { opId: string | null, code: string }[], warnings: object }>}
+   */
+  async applyOps(batch) {
+    const { data } = await callFunction('trip-apply-ops', { method: 'POST', body: batch });
+    return data;
+  },
+  /** Nombre de participants d'un séjour (0 si inaccessible). @param {string} tripId */
+  async memberCount(tripId) {
+    ensureOnline();
+    const { count, error } = await withTimeout(supabase.from('trip_members').select('user_id', { count: 'exact', head: true }).eq('trip_id', tripId), getRules().api.timeoutMs);
     if (error) throw new ApiError('server');
+    return count ?? 0;
+  },
+  /**
+   * Historique d'un séjour, du plus récent au plus ancien, avec le prénom et
+   * la couleur de chaque auteur (null : compte supprimé ou profil absent).
+   * @param {string} tripId
+   */
+  async changes(tripId) {
+    ensureOnline();
+    const timeout = getRules().api.timeoutMs;
+    const { data, error } = await withTimeout(
+      supabase.from('trip_changes').select('id, version, author_id, op_type, summary, created_at').eq('trip_id', tripId).order('id', { ascending: false }).limit(200),
+      timeout
+    );
+    if (error) throw new ApiError('server');
+    const authors = [...new Set(data.map((c) => c.author_id).filter(Boolean))];
+    const { data: profiles, error: profileError } = authors.length
+      ? await withTimeout(supabase.from('profiles').select('user_id, display_name, avatar_color').in('user_id', authors), timeout)
+      : { data: [], error: null };
+    if (profileError) throw new ApiError('server');
+    const byId = new Map(profiles.map((p) => [p.user_id, p]));
+    return data.map((c) => ({ ...c, author: c.author_id ? (byId.get(c.author_id) ?? null) : null }));
   }
 };
 

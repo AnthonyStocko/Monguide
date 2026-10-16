@@ -27,16 +27,25 @@ export async function clientId(req, caller) {
 }
 
 /**
+ * Fenêtre et limite d'un type de requête : modifications de séjour par
+ * minute (tripOpsPerMinute), les autres par fenêtre de windowMin minutes.
+ * @param {'generate' | 'tripOps' | 'default'} kind
+ * @returns {{ windowMs: number, limit: number }}
+ */
+export function rateWindow(kind, { windowMin, generatePerWindow, otherPerWindow, tripOpsPerMinute = 120 }) {
+  if (kind === 'tripOps') return { windowMs: 60_000, limit: tripOpsPerMinute };
+  return { windowMs: windowMin * 60_000, limit: kind === 'generate' ? generatePerWindow : otherPerWindow };
+}
+
+/**
  * Compte la requête dans une fenêtre fixe et refuse au-delà de la limite.
  * En cas de panne de la base, la requête passe (journalisé).
- * @param {{ req: Request, caller: { type: string, userId?: string }, kind: 'generate' | 'default', rules: any }} params
+ * @param {{ req: Request, caller: { type: string, userId?: string }, kind: 'generate' | 'tripOps' | 'default', rules: any }} params
  * @throws {AppError} 429 avec l'en-tête Retry-After
  */
 export async function enforceRateLimit({ req, caller, kind, rules }) {
-  const { windowMin, generatePerWindow, otherPerWindow } = rules.rateLimits;
-  const windowMs = windowMin * 60_000;
+  const { windowMs, limit } = rateWindow(kind, rules.rateLimits);
   const windowStart = Math.floor(Date.now() / windowMs) * windowMs;
-  const limit = kind === 'generate' ? generatePerWindow : otherPerWindow;
   const bucket = `${kind}:${await clientId(req, caller)}`;
 
   const { data: count, error } = await getAdminClient().rpc('rate_limit_hit', {

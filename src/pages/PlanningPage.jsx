@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CirclePlus, FileDown, ImageOff } from 'lucide-react';
+import { CirclePlus, FileDown, History, ImageOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { applyChanges } from '@domain/applyChanges.js';
@@ -36,6 +36,7 @@ import { usePlaceName } from '../i18n/usePlaceName.js';
 import { getWeather, sendAiFeedback } from '../services/dataApi.js';
 import { connectionTypeKnown, onConnectionChange } from '../services/network.js';
 import { hapticStepValidated } from '../services/haptics.js';
+import { memberCount } from '../services/sharing.js';
 import { refreshTripPhotos } from '../services/tripImages.js';
 
 /** En développement : invariants vérifiés après chaque recalcul, sur les journées recalculées (console). */
@@ -105,6 +106,19 @@ export default function PlanningPage() {
     };
   }, [shownTripId]);
 
+  // Séjour partagé (plus d'un participant) : accès aux « Modifications » ; bascule de la version IA désactivée.
+  const synced = status === 'ready' && Number.isInteger(trip.version);
+  const [shared, setShared] = useState(false);
+  useEffect(() => {
+    setShared(false);
+    if (!synced) return undefined;
+    let alive = true;
+    memberCount(shownTripId).then((n) => alive && setShared(n > 1));
+    return () => {
+      alive = false;
+    };
+  }, [shownTripId, synced]);
+
   if (status === 'loading') {
     return (
       <Page>
@@ -150,7 +164,7 @@ export default function PlanningPage() {
 
   const saveDay = async (newDay) => {
     const days = trip.days.map((d, i) => (i === day ? clearResolvedConflicts(recomputeTravel(newDay, trip, rules), trip.mode, rules) : d));
-    await save({ ...trip, days });
+    await save({ ...trip, days }, trip);
     setDialog(null);
   };
 
@@ -162,10 +176,11 @@ export default function PlanningPage() {
     const next = applyChanges(base, result, choices, rules);
     // "Ajouter sans réorganiser" garde volontairement les chevauchements (badge "Conflit d'horaire").
     if (check) devCheck(base, next, trip.mode, rules);
-    await save(next);
+    // Base : séjour d'avant l'action (previous), pour que seules ses différences soient enregistrées.
+    const saved = await save(next, previous);
     setProposal(null);
     setDialog(null);
-    setUndo({ previous, message });
+    setUndo({ previous, after: saved, message });
   };
 
   // --- Suivi en temps réel : valider ou passer une étape du jour en cours ---
@@ -173,7 +188,7 @@ export default function PlanningPage() {
     const step = current.steps[stepIndex];
     const now = nowInZone(trip.timezone);
     const before = trip;
-    let next = await save(setStepStatus(trip, day, step.id, stepStatus, now.time));
+    let next = await save(setStepStatus(trip, day, step.id, stepStatus, now.time), trip);
     // Validée : coche animée (StepCard) et vibration légère.
     if (stepStatus === 'done') hapticStepValidated();
     // Météo : seulement en ligne, via la fonction weather (met aussi à jour Day.weather).
@@ -185,7 +200,7 @@ export default function PlanningPage() {
         if (res.fromCache || !w) online = false;
         else {
           const weather = dayWeather(w);
-          next = await save({ ...next, days: next.days.map((d, i) => (i === day ? { ...d, weatherAvailable: Boolean(w.available), ...(weather ? { weather } : {}) } : d)) });
+          next = await save({ ...next, days: next.days.map((d, i) => (i === day ? { ...d, weatherAvailable: Boolean(w.available), ...(weather ? { weather } : {}) } : d)) }, next);
         }
       } catch {
         online = false;
@@ -196,7 +211,7 @@ export default function PlanningPage() {
     const message = result.weatherChecked ? doneText : `${doneText} · ${t('replan.weatherOffline')}`;
     if (result.changes.length) setProposal({ kind: 'tracking', base: next, result });
     // Message en bas d'écran avec "Annuler" (retour à l'état d'avant la validation).
-    setUndo({ previous: before, message });
+    setUndo({ previous: before, after: next, message });
   };
 
   // --- Étapes personnelles ---
@@ -279,6 +294,11 @@ export default function PlanningPage() {
         <Button variant="secondary" icon={FileDown} onClick={() => setDialog({ kind: 'export' })}>
           {t('export.button')}
         </Button>
+        {shared && (
+          <Button variant="secondary" icon={History} onClick={() => navigate(`/planning/${trip.id}/changes`)}>
+            {t('changes.button')}
+          </Button>
+        )}
       </TripHero>
 
       {photos?.status === 'wifi_only' && (
@@ -303,13 +323,13 @@ export default function PlanningPage() {
           reprogrammées par l'enregistrement du séjour). */}
       <AiReviewCard
         trip={trip}
-        readOnly={readOnly}
+        readOnly={readOnly || shared}
         onShowOriginal={() => {
-          save(switchToOriginal(trip));
+          save(switchToOriginal(trip), trip);
           sendAiFeedback('revert_original');
         }}
         onShowReviewed={() => {
-          save(switchToReviewed(trip));
+          save(switchToReviewed(trip), trip);
           sendAiFeedback('revert_reviewed');
         }}
       />
@@ -362,7 +382,7 @@ export default function PlanningPage() {
           dayIndex={day}
           stepIndex={dialog.stepIndex}
           onPick={async (place) => {
-            await save(replaceStepPlace(trip, day, dialog.stepIndex, place, rules));
+            await save(replaceStepPlace(trip, day, dialog.stepIndex, place, rules), trip);
             setDialog(null);
           }}
           onClose={() => setDialog(null)}
@@ -415,7 +435,8 @@ export default function PlanningPage() {
           message={undo.message}
           seconds={rules.ui.undoDelaySec}
           onUndo={async () => {
-            await save(undo.previous);
+            // Opérations inverses de l'action seule : une modification reçue entre-temps est gardée.
+            await save(undo.previous, undo.after);
             setUndo(null);
           }}
           onExpire={expireUndo}

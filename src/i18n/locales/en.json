@@ -50,6 +50,19 @@
     "tripLength_one": "{{count}} day · {{month}}",
     "tripLength_other": "{{count}} days · {{month}}"
   },
+  "changes": {
+    "button": "Changes",
+    "title": "Changes",
+    "back": "Back to the itinerary",
+    "someone": "A participant",
+    "formerMember": "Former participant",
+    "emptyTitle": "No changes yet",
+    "empty": "Changes made by participants will appear here.",
+    "offlineTitle": "Offline",
+    "offline": "Connect to the internet to see the changes.",
+    "error": "Could not load the changes. Please try again later.",
+    "languageNote": "Change descriptions are written in French."
+  },
   "planning": {
     "emptyTitle": "No schedule",
     "emptyText": "Create a trip to see its day-by-day plan.",

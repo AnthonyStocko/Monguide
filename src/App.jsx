@@ -6,6 +6,7 @@ import UpdateRequiredScreen from './components/layout/UpdateRequiredScreen.jsx';
 import { useConfig } from './hooks/useConfig.js';
 import AboutPage from './pages/AboutPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
+import ChangesPage from './pages/ChangesPage.jsx';
 import CreatePage from './pages/CreatePage.jsx';
 import DebugPage from './pages/DebugPage.jsx';
 import FavoritesPage from './pages/FavoritesPage.jsx';
@@ -72,6 +73,7 @@ export default function App() {
           <Route path="create" element={<CreatePage />} />
           <Route path="planning" element={<PlanningPage />} />
           <Route path="planning/:tripId" element={<PlanningPage />} />
+          <Route path="planning/:tripId/changes" element={<ChangesPage />} />
           <Route path="map" element={<MapPage />} />
           <Route path="favorites" element={<FavoritesPage />} />
           <Route path="settings" element={<SettingsPage />} />

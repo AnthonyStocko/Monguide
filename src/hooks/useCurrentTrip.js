@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCurrentTripId, listTrips, loadTrip, onTripsChanged, setCurrentTripId, updateTrip } from '../services/tripsStore.js';
 
 /**
@@ -6,11 +6,17 @@ import { getCurrentTripId, listTrips, loadTrip, onTripsChanged, setCurrentTripId
  * récent), lu sur l'appareil : disponible hors ligne. readOnly : séjour créé
  * par une version plus récente de l'application, consultable mais non modifiable.
  * @param {string | undefined} tripId
- * @returns {{ status: 'loading' | 'ready' | 'empty', trip: object | null, readOnly: boolean, save: (trip: object) => Promise<object> }}
+ * save(next, base) : seules les différences entre base (le séjour à partir duquel next a été
+ * calculé ; par défaut le séjour affiché) et next sont enregistrées (opérations,
+ * services/tripsStore.js), par-dessus la dernière version.
+ * @returns {{ status: 'loading' | 'ready' | 'empty', trip: object | null, readOnly: boolean, save: (trip: object, base?: object) => Promise<object> }}
  */
 export function useCurrentTrip(tripId) {
   const [state, setState] = useState({ status: 'loading', trip: null, readOnly: false });
   const [version, setVersion] = useState(0);
+  // Séjour affiché : base des différences de la prochaine sauvegarde.
+  const shown = useRef(null);
+  shown.current = state.trip;
 
   // Rechargement quand la synchronisation modifie ou supprime des séjours.
   useEffect(() => onTripsChanged(() => setVersion((v) => v + 1)), []);
@@ -33,8 +39,9 @@ export function useCurrentTrip(tripId) {
     };
   }, [tripId, version]);
 
-  const save = useCallback(async (trip) => {
-    const saved = await updateTrip(trip);
+  const save = useCallback(async (trip, base = shown.current ?? undefined) => {
+    const saved = await updateTrip(trip, base);
+    shown.current = saved;
     setState({ status: 'ready', trip: saved, readOnly: false });
     return saved;
   }, []);

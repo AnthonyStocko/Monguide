@@ -348,7 +348,9 @@ export const RULES = Object.freeze({
   rateLimits: {
     windowMin: 60,
     generatePerWindow: 30,
-    otherPerWindow: 600
+    otherPerWindow: 600,
+    /** trip-apply-ops : appels par minute et par utilisateur (fenêtre d'une minute). */
+    tripOpsPerMinute: 120
   },
 
   /**

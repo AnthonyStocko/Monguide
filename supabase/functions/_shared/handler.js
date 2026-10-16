@@ -17,7 +17,7 @@ import { errorResponse, jsonResponse } from './respond.js';
  * @param {{
  *   name: string,
  *   methods?: string[],
- *   rateLimitKind?: 'generate' | 'default',
+ *   rateLimitKind?: 'generate' | 'tripOps' | 'default',
  *   handle: (ctx: { req: Request, caller: object, appConfig: { minAppVersion: string, rules: object, osmPointer: { dataDate: string, manifest: string } | null } }) => Promise<unknown> | unknown
  * }} options
  */

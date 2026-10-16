@@ -491,3 +491,8 @@ entrypoint = "./functions/push-schedule/index.js"
 verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/push-send/index.js"
+
+[functions.trip-apply-ops]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/trip-apply-ops/index.js"

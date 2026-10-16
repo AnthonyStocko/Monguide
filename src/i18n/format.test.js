@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatCountry, formatDate, formatNumber } from './format.js';
+import { formatCountry, formatDate, formatNumber, formatRelative } from './format.js';
 
 // Intl utilise des espaces insécables : on les normalise pour comparer.
 const plain = (s) => s.replace(/\s/g, ' ');
@@ -38,5 +38,16 @@ describe('formatCountry', () => {
     expect(formatCountry('BE', 'fr')).toBe('Belgique');
     expect(formatCountry('DE', 'en')).toBe('Germany');
     expect(formatCountry('??', 'fr')).toBe('??');
+  });
+});
+
+describe('formatRelative', () => {
+  const now = Date.parse('2026-10-16T12:00:00Z');
+  it('heure relative dans la langue de l’interface', () => {
+    expect(formatRelative('2026-10-16T11:59:50Z', 'fr', now)).toBe('maintenant');
+    expect(plain(formatRelative('2026-10-16T11:55:00Z', 'fr', now))).toBe('il y a 5 minutes');
+    expect(plain(formatRelative('2026-10-16T09:00:00Z', 'en', now))).toBe('3 hours ago');
+    expect(formatRelative('2026-10-15T12:00:00Z', 'fr', now)).toBe('hier');
+    expect(plain(formatRelative('2026-08-16T12:00:00Z', 'en', now))).toBe('2 months ago');
   });
 });

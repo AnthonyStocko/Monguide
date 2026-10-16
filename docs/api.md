@@ -564,11 +564,14 @@ Journées (`planning[]`) et étapes : identifiant `id` stable (UUID).
 Journée générée ou migrée (schemaVersion 3) : UUID version 5 de
 `day:<séjour>:<date>` (`domain/stableId.js`, même calcul que la migration SQL).
 
-Synchronisation (`src/services/sync.js`) : lecture des lignes
-`updated_at > dernière synchronisation`, puis `upsert` des séjours modifiés
-localement.
+Synchronisation (`src/services/sync.js`) : lecture de `id, version, deleted`
+de chaque séjour accessible, puis des lignes complètes des séjours plus
+récents que la copie de l'appareil ; envoi des modifications par
+`trip-apply-ops` (opérations, jamais le séjour entier). L'ancien `upsert`
+direct (applications publiées avant le Bloc B) reste accepté pour l'owner
+d'un séjour non partagé, jusqu'à ce que `minAppVersion` l'exclue.
 
-Un séjour supprimé est envoyé comme marqueur sans contenu (`title` vide,
+Un séjour supprimé est enregistré comme marqueur sans contenu (`title` vide,
 `destination`, `params` et `planning` vides, `deleted = true`). La tâche
 pg_cron `monguide-purge-deleted-trips` efface les marqueurs de plus de
 90 jours (`rules.sync.deletedRetentionDays`).
@@ -600,6 +603,65 @@ l'utilisateur appelant. Tests : `supabase/tests/database/shared_trips.test.sql`
   s'il en était le seul participant (déclencheur sur `auth.users`) ; ses
   entrées d'historique restent, sans auteur.
 - **Erreurs** : codes communs ; `500 internal_error` si la suppression échoue.
+
+### `trip-apply-ops` — modifications d'un séjour par opérations
+
+Seul chemin d'écriture des séjours pour l'application (Prompt 8.0, Bloc B).
+
+- **Méthode** : `POST`, utilisateur connecté et participant du séjour
+  (`401 unauthorized` en mode invité). Limite : 120 appels par minute et par
+  utilisateur (`rules.rateLimits.tripOpsPerMinute`, `429 rate_limited`).
+- **Entrée** : `{ "tripId": uuid, "baseVersion": entier, "ops": [{ "opId": uuid, "type", "params" }] }`,
+  1 à 50 opérations, `opId` créé par l'appareil et unique. `baseVersion` :
+  version de la copie de l'appareil (information ; les opérations sont
+  toujours appliquées sur la dernière version).
+- **Traitement** : lecture de la dernière version, application des
+  opérations (`domain/ops/applyOps.js`, même code que l'appareil), trajets et
+  conflits recalculés sur les journées touchées, puis `trip_commit` : dans
+  une transaction, verrou de la ligne, vérification que la version n'a pas
+  changé depuis la lecture (sinon tout est relu et réappliqué, 5 fois au
+  plus, puis `409 conflict`), écriture, version + 1, une ligne dans
+  `trip_changes` (résumés en français), opérations enregistrées dans
+  `trip_applied_ops` (30 jours). Une opération déjà appliquée (même `opId`)
+  est ignorée sans erreur.
+- **Sortie** : `{ "version", "trip", "rejected": [{ "opId", "code" }], "warnings": { "<dayId>": { "<stepId>": [{ "code", … }] } } }`.
+  `trip` : séjour complet après application (`version` comprise).
+  `warnings` : vérifications habituelles (`checkDay`) des journées
+  recalculées, jamais bloquantes.
+- **Refus d'une opération** (les autres du lot sont appliquées) :
+  `TARGET_GONE` (étape, journée ou hébergement supprimé entre-temps),
+  `FORBIDDEN` (réservée à l'owner : `renameTrip`, `deleteTrip`),
+  `SHARED_TRIP` (`switchReview` dans un séjour à plusieurs participants),
+  `EXISTS` (`createTrip` d'un séjour existant, `addStep` d'une étape déjà
+  présente), `TRIP_DELETED`, `INVALID` (forme).
+- **Erreurs** : codes communs ; `400 invalid_input` (lot mal formé) ;
+  `404 trip_not_found` (séjour inconnu ou utilisateur non participant :
+  réponse identique).
+
+| Opération | Paramètres | Effet |
+|---|---|---|
+| `createTrip` | `trip` | crée le séjour (première opération du lot, séjour inconnu du serveur) ; l'appelant devient owner |
+| `deleteTrip` | — | owner : marqueur de suppression |
+| `renameTrip` | `title` (100 caractères au plus) | owner : nouveau titre |
+| `addStep` | `dayId`, `step`, `afterStepId` (null : en tête) | ajoute une étape ; `afterStepId` disparu : place selon l'heure de début |
+| `removeStep` | `stepId` | supprime une étape |
+| `moveStep` | `stepId`, `toDayId`, `afterStepId`, `start`, `end`, `customTime?` | déplace (autre position, autre horaire ou autre journée) |
+| `setStepTime` | `stepId`, `start`, `end`, `customTime?` | horaire (« HH:mm », à cheval sur minuit accepté) |
+| `replaceStep` | `stepId`, `place` (null : sans lieu, « Soirée libre » pour un dîner) | autre lieu : remplacement, suggestion météo acceptée, choix du restaurant du dîner |
+| `setStepDone` | `stepId`, `status` (`planned` \| `done` \| `skipped`), `completedAt?` (heure de la destination) | étape validée, passée ou remise à faire (partagé entre participants) |
+| `updateStep` | `stepId`, `set?`, `unset?` | autres champs : `type`, `title`, `note`, `indoor`, `badges`, `conflicts`, `customTime`, `locked`, `specialties`, `category`, `source` |
+| `setDayWeather` | `dayId`, `weatherAvailable`, `weather` | prévisions du jour |
+| `setDayLodging` | `dayId`, `startLodgingId`, `endLodgingId` | hébergements de départ et d'arrivée du jour |
+| `setLodging` | `lodging` | ajoute ou modifie un hébergement |
+| `removeLodging` | `lodgingId` | supprime un hébergement |
+| `updateCandidates` | `add?`, `remove?`, `update?` | réserve de lieux |
+| `setImages` | `images` (`placeId` -> photo ou null), `hero?`, `destinationWikidata?` | photos Wikimedia Commons |
+| `switchReview` | `to` (`original` \| `reviewed`) | version d'origine ou relue de la relecture IA (séjour à un seul participant) |
+
+L'application produit ces opérations par différence entre le séjour avant
+et après l'action (`domain/ops/diffTrips.js`) : chaque action de l'écran
+(réajustement, report, « Annuler »…) devient une suite d'opérations
+atomiques sur des identifiants.
 
 ### Rappels de la version web (Web Push)
 
@@ -680,3 +742,4 @@ envoi, abonnements après 90 jours sans nouvelles de l'appareil.
 | 1 | 2026-09-29 | Ajout compatible : `generate` en flux NDJSON (`Accept: application/x-ndjson`), événements `start`, `step`, `result`, `error`. |
 | 1 | 2026-10-13 | Ajouts compatibles : rappels de la version web, fonctions `push-subscribe`, `push-schedule`, `push-send` ; code `404 not_subscribed`. |
 | 1 | 2026-10-16 | Ajouts compatibles : séjours partagés, Bloc A (tables `profiles`, `trip_members`, `trip_invites`, `trip_changes`, colonne `trips.version`, RLS par participant) ; `Day.id` (schemaVersion 3) dans les séjours de `generate`. |
+| 1 | 2026-10-16 | Ajout compatible : fonction `trip-apply-ops` (modifications par opérations, idempotentes) ; `version` dans les séjours lus. |

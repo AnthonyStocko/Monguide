@@ -106,7 +106,7 @@ export function refreshTripPhotos(tripId) {
       const latest = await loadTrip(tripId);
       if (!latest || latest.readOnly) return null;
       const { trip: next, changed } = applyTripImages(latest.trip, images, destination);
-      trip = changed ? await updateTrip(next) : latest.trip;
+      trip = changed ? await updateTrip(next, latest.trip) : latest.trip;
       await storage.set(`${CHECK_PREFIX}${tripId}`, {
         checkedAt: check && Date.now() - Date.parse(check.checkedAt) < RECHECK_MS ? check.checkedAt : new Date().toISOString(),
         qids: unique(checked),

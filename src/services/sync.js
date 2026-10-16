@@ -1,25 +1,34 @@
 import { migrate } from '@domain/migrations.js';
-import { rowToTrip, tripToRow } from '@domain/tripRow.js';
+import { applyOps } from '@domain/ops/applyOps.js';
+import { diffTrips } from '@domain/ops/diffTrips.js';
+import { MAX_OPS_PER_CALL } from '@domain/ops/opTypes.js';
+import { rowToTrip } from '@domain/tripRow.js';
 import { authApi, tripsRemote } from './api.js';
 import { getRules } from './rules.js';
 import * as settings from './settings.js';
-import { allTripRecords, onTripsChanged, purgeAllTrips, purgeTrip, saveTrip } from './tripsStore.js';
+import * as storage from './storage.js';
+import { allTripRecords, detachAllTrips, getQueue, hasPendingOps, onTripsChanged, purgeAllTrips, purgeTrip, saveTrip, setQueue, withTripLock } from './tripsStore.js';
 
 /**
  * Synchronisation des séjours avec le compte, stratégie "local d'abord" :
  * l'appareil fait foi pour l'affichage ; au démarrage, au retour du réseau,
- * à la connexion et après chaque modification, on récupère les séjours
- * modifiés à distance depuis la dernière synchronisation, puis on envoie les
- * séjours modifiés localement. Conflit : la version au updatedAt le plus
- * récent l'emporte. Une suppression (deleted = true) est propagée, puis le
- * séjour est purgé de l'appareil.
+ * à la connexion et après chaque modification :
+ *  1. réception : version de chaque séjour accessible (trips.version) ; un
+ *     séjour plus récent sur le serveur remplace la copie de l'appareil, les
+ *     opérations encore en file y sont réappliquées ; un séjour supprimé ou
+ *     devenu inaccessible est effacé de l'appareil ;
+ *  2. envoi : opérations en file, par lots de 50, à trip-apply-ops (jamais
+ *     le séjour entier) ; séjour inconnu du serveur : opération createTrip.
+ * Conflits : le serveur applique chaque opération sur sa dernière version ;
+ * deux modifications de deux étapes différentes sont toutes deux gardées.
  *
- * État conservé (réglages) : lastPullAt (updated_at le plus récent reçu) et,
- * par séjour, l'updatedAt déjà synchronisé.
+ * Reprise d'une copie sans version (séjour enregistré avant les opérations,
+ * ou gardé après une déconnexion) : l'état "syncState" (updatedAt déjà
+ * synchronisé de chaque séjour) dit si elle a des modifications non
+ * envoyées ; elles deviennent alors des opérations (diffTrips).
  */
 
-const STATE_KEY = 'syncState';
-const emptyState = () => ({ lastPullAt: null, synced: {} });
+const LEGACY_KEY = 'syncState';
 
 /** @typedef {'guest' | 'synced' | 'pending' | 'syncing' | 'offline' | 'error'} SyncStatus */
 let status = 'guest';
@@ -43,29 +52,125 @@ export function onSyncStatus(listener) {
   return () => listeners.delete(listener);
 }
 
-async function loadState() {
-  return (await settings.get(STATE_KEY).catch(() => null)) ?? emptyState();
-}
-
-const isDirty = (trip, state) => state.synced[trip.id] !== trip.updatedAt;
+const KEY = (id) => `trip:${id}`;
+const hasVersion = (trip) => Number.isInteger(trip?.version);
 
 /**
- * Fusionne les lignes reçues du serveur dans l'appareil.
- * @returns {Promise<void>}
+ * Copie de l'appareil à partir de la version du serveur : opérations en
+ * file réappliquées par-dessus.
  */
-async function applyRemote(rows, state) {
-  const local = new Map((await allTripRecords()).map((t) => [t.id, t]));
-  for (const row of rows) {
-    const remote = rowToTrip(row);
-    const mine = local.get(remote.id);
-    if (remote.deleted) {
-      await purgeTrip(remote.id);
-    } else if (!mine || remote.updatedAt > mine.updatedAt) {
-      // Version distante plus récente : elle remplace la version locale (migrée à la réception).
-      await saveTrip(migrate(remote).trip, { remote: true });
+async function storeRemote(remote, queue) {
+  const migrated = migrate(remote);
+  const trip = !migrated.readOnly && queue.length ? applyOps(migrated.trip, queue, { rules: getRules() }).trip : remote;
+  await setQueue(remote.id, migrated.readOnly ? [] : queue);
+  await saveTrip({ ...trip, version: remote.version }, { remote: true });
+}
+
+/** Séjour reçu du serveur (plus récent, nouveau, ou copie sans version à reprendre). */
+function adoptRemote(remote, legacy) {
+  return withTripLock(remote.id, async () => {
+    const stored = await storage.get(KEY(remote.id));
+    let queue = await getQueue(remote.id);
+    if (stored && !hasVersion(stored)) {
+      // Copie sans version : modifications non envoyées (d'après syncState) -> opérations.
+      const dirty = legacy ? legacy[remote.id] !== stored.updatedAt : false;
+      if (dirty && stored.deleted) queue = [{ opId: crypto.randomUUID(), type: 'deleteTrip', params: {} }];
+      else if (dirty) queue = diffTrips(migrate(remote).trip, migrate(stored).trip).ops;
     }
-    if (!mine || remote.updatedAt >= mine.updatedAt) state.synced[remote.id] = remote.updatedAt;
-    if (!state.lastPullAt || row.updated_at > state.lastPullAt) state.lastPullAt = row.updated_at;
+    await storeRemote(remote, queue);
+  });
+}
+
+async function pull(legacy) {
+  const remote = new Map((await tripsRemote.listVersions()).map((r) => [r.id, r]));
+  const local = await allTripRecords();
+  const known = new Set(local.map((t) => t.id));
+  const wanted = [];
+  for (const trip of local) {
+    const r = remote.get(trip.id);
+    if (r?.deleted || (!r && hasVersion(trip))) await purgeTrip(trip.id);
+    else if (r && (!hasVersion(trip) || r.version > trip.version)) wanted.push(trip.id);
+  }
+  for (const r of remote.values()) if (!r.deleted && !known.has(r.id)) wanted.push(r.id);
+  for (const row of await tripsRemote.fetchRows(wanted)) await adoptRemote(rowToTrip(row), legacy);
+}
+
+/** Réponse de trip-apply-ops : version du serveur, opérations envoyées retirées de la file. */
+function acknowledge(id, sent, response) {
+  return withTripLock(id, async () => {
+    if (response.trip.deleted) return purgeTrip(id);
+    const done = new Set(sent.map((o) => o.opId));
+    const queue = (await getQueue(id)).filter((o) => !done.has(o.opId));
+    if (import.meta.env?.DEV && response.rejected?.length) console.warn('trip-apply-ops : opérations refusées', response.rejected);
+    await storeRemote({ ...response.trip, version: response.version }, queue);
+  });
+}
+
+async function sendQueue(trip) {
+  for (;;) {
+    const queue = await getQueue(trip.id);
+    if (!queue.length) return;
+    const current = await storage.get(KEY(trip.id));
+    if (!current) return;
+    const batch = queue.slice(0, MAX_OPS_PER_CALL);
+    let response;
+    try {
+      response = await tripsRemote.applyOps({ tripId: trip.id, baseVersion: current.version, ops: batch });
+    } catch (err) {
+      // Séjour supprimé ou plus accessible : effacé de l'appareil.
+      if (err?.code === 'trip_not_found') return purgeTrip(trip.id);
+      // Lot refusé par le serveur (malformé) : abandonné, sinon il bloquerait la file.
+      if (err?.code === 'invalid_input') {
+        const sent = new Set(batch.map((o) => o.opId));
+        await setQueue(trip.id, (await getQueue(trip.id)).filter((o) => !sent.has(o.opId)));
+        continue;
+      }
+      throw err;
+    }
+    await acknowledge(trip.id, batch, response);
+  }
+}
+
+/** Séjour pas encore sur le serveur : createTrip avec son contenu actuel. */
+async function create(trip) {
+  const sentAt = trip.updatedAt;
+  const { version: _v, ...content } = migrate(trip).trip;
+  let response;
+  try {
+    response = await tripsRemote.applyOps({ tripId: trip.id, baseVersion: 0, ops: [{ opId: crypto.randomUUID(), type: 'createTrip', params: { trip: content } }] });
+  } catch (err) {
+    // Identifiant déjà pris par un séjour d'un autre compte (copie gardée après une déconnexion) : nouvel identifiant.
+    if (err?.code === 'trip_not_found') return renameLocal(trip);
+    throw err;
+  }
+  await withTripLock(trip.id, async () => {
+    const now = await storage.get(KEY(trip.id));
+    if (!now) {
+      // Supprimé pendant l'envoi : supprimé aussi sur le serveur.
+      await tripsRemote.applyOps({ tripId: trip.id, baseVersion: response.version, ops: [{ opId: crypto.randomUUID(), type: 'deleteTrip', params: {} }] }).catch(() => {});
+      return;
+    }
+    // Modifié pendant l'envoi : ces modifications deviennent des opérations.
+    const queue = now.updatedAt !== sentAt ? diffTrips(content, migrate(now).trip).ops : [];
+    await storeRemote({ ...response.trip, version: response.version }, queue);
+  });
+}
+
+async function renameLocal(trip) {
+  const id = crypto.randomUUID();
+  await withTripLock(trip.id, async () => {
+    const now = await storage.get(KEY(trip.id));
+    if (!now) return;
+    await saveTrip({ ...now, id });
+    await purgeTrip(trip.id);
+  });
+}
+
+async function push() {
+  for (const trip of await allTripRecords()) {
+    if (hasVersion(trip)) await sendQueue(trip);
+    else if (trip.deleted) await purgeTrip(trip.id);
+    else await create(trip);
   }
 }
 
@@ -74,20 +179,14 @@ async function run() {
   if (!session) return setStatus('guest');
   if (!navigator.onLine) return setStatus('offline');
   setStatus('syncing');
-  const state = await loadState();
   try {
-    await applyRemote(await tripsRemote.pullSince(state.lastPullAt), state);
-
-    const dirty = (await allTripRecords()).filter((t) => isDirty(t, state));
-    await tripsRemote.push(dirty.map(tripToRow));
-    for (const trip of dirty) {
-      state.synced[trip.id] = trip.updatedAt;
-      if (trip.deleted) await purgeTrip(trip.id);
-    }
-    await settings.set(STATE_KEY, state);
-    setStatus('synced');
+    const legacy = (await settings.get(LEGACY_KEY).catch(() => null))?.synced ?? null;
+    await pull(legacy);
+    await push();
+    // Toutes les copies sans version sont reprises : l'ancien état ne sert plus.
+    if (legacy) await settings.remove(LEGACY_KEY);
+    setStatus((await hasPendingOps()) ? 'pending' : 'synced');
   } catch {
-    await settings.set(STATE_KEY, state).catch(() => {});
     setStatus(navigator.onLine ? 'error' : 'offline');
   }
 }
@@ -123,10 +222,12 @@ export function scheduleSync() {
 
 /**
  * Oublie l'état de synchronisation (déconnexion). Les séjours conservés sur
- * l'appareil seront envoyés au prochain compte connecté.
+ * l'appareil deviennent locaux ; ils seront repris par le prochain compte
+ * connecté (modifications non envoyées comprises).
  */
 export async function resetSyncState() {
-  await settings.remove(STATE_KEY);
+  const clean = await detachAllTrips();
+  await settings.set(LEGACY_KEY, { synced: clean });
   setStatus('guest');
 }
 
@@ -140,8 +241,13 @@ export async function endSession({ erase = false } = {}) {
   await authApi.signOut();
   while (running) await running.catch(() => {});
   clearTimeout(timer);
-  if (erase) await purgeAllTrips();
-  await resetSyncState();
+  if (erase) {
+    await purgeAllTrips();
+    await settings.remove(LEGACY_KEY);
+    setStatus('guest');
+  } else {
+    await resetSyncState();
+  }
 }
 
 let started = false;

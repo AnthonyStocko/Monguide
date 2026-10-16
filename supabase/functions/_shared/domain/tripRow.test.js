@@ -43,6 +43,13 @@ describe('tripToRow / rowToTrip', () => {
     expect(row).not.toHaveProperty('user_id');
   });
 
+  it('version : lue depuis la colonne de la base, jamais envoyée dans params', () => {
+    const row = { ...tripToRow({ ...trip, version: 7 }), user_id: 'u', updated_at: '2026-09-24T11:00:00+00:00', version: 7 };
+    expect(row.params).not.toHaveProperty('version');
+    expect(rowToTrip(row).version).toBe(7);
+    expect(rowToTrip({ ...row, version: undefined })).not.toHaveProperty('version');
+  });
+
   it('reconstruit exactement le séjour', () => {
     const row = { ...tripToRow(trip), user_id: 'u', updated_at: '2026-09-24T11:00:00+00:00' };
     expect(rowToTrip(row)).toEqual(trip);

@@ -50,6 +50,19 @@
     "tripLength_one": "{{count}} jour · {{month}}",
     "tripLength_other": "{{count}} jours · {{month}}"
   },
+  "changes": {
+    "button": "Modifications",
+    "title": "Modifications",
+    "back": "Retour au planning",
+    "someone": "Un participant",
+    "formerMember": "Ancien participant",
+    "emptyTitle": "Aucune modification",
+    "empty": "Les modifications des participants apparaîtront ici.",
+    "offlineTitle": "Hors ligne",
+    "offline": "Connectez-vous à internet pour voir les modifications.",
+    "error": "Impossible de charger les modifications. Réessayez plus tard.",
+    "languageNote": ""
+  },
   "planning": {
     "emptyTitle": "Aucun planning",
     "emptyText": "Créez un séjour pour voir son programme jour par jour.",

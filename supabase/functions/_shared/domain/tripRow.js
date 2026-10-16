@@ -6,7 +6,8 @@
  * (auth.uid()), jamais par l'application.
  */
 
-const OWN_COLUMNS = ['id', 'title', 'destination', 'startDate', 'endDate', 'createdAt', 'updatedAt', 'deleted', 'days', 'userId'];
+// version : numéro fixé par la base (colonne version), jamais envoyé par l'appareil.
+const OWN_COLUMNS = ['id', 'title', 'destination', 'startDate', 'endDate', 'createdAt', 'updatedAt', 'deleted', 'days', 'userId', 'version'];
 
 /**
  * Un séjour supprimé n'est envoyé que comme marqueur de suppression : son
@@ -60,6 +61,7 @@ export function rowToTrip(row) {
     createdAt: row.created_at,
     // Horodatage normalisé (la base renvoie "+00:00" au lieu de "Z").
     updatedAt: new Date(row.updated_at).toISOString(),
-    deleted: Boolean(row.deleted)
+    deleted: Boolean(row.deleted),
+    ...(Number.isInteger(row.version) ? { version: row.version } : {})
   };
 }
