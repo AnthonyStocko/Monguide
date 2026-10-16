@@ -6,6 +6,14 @@ export function onAppActive(listener) {
   return () => document.removeEventListener('visibilitychange', onChange);
 }
 
+export function onAppHidden(listener) {
+  const onChange = () => {
+    if (document.visibilityState === 'hidden') listener();
+  };
+  document.addEventListener('visibilitychange', onChange);
+  return () => document.removeEventListener('visibilitychange', onChange);
+}
+
 export function onAppUrlOpen() {
   return () => {};
 }

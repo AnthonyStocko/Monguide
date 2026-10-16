@@ -10,6 +10,16 @@ export function onAppActive(listener) {
   };
 }
 
+export function onAppHidden(listener) {
+  const handle = App.addListener('appStateChange', ({ isActive }) => {
+    if (!isActive) listener();
+  });
+  handle.catch(() => {});
+  return () => {
+    handle.then((h) => h.remove()).catch(() => {});
+  };
+}
+
 let launchHandled = false;
 
 export function onAppUrlOpen(listener) {

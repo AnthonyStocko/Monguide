@@ -51,6 +51,13 @@
     "tripLength_other": "{{count}} days · {{month}}"
   },
   "sharing": {
+    "shareButton": "Share",
+    "sharedBadge": "Shared",
+    "namesList_one": "{{last}}",
+    "namesList_other": "{{names}} and {{last}}",
+    "namesMore_one": "{{names}} and 1 other",
+    "namesMore_other": "{{names}} and {{count}} others",
+    "membersButton": "Participants: {{names}}",
     "title": "Participants",
     "members_one": "{{count}} participant",
     "members_other": "{{count}} participants",
@@ -142,6 +149,13 @@
       "offline": "Connect to the internet to join the trip.",
       "generic": "The invitation could not be opened. Please try again later."
     }
+  },
+  "live": {
+    "manyChanges_one": "{{name}} made {{count}} change",
+    "manyChanges_other": "{{name}} made {{count}} changes",
+    "sinceVisit_one": "{{count}} change since your last visit",
+    "sinceVisit_other": "{{count}} changes since your last visit",
+    "seeChanges": "View"
   },
   "changes": {
     "button": "Changes",
@@ -995,6 +1009,8 @@
       ]
     },
     "settings": {
+      "tripChanges": "Tell me about changes to shared trips",
+      "tripChangesHint": "At most one notification per hour and per trip, when another participant changes the trip.",
       "title": "Reminders",
       "device": "Receive reminders on this device",
       "deviceHint": "Several phones on the same account? Turn this off on those that should not ring.",

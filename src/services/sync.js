@@ -191,6 +191,24 @@ async function run() {
   }
 }
 
+/**
+ * Dernière version d'un seul séjour (modification reçue en direct, retour au
+ * premier plan) : copie de l'appareil remplacée, opérations en file
+ * réappliquées. Séjour devenu inaccessible : effacé.
+ * @param {string} tripId
+ */
+export async function refreshTrip(tripId) {
+  if (!navigator.onLine) return;
+  const [row] = await tripsRemote.fetchRows([tripId]);
+  if (!row || row.deleted) {
+    await purgeTrip(tripId);
+    return;
+  }
+  const stored = await storage.get(KEY(tripId));
+  if (hasVersion(stored) && row.version <= stored.version) return;
+  await adoptRemote(rowToTrip(row), null);
+}
+
 let again = false;
 
 /**

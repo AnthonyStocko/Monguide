@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '../../i18n/useFormat.js';
 import { tripStatus } from '../../utils/tripStatus.js';
+import SharedBadge from '../sharing/SharedBadge.jsx';
 import Badge from '../ui/Badge.jsx';
 import { usePhoto } from '../ui/Photo.jsx';
 
@@ -11,7 +12,8 @@ const STATUS_TONES = { current: 'primary', upcoming: 'secondary', past: 'neutral
  * Carte à image d'un séjour (accueil, favoris) : photo de la destination ou
  * paysage illustré, titre (lien vers le planning, zone cliquable étendue à
  * toute la carte), durée et mois, statut en badge (facultatif), crédit
- * derrière le bouton "i" (au-dessus du lien).
+ * derrière le bouton "i" (au-dessus du lien). Séjour partagé : badge
+ * « Partagé », pastilles et prénoms des participants.
  * @param {{ trip: object, showStatus?: boolean, headingLevel?: 3 | 4, compact?: boolean, children?: import('react').ReactNode }} props
  */
 export default function TripImageCard({ trip, showStatus = false, headingLevel = 3, compact = false, children }) {
@@ -38,6 +40,7 @@ export default function TripImageCard({ trip, showStatus = false, headingLevel =
           </Link>
         </Heading>
         <p className="text-ink-muted first-letter:uppercase">{t('home.tripLength', { count: info.dayCount, month })}</p>
+        {Number.isInteger(trip.version) && <SharedBadge tripId={trip.id} />}
         {children && <div className="relative z-10 mt-2">{children}</div>}
       </div>
     </article>

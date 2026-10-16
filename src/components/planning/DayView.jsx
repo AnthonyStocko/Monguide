@@ -19,12 +19,13 @@ const MODE_ICONS = { walk: Footprints, transit: BusFront, bike: Bike, car: Car }
  * retour, bouton "Rentrer" et liens d'hébergement.
  * @param {{
  *   trip: object, dayIndex: number, rules: any, isToday: boolean, readOnly: boolean, highlightId?: string | null,
+ *   flash?: Record<string, { color: string | null, userId: string | null }>,
  *   stepRefs?: import('react').MutableRefObject<Record<string, HTMLElement | null>>,
  *   onEditTime: (i: number) => void, onReplace: (i: number) => void, onLodging: () => void,
  *   onAddStep: (afterIndex: number) => void, onEditPersonal: (i: number) => void, onTrack: (i: number, status: 'done' | 'skipped') => void
  * }} props
  */
-export default function DayView({ trip, dayIndex, rules, isToday, readOnly, highlightId, stepRefs, onEditTime, onReplace, onLodging, onAddStep, onEditPersonal, onTrack }) {
+export default function DayView({ trip, dayIndex, rules, isToday, readOnly, highlightId, flash = {}, stepRefs, onEditTime, onReplace, onLodging, onAddStep, onEditPersonal, onTrack }) {
   const { t } = useTranslation();
   const day = trip.days[dayIndex];
   const lodging = (id) => trip.lodgings.find((l) => l.id === id);
@@ -111,6 +112,7 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
               isToday={isToday}
               readOnly={readOnly}
               highlighted={highlightId === step.id}
+              flash={flash[step.id]}
               current={i === currentIndex}
               reviewReason={reasons.has(step.id) ? (reasons.get(step.id) ?? '') : undefined}
               onEditTime={() => onEditTime(i)}

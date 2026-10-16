@@ -62,8 +62,8 @@ const tripsRemote = {
 };
 vi.mock('./api.js', () => ({ authApi: { getSession: async () => ({ user: {} }), signOut: async () => {}, onChange: () => () => {} }, tripsRemote }));
 
-const { syncNow } = await import('./sync.js');
-const { getQueue, loadTrip, updateTrip, deleteTrip } = await import('./tripsStore.js');
+const { refreshTrip, syncNow } = await import('./sync.js');
+const { getQueue, loadTrip, onTripsChanged, updateTrip, deleteTrip } = await import('./tripsStore.js');
 
 const TRIP = '0b9d6a7e-1c2f-4e3a-8b5d-6f7a8b9c0d1e';
 const near = place('near', 'museum', 0.6, { name: 'Musée proche' });
@@ -207,6 +207,26 @@ describe('synchronisation par opérations', () => {
     server.members.set(TRIP, { other: 'owner' });
     await syncNow();
     expect(db.has(`trip:${TRIP}`)).toBe(false);
+  });
+
+  it('modification reçue en direct (refreshTrip) : copie remplacée, prévenue comme distante (rappels reprogrammés)', async () => {
+    const trip = seed();
+    // Cet appareil a une opération en attente ; l'autre change l'horaire du déjeuner.
+    await updateTrip(setStepStatus(trip, 0, 'culture', 'done', '11:00'), trip);
+    await otherDevice([{ opId: crypto.randomUUID(), type: 'setStepTime', params: { stepId: 'lunch', start: '13:00', end: '14:00' } }]);
+    const events = [];
+    const off = onTripsChanged((id, { remote }) => events.push({ id, remote }));
+    await refreshTrip(TRIP);
+    off();
+    const t = await local();
+    expect(step(t, 'lunch').start).toBe('13:00');
+    expect(step(t, 'culture').status).toBe('done');
+    expect(t.version).toBe(2);
+    // notifications.js reprogramme les rappels de cet appareil à chaque modification, distante comprise.
+    expect(events).toEqual([{ id: TRIP, remote: true }]);
+    // Déjà à jour : rien.
+    await refreshTrip(TRIP);
+    expect((await local()).version).toBe(2);
   });
 
   it('aucune écriture du séjour entier : seules des opérations sont envoyées', async () => {

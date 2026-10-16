@@ -594,9 +594,9 @@ Aucune écriture depuis le client sauf indication : les fonctions serveur
 | Table | Contenu | Accès du client |
 |---|---|---|
 | `profiles` | `user_id`, `display_name` (1 à 40 caractères), `avatar_color` (nom de couleur de la palette), `updated_at` | lit, crée et modifie le sien ; lit ceux des personnes avec qui il partage un séjour |
-| `trip_members` | `trip_id`, `user_id`, `role` (`owner` \| `editor`), `joined_at`, `last_seen_version` ; un owner, 10 participants au plus | lecture entre participants ; suppression de sa ligne (quitter) ou par l'owner (retirer), jamais de la ligne owner |
+| `trip_members` | `trip_id`, `user_id`, `role` (`owner` \| `editor`), `joined_at`, `last_seen_version` ; un owner, 10 participants au plus | lecture entre participants ; suppression de sa ligne (quitter) ou par l'owner (retirer), jamais de la ligne owner ; mise à jour de son seul `last_seen_version` |
 | `trip_invites` | `kind` (`link` \| `email`), `token_hash` (SHA-256 hexadécimal, jamais le jeton), `email_normalized`, `created_by`, `expires_at` (7 jours), `revoked_at`, `uses` | owner : lecture, et désactivation (`revoked_at`, définitive) |
-| `trip_changes` | `version`, `author_id` (NULL : « Ancien participant »), `op_type`, `summary` (280 caractères au plus) ; 200 dernières par séjour (pg_cron `monguide-purge-trip-changes`) | lecture par les participants |
+| `trip_changes` | `version`, `author_id` (NULL : « Ancien participant »), `op_type`, `summary` (280 caractères au plus), `step_ids` (étapes touchées), `summary_count` (modifications résumées) ; 200 dernières par séjour (pg_cron `monguide-purge-trip-changes`) ; publiée dans Supabase Realtime | lecture par les participants, y compris en direct |
 
 Fonctions utilisées par les politiques : `is_trip_member(trip_id)`,
 `is_trip_owner(trip_id)`, `is_trip_shared(trip_id)` (false pour un
@@ -709,6 +709,30 @@ Quitter (editor) et retirer (owner) : suppression directe de la ligne
 `trip_members` (RLS). La personne perd l'accès tout de suite ; le séjour
 disparaît de ses appareils à la synchronisation suivante.
 
+### Modifications en direct (Prompt 8.0, Bloc D)
+
+- **Temps réel** : pendant qu'un séjour partagé est affiché, l'application
+  s'abonne aux insertions dans `trip_changes` filtrées sur `trip_id`
+  (Supabase Realtime, `postgres_changes`). Realtime applique la RLS de la
+  table : un non-participant ne reçoit rien. Une ligne de version
+  supérieure à la copie de l'appareil : le séjour est relu (`trips`),
+  les opérations encore en file réappliquées. Désabonnement en quittant
+  l'écran et en arrière-plan ; au retour, dernière version relue.
+- **Dernière visite** : `trip_members.last_seen_version`, mis à jour par
+  l'utilisateur à l'ouverture et à chaque modification reçue ; bandeau
+  « N modifications depuis votre dernière visite » (lignes de
+  `trip_changes` des autres participants, de version supérieure).
+- **Rappels** : jamais partagés ; chaque appareil reprogramme les siens à
+  chaque modification reçue (Android : notifications locales ; web :
+  `push-schedule`).
+- **Notification web** « Paul a modifié votre séjour » : appareils web
+  dont l'abonnement a `notify_trip_changes` (réglage, désactivé par
+  défaut ; `push-subscribe`, champ `tripChanges`) ; mise en file par
+  `trip-apply-ops` après chaque modification résumée d'un séjour partagé
+  (`trip_queue_change_pushes`, au plus une par heure, par séjour et par
+  appareil ; envoi par `push-send`). Aucune notification sur Android dans
+  cette version.
+
 ### `delete-account` — suppression du compte
 
 - **Méthode** : `POST`, sans corps ; utilisateur connecté uniquement
@@ -730,7 +754,9 @@ l'heure prévue. L'application Android n'appelle aucune de ces fonctions
 #### `push-subscribe` — abonnement de l'appareil
 
 - **Méthode** : `POST`, mode invité accepté.
-- **Entrée** : `{ "deviceId", "subscription": { "endpoint", "keys": { "p256dh", "auth" } }, "lang" }`.
+- **Entrée** : `{ "deviceId", "subscription": { "endpoint", "keys": { "p256dh", "auth" } }, "lang", "tripChanges"? }`.
+  `tripChanges` (booléen, facultatif) : notifications des modifications des
+  séjours partagés pour cet appareil ; absent : inchangé.
   `deviceId` : identifiant aléatoire créé par l'application (16 à 64 lettres,
   chiffres ou tirets). `subscription` : `PushSubscription.toJSON()` du
   navigateur ; `endpoint` doit appartenir à un service de push connu (Apple,
@@ -800,3 +826,4 @@ envoi, abonnements après 90 jours sans nouvelles de l'appareil.
 | 1 | 2026-10-16 | Ajouts compatibles : séjours partagés, Bloc A (tables `profiles`, `trip_members`, `trip_invites`, `trip_changes`, colonne `trips.version`, RLS par participant) ; `Day.id` (schemaVersion 3) dans les séjours de `generate`. |
 | 1 | 2026-10-16 | Ajout compatible : fonction `trip-apply-ops` (modifications par opérations, idempotentes) ; `version` dans les séjours lus. |
 | 1 | 2026-10-16 | Ajouts compatibles : fonctions `trip-invite-link`, `trip-invite-email`, `trip-invites-claim`, `trip-join` ; clé réservée `web_url` de `app_config` ; `ownerId` dans les séjours lus. |
+| 1 | 2026-10-16 | Ajouts compatibles : `trip_changes` en direct (Realtime), `step_ids` et `summary_count` ; `last_seen_version` modifiable par chacun ; `push-subscribe` : `tripChanges`. |

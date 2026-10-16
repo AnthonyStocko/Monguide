@@ -59,11 +59,12 @@ export const remoteReminders = remotePush !== null;
 export const notificationsNeedInstall = () => remoteReminders && getInstallMode() === 'ios';
 
 /**
- * @typedef {{ device: boolean, summaries: boolean, reminders: boolean, summaryTime: string | null }} NotificationPrefs
+ * @typedef {{ device: boolean, summaries: boolean, reminders: boolean, summaryTime: string | null, tripChanges: boolean }} NotificationPrefs
+ * tripChanges : version web, « Paul a modifié votre séjour » (séjours partagés, au plus une fois par heure et par séjour) ;
  * device : "Recevoir les rappels sur cet appareil" (plusieurs téléphones sur un même compte) ;
  * summaryTime null : heure par défaut (rules.notifications.eveningSummaryTime).
  */
-const DEFAULT_PREFS = { device: true, summaries: true, reminders: true, summaryTime: null };
+const DEFAULT_PREFS = { device: true, summaries: true, reminders: true, summaryTime: null, tripChanges: false };
 
 /** Une seule opération de programmation à la fois (évite les courses entre événements). */
 let queue = Promise.resolve();
@@ -228,11 +229,12 @@ async function pushDevice() {
     await settings.set(PUSH_DEVICE_KEY, deviceId);
   }
   const lang = i18n.resolvedLanguage;
+  const { tripChanges } = await getNotificationPrefs();
   const saved = await settings.get(PUSH_SUBSCRIPTION_KEY);
-  const current = saved && saved.endpoint === subscription.endpoint && saved.lang === lang && Date.now() - saved.at < PUSH_REFRESH_MS;
+  const current = saved && saved.endpoint === subscription.endpoint && saved.lang === lang && saved.tripChanges === tripChanges && Date.now() - saved.at < PUSH_REFRESH_MS;
   if (!current) {
-    await callFunction('push-subscribe', { body: { deviceId, subscription, lang } });
-    await settings.set(PUSH_SUBSCRIPTION_KEY, { endpoint: subscription.endpoint, lang, at: Date.now() });
+    await callFunction('push-subscribe', { body: { deviceId, subscription, lang, tripChanges } });
+    await settings.set(PUSH_SUBSCRIPTION_KEY, { endpoint: subscription.endpoint, lang, tripChanges, at: Date.now() });
   }
   return deviceId;
 }

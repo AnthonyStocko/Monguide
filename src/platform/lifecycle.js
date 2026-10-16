@@ -13,6 +13,12 @@ const impl = await (import.meta.env.VITE_TARGET !== 'web' && isNative ? import('
 export const onAppActive = impl.onAppActive;
 
 /**
+ * Prévient quand l'application passe en arrière-plan (écran quitté, autre application).
+ * @type {(listener: () => void) => () => void} renvoie le désabonnement
+ */
+export const onAppHidden = impl.onAppHidden;
+
+/**
  * Prévient quand l'application est ouverte par un lien (Android App Links),
  * y compris au lancement à froid ; sans objet sur le web, où le navigateur
  * charge directement l'adresse.

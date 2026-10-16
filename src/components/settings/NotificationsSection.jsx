@@ -139,6 +139,14 @@ export default function NotificationsSection() {
       />
       {pending !== null && permission === 'granted' && <p className="text-ink-muted">{t('notifications.settings.pending', { count: pending })}</p>}
 
+      {/* Version web : modifications des séjours partagés (désactivé par défaut ; pas de notification sur Android dans cette version). */}
+      {remoteReminders && permission === 'granted' && (
+        <>
+          <Switch id="notif-trip-changes" label={t('notifications.settings.tripChanges')} checked={prefs.tripChanges} onChange={(tripChanges) => update({ tripChanges })} />
+          <p className="text-ink-muted">{t('notifications.settings.tripChangesHint')}</p>
+        </>
+      )}
+
       {!remoteReminders && (
       <details className="rounded-xl bg-subtle px-3 py-2">
         <summary className="flex min-h-12 cursor-pointer items-center gap-2 font-medium">

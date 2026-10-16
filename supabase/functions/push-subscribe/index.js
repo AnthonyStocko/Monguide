@@ -6,7 +6,8 @@ import { getAdminClient } from '../_shared/supabaseAdmin.js';
 import { readJsonBody, readString } from '../_shared/validate.js';
 
 // POST /functions/v1/push-subscribe (docs/api.md)
-//   { deviceId, subscription: { endpoint, keys: { p256dh, auth } }, lang } -> { subscribed: true }
+//   { deviceId, subscription: { endpoint, keys: { p256dh, auth } }, lang, tripChanges? } -> { subscribed: true }
+//   tripChanges : « Paul a modifié votre séjour » (séjours partagés), absent = inchangé
 //   { deviceId, subscription: null } -> { subscribed: false } (abonnement et rappels supprimés)
 // Version web : enregistre ou met à jour l'abonnement Web Push de l'appareil.
 // Mode invité accepté ; le compte connecté, s'il y en a un, est noté.
@@ -32,6 +33,7 @@ serveFunction({
         user_id: caller.type === 'user' ? caller.userId : null,
         ...subscription,
         lang,
+        ...(typeof body.tripChanges === 'boolean' ? { notify_trip_changes: body.tripChanges } : {}),
         last_seen_at: new Date().toISOString()
       },
       { onConflict: 'device_id' }

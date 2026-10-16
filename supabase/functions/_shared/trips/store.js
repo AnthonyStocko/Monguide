@@ -30,7 +30,7 @@ export function createTripStore(db) {
       return new Set((data ?? []).map((r) => r.op_id));
     },
 
-    async commit({ tripId, expectedVersion, row, author, opIds, opType, summary }) {
+    async commit({ tripId, expectedVersion, row, author, opIds, opType, summary, stepIds = [], summaryCount = 1 }) {
       const { data, error } = await db.rpc('trip_commit', {
         p_trip_id: tripId,
         p_expected_version: expectedVersion,
@@ -38,10 +38,17 @@ export function createTripStore(db) {
         p_author: author,
         p_op_ids: opIds,
         p_op_type: opType,
-        p_summary: summary
+        p_summary: summary,
+        p_step_ids: stepIds,
+        p_summary_count: summaryCount
       });
       if (error) throw failure('commit', error);
       return saved(data);
+    },
+
+    async notifyOthers(tripId, author) {
+      const { error } = await db.rpc('trip_queue_change_pushes', { p_trip_id: tripId, p_author: author });
+      if (error) log('warn', 'trip_change_push_failed', { code: error.code ?? null });
     },
 
     async create({ tripId, owner, row, opIds, opType, summary }) {

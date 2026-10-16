@@ -51,6 +51,13 @@
     "tripLength_other": "{{count}} jours · {{month}}"
   },
   "sharing": {
+    "shareButton": "Partager",
+    "sharedBadge": "Partagé",
+    "namesList_one": "{{last}}",
+    "namesList_other": "{{names}} et {{last}}",
+    "namesMore_one": "{{names}} et 1 autre",
+    "namesMore_other": "{{names}} et {{count}} autres",
+    "membersButton": "Participants : {{names}}",
     "title": "Participants",
     "members_one": "{{count}} participant",
     "members_other": "{{count}} participants",
@@ -142,6 +149,13 @@
       "offline": "Connectez-vous à internet pour rejoindre le séjour.",
       "generic": "L’invitation n’a pas pu être ouverte. Réessayez plus tard."
     }
+  },
+  "live": {
+    "manyChanges_one": "{{name}} a fait {{count}} modification",
+    "manyChanges_other": "{{name}} a fait {{count}} modifications",
+    "sinceVisit_one": "{{count}} modification depuis votre dernière visite",
+    "sinceVisit_other": "{{count}} modifications depuis votre dernière visite",
+    "seeChanges": "Voir"
   },
   "changes": {
     "button": "Modifications",
@@ -995,6 +1009,8 @@
       ]
     },
     "settings": {
+      "tripChanges": "Me prévenir des modifications des séjours partagés",
+      "tripChangesHint": "Une notification au plus par heure et par séjour, quand un autre participant modifie le séjour.",
       "title": "Rappels",
       "device": "Recevoir les rappels sur cet appareil",
       "deviceHint": "Plusieurs téléphones sur le même compte ? Désactivez ce réglage sur ceux qui ne doivent pas sonner.",

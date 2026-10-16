@@ -14,9 +14,9 @@ vi.mock('./api.js', () => ({
   tripsRemote: { memberCount: vi.fn() }
 }));
 const syncNow = vi.fn(async () => {});
-vi.mock('./sync.js', () => ({ syncNow: () => syncNow() }));
+vi.mock('./sync.js', () => ({ syncNow: () => syncNow(), onSyncStatus: () => () => {} }));
 const purgeTrip = vi.fn(async () => {});
-vi.mock('./tripsStore.js', () => ({ purgeTrip: (id) => purgeTrip(id) }));
+vi.mock('./tripsStore.js', () => ({ purgeTrip: (id) => purgeTrip(id), allTripRecords: async () => [] }));
 
 const sharing = await import('./sharing.js');
 const NOW = Date.parse('2026-10-16T12:00:00Z');

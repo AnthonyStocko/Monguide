@@ -14,6 +14,7 @@ import { cascadeProps } from '../../ui/motion.js';
 import ValidatedCheck from '../../ui/ValidatedCheck.jsx';
 import RestaurantDetails from './RestaurantDetails.jsx';
 import { freeLabelKey } from '../../utils/freeLabel.js';
+import { avatarColor } from '../../config/avatarColors.js';
 
 const STATUS_TONES = { planned: 'neutral', done: 'primary', skipped: 'warning' };
 
@@ -28,10 +29,11 @@ const STATUS_TONES = { planned: 'neutral', done: 'primary', skipped: 'warning' }
  * @param {{
  *   step: object, day: object, trip: object, rules: any, isToday: boolean, highlighted?: boolean, current?: boolean, readOnly?: boolean,
  *   onEditTime: () => void, onReplace: () => void, onEditPersonal: () => void, onTrack: (status: 'done' | 'skipped') => void,
- *   cascade?: { index: number, animate: boolean }, reviewReason?: string
- * }} props reviewReason : étape modifiée par l'assistant IA (raison, "" si aucune)
+ *   cascade?: { index: number, animate: boolean }, reviewReason?: string, flash?: { color: string | null, userId: string | null }
+ * }} props reviewReason : étape modifiée par l'assistant IA (raison, "" si aucune) ; flash : modifiée à l'instant par un
+ *   autre participant (contour de sa couleur, 2 s, seulement si les animations sont permises)
  */
-const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTime, onReplace, onEditPersonal, onTrack, isToday, highlighted, current = false, readOnly, reviewReason, cascade = { index: 0, animate: false } }, ref) {
+const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTime, onReplace, onEditPersonal, onTrack, isToday, highlighted, current = false, readOnly, reviewReason, flash, cascade = { index: 0, animate: false } }, ref) {
   const { t } = useTranslation();
   const { placeName } = usePlaceName();
   const place = step.place;
@@ -50,7 +52,8 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
       ref={ref}
       id={`step-${step.id}`}
       tabIndex={-1}
-      className={`space-y-3 rounded-3xl border-2 bg-surface p-3 shadow-sm ${highlighted ? 'border-primary-strong ring-2 ring-primary-strong' : current ? 'border-primary' : 'border-transparent'}`}
+      className={`space-y-3 rounded-3xl border-2 bg-surface p-3 shadow-sm transition-[outline-color] duration-300 ${highlighted ? 'border-primary-strong ring-2 ring-primary-strong' : current ? 'border-primary' : 'border-transparent'}`}
+      style={flash ? { outline: `3px solid ${avatarColor(flash.color, flash.userId ?? '')}`, outlineOffset: '2px' } : undefined}
     >
       <div className="flex items-start gap-3">
         {photo.media}

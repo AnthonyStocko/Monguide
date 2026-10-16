@@ -25,12 +25,13 @@ function memoryStore({ trip = baseTrip(), members = { [A]: 'owner', [B]: 'editor
     members: { ...members },
     applied: new Map(),
     changes: [],
+    notified: [],
     beforeCommit: null
   };
-  const write = (row, { author, opIds, opType, summary }) => {
+  const write = (row, { author, opIds, opType, summary, stepIds, summaryCount }) => {
     db.row = { ...row, version: (db.row?.version ?? 0) + 1, updated_at: new Date().toISOString() };
     for (const id of opIds) db.applied.set(id, db.row.version);
-    if (summary) db.changes.push({ version: db.row.version, author, opType, summary });
+    if (summary) db.changes.push({ version: db.row.version, author, opType, summary, ...(stepIds ? { stepIds, summaryCount } : {}) });
     return { version: db.row.version, updatedAt: db.row.updated_at };
   };
   const store = {
@@ -42,6 +43,7 @@ function memoryStore({ trip = baseTrip(), members = { [A]: 'owner', [B]: 'editor
       if (db.row.version !== expectedVersion || rest.opIds.some((id) => db.applied.has(id))) return null;
       return write({ ...db.row, ...row }, rest);
     },
+    notifyOthers: async (tripId, author) => void db.notified.push({ tripId, author }),
     create: async ({ owner, row, ...rest }) => {
       if (db.row) return null;
       db.members = { [owner]: 'owner' };
@@ -76,7 +78,9 @@ describe('applyBatch', () => {
     expect(stepOf(res.trip, 'culture')).toMatchObject({ start: '10:15', end: '11:45' });
     expect(res.trip.version).toBe(2);
     expect(res.rejected).toEqual([]);
-    expect(db.changes).toEqual([{ version: 2, author: B, opType: 'set_step_time', summary: "a changé l'horaire de « Musée Paul-Dini » : 10:15–11:45 (samedi)" }]);
+    expect(db.changes).toEqual([{ version: 2, author: B, opType: 'set_step_time', summary: "a changé l'horaire de « Musée Paul-Dini » : 10:15–11:45 (samedi)", stepIds: ['culture'], summaryCount: 1 }]);
+    // Séjour partagé : les autres participants sont prévenus (version web).
+    expect(db.notified).toEqual([{ tripId: TRIP, author: B }]);
   });
 
   it('idempotence : le même opId renvoyé deux fois n’est appliqué qu’une fois', async () => {

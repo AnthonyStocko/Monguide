@@ -3,6 +3,7 @@ import { ChevronLeft, Copy, Link2, LogOut, Mail, RefreshCw, Share2, UserMinus, W
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import Page from '../components/layout/Page.jsx';
+import Avatar from '../components/sharing/Avatar.jsx';
 import ProfileNameDialog from '../components/sharing/ProfileNameDialog.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Button from '../components/ui/Button.jsx';
@@ -11,7 +12,6 @@ import Dialog from '../components/ui/Dialog.jsx';
 import EmptyState from '../components/ui/EmptyState.jsx';
 import FieldError from '../components/ui/FieldError.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
-import { avatarColor } from '../config/avatarColors.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { useOnlineStatus } from '../hooks/useOnlineStatus.js';
 import { useFormat } from '../i18n/useFormat.js';
@@ -28,15 +28,6 @@ import {
   tripMembers
 } from '../services/sharing.js';
 import { getTrip } from '../services/tripsStore.js';
-
-/** Pastille : initiale sur la couleur du participant. */
-export function Avatar({ name, color, userId }) {
-  return (
-    <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full text-base font-bold text-white" style={{ backgroundColor: avatarColor(color, userId ?? '') }}>
-      {(name ?? '?').trim().charAt(0).toUpperCase() || '?'}
-    </span>
-  );
-}
 
 /**
  * « Participants » d'un séjour du compte : liste des membres ; owner :

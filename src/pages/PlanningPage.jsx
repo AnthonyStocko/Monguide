@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CirclePlus, FileDown, History, ImageOff, Users } from 'lucide-react';
+import { CirclePlus, FileDown, History, ImageOff, Share2, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { applyChanges } from '@domain/applyChanges.js';
@@ -25,19 +25,25 @@ import ReplaceStepDialog from '../components/planning/ReplaceStepDialog.jsx';
 import TimeEditorDialog from '../components/planning/TimeEditorDialog.jsx';
 import TripHero from '../components/planning/TripHero.jsx';
 import UndoBar from '../components/planning/UndoBar.jsx';
+import LiveToast from '../components/sharing/LiveToast.jsx';
+import MembersStrip from '../components/sharing/MembersStrip.jsx';
 import Button from '../components/ui/Button.jsx';
 import Card from '../components/ui/Card.jsx';
 import EmptyState from '../components/ui/EmptyState.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
+import { useAuth } from '../hooks/useAuth.js';
 import { useConfig } from '../hooks/useConfig.js';
 import { useCurrentTrip } from '../hooks/useCurrentTrip.js';
+import { useLiveTrip } from '../hooks/useLiveTrip.js';
+import { useTripMembers } from '../hooks/useTripMembers.js';
 import { useFormat } from '../i18n/useFormat.js';
 import { usePlaceName } from '../i18n/usePlaceName.js';
 import { getWeather, sendAiFeedback } from '../services/dataApi.js';
 import { connectionTypeKnown, onConnectionChange } from '../services/network.js';
 import { hapticStepValidated } from '../services/haptics.js';
-import { memberCount } from '../services/sharing.js';
+import { changesSinceLastVisit, tripMembers } from '../services/sharing.js';
 import { refreshTripPhotos } from '../services/tripImages.js';
+import { useMotionAllowed } from '../ui/motion.js';
 
 /** En développement : invariants vérifiés après chaque recalcul, sur les journées recalculées (console). */
 function devCheck(before, after, mode, rules) {
@@ -106,18 +112,61 @@ export default function PlanningPage() {
     };
   }, [shownTripId]);
 
-  // Séjour partagé (plus d'un participant) : accès aux « Modifications » ; bascule de la version IA désactivée.
+  // Séjour partagé (plus d'un participant) : pastilles, « Modifications », modifications en direct ;
+  // bascule de la version IA désactivée. Participants gardés sur l'appareil, relus en ligne.
   const synced = status === 'ready' && Number.isInteger(trip.version);
-  const [shared, setShared] = useState(false);
+  const members = useTripMembers(shownTripId);
+  const shared = synced && (members?.length ?? 0) > 1;
+  const { session } = useAuth();
+  const isOwner = synced && (!trip.ownerId || trip.ownerId === session?.user?.id);
   useEffect(() => {
-    setShared(false);
-    if (!synced) return undefined;
+    if (synced && navigator.onLine) tripMembers(shownTripId).catch(() => {});
+  }, [shownTripId, synced]);
+
+  // « 4 modifications depuis votre dernière visite » : une fois par ouverture du séjour.
+  const [sinceVisit, setSinceVisit] = useState(null);
+  const shownVersion = synced ? trip.version : null;
+  const versionRef = useRef(shownVersion);
+  versionRef.current = shownVersion;
+  useEffect(() => {
+    setSinceVisit(null);
+    if (!shared) return undefined;
     let alive = true;
-    memberCount(shownTripId).then((n) => alive && setShared(n > 1));
+    changesSinceLastVisit(shownTripId, versionRef.current)
+      .then((count) => alive && count > 0 && setSinceVisit({ count }))
+      .catch(() => {});
     return () => {
       alive = false;
     };
-  }, [shownTripId, synced]);
+  }, [shownTripId, shared]);
+
+  // En direct : message en bas de l'écran (regroupé par auteur) et étapes touchées mises en évidence 2 s.
+  const motionAllowed = useMotionAllowed();
+  const [liveToast, setLiveToast] = useState(null);
+  const [flash, setFlash] = useState({});
+  const toastTimer = useRef(null);
+  const onRemoteChange = useCallback(
+    (change) => {
+      const author = members?.find((m) => m.userId === change.author_id);
+      const name = change.author_id ? (author?.name ?? t('changes.someone')) : t('changes.formerMember');
+      const count = change.summary_count ?? 1;
+      setLiveToast((current) => {
+        const total = current && current.userId === change.author_id ? current.count + count : count;
+        const text = total > 1 ? t('live.manyChanges', { name, count: total }) : `${name} ${change.summary.replace(/ \([^()]*\)$/, '')}`;
+        return { userId: change.author_id, name, color: author?.color ?? null, count: total, text };
+      });
+      clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setLiveToast(null), 4000);
+      if (motionAllowed && change.step_ids?.length) {
+        const color = author?.color ?? null;
+        setFlash(Object.fromEntries(change.step_ids.map((id) => [id, { color, userId: change.author_id }])));
+        setTimeout(() => setFlash({}), 2000);
+      }
+    },
+    [members, motionAllowed, t]
+  );
+  useEffect(() => () => clearTimeout(toastTimer.current), []);
+  useLiveTrip({ tripId: shownTripId, version: shownVersion, enabled: shared, onRemoteChange });
 
   if (status === 'loading') {
     return (
@@ -294,7 +343,12 @@ export default function PlanningPage() {
         <Button variant="secondary" icon={FileDown} onClick={() => setDialog({ kind: 'export' })}>
           {t('export.button')}
         </Button>
-        {synced && (
+        {isOwner && (
+          <Button variant="secondary" icon={Share2} onClick={() => navigate(`/planning/${trip.id}/participants`)}>
+            {t('sharing.shareButton')}
+          </Button>
+        )}
+        {synced && !isOwner && !shared && (
           <Button variant="secondary" icon={Users} onClick={() => navigate(`/planning/${trip.id}/participants`)}>
             {t('sharing.title')}
           </Button>
@@ -304,7 +358,19 @@ export default function PlanningPage() {
             {t('changes.button')}
           </Button>
         )}
+        {shared && <MembersStrip members={members} onOpen={() => navigate(`/planning/${trip.id}/participants`)} />}
       </TripHero>
+
+      {sinceVisit && (
+        <p role="status" className="flex flex-wrap items-center gap-x-2 rounded-xl bg-secondary-soft px-3 py-2 text-secondary-on-soft">
+          <History aria-hidden="true" className="size-5 shrink-0" />
+          <span>{t('live.sinceVisit', { count: sinceVisit.count })}</span>
+          <span aria-hidden="true">·</span>
+          <Link to={`/planning/${trip.id}/changes`} className="inline-flex min-h-12 items-center font-semibold underline underline-offset-2">
+            {t('live.seeChanges')}
+          </Link>
+        </p>
+      )}
 
       {photos?.status === 'wifi_only' && (
         <p role="status" className="flex items-start gap-2 rounded-xl bg-secondary-soft px-3 py-2 text-secondary-on-soft">
@@ -368,6 +434,7 @@ export default function PlanningPage() {
           isToday={isToday}
           readOnly={readOnly}
           highlightId={highlightId}
+          flash={flash}
           stepRefs={stepRefs}
           onEditTime={(i) => !readOnly && setDialog({ kind: 'time', stepIndex: i })}
           onReplace={(i) => !readOnly && setDialog({ kind: 'replace', stepIndex: i })}
@@ -434,6 +501,7 @@ export default function PlanningPage() {
           onClose={() => setProposal(null)}
         />
       )}
+      <LiveToast toast={liveToast} raised={Boolean(undo)} />
       {undo && (
         <UndoBar
           key={undo.message + undo.previous.updatedAt}
