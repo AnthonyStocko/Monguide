@@ -202,5 +202,6 @@ describe('outils', () => {
     expect(opTypeColumn('setStepTime')).toBe('set_step_time');
     expect(rateWindow('tripOps', rules.rateLimits)).toEqual({ windowMs: 60_000, limit: 120 });
     expect(rateWindow('default', rules.rateLimits)).toEqual({ windowMs: 3_600_000, limit: 600 });
+    expect(rateWindow('invites', rules.rateLimits)).toEqual({ windowMs: 3_600_000, limit: 60 });
   });
 });

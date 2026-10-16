@@ -350,7 +350,9 @@ export const RULES = Object.freeze({
     generatePerWindow: 30,
     otherPerWindow: 600,
     /** trip-apply-ops : appels par minute et par utilisateur (fenêtre d'une minute). */
-    tripOpsPerMinute: 120
+    tripOpsPerMinute: 120,
+    /** Invitations (trip-invite-link, trip-invite-email, trip-join, trip-invites-claim) : appels par fenêtre. */
+    invitesPerWindow: 60
   },
 
   /**

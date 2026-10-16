@@ -35,6 +35,12 @@ QUI S'ADAPTE À LA JOURNÉE
 • Validez ou passez une étape : en cas de retard, Mon guide propose un planning réajusté, que vous pouvez annuler.
 • Horaires modifiables à la main, lieux remplaçables en un geste.
 
+PRÉPAREZ VOTRE SÉJOUR À PLUSIEURS
+• Invitez vos compagnons de voyage par un lien (WhatsApp, SMS, e-mail) : jusqu'à 10 participants, sur Android, iPhone ou ordinateur.
+• Chacun peut modifier le planning, et les changements des autres apparaissent en direct : « Paul a déplacé le musée à 15 h ».
+• Hors ligne, vos modifications sont gardées et envoyées au retour du réseau, sans rien perdre.
+• L'historique montre qui a changé quoi.
+
 PENDANT LE VOYAGE
 • Le soir, le programme du lendemain avec l'heure de départ conseillée ; une heure avant chaque étape, un rappel.
 • Carte des étapes et itinéraire vers chaque lieu.
@@ -48,6 +54,7 @@ RESPONSABLE ET TRANSPARENT
 VOS DONNÉES
 • Sans compte, vos séjours restent sur votre téléphone.
 • Avec un compte (connexion par code reçu par e-mail, sans mot de passe), retrouvez vos séjours sur tous vos appareils.
+• Un séjour partagé n'est visible que des personnes que vous invitez.
 • Aucune publicité, aucun suivi. Données hébergées dans l'Union européenne. Suppression du compte à tout moment.
 
 32 pays pris en charge : les 27 pays de l'Union européenne, le Royaume-Uni, la Suisse, la Norvège, l'Islande et le Liechtenstein.
@@ -55,11 +62,15 @@ VOS DONNÉES
 Les temps de trajet et les informations des lieux sont indicatifs : vérifiez-les avant de vous déplacer.
 <!-- /long:fr -->
 
-### Notes de version (1.0.0)
+### Notes de version (1.2.0)
 
 <!-- notes:fr -->
-Première version : planning jour par jour, météo, étapes personnelles, rappels, carte, export PDF, synchronisation entre appareils.
+Nouveau : partagez un séjour et préparez-le à plusieurs, en direct.
 <!-- /notes:fr -->
+
+Notes précédentes (1.0.0) : « Première version : planning jour par jour,
+météo, étapes personnelles, rappels, carte, export PDF, synchronisation entre
+appareils. »
 
 ## English (en-GB)
 
@@ -92,6 +103,12 @@ THAT ADAPTS TO YOUR DAY
 • Mark a stop as done or skip it: if you are running late, Mon guide suggests an adjusted plan, which you can undo.
 • Change times by hand, replace places in one tap.
 
+PLAN YOUR TRIP TOGETHER
+• Invite your travel companions with a link (WhatsApp, text, email): up to 10 participants, on Android, iPhone or computer.
+• Everyone can edit the plan, and the others' changes appear live: “Paul moved the museum to 3 pm”.
+• Offline, your changes are kept and sent when you are back online, with nothing lost.
+• The history shows who changed what.
+
 DURING YOUR TRIP
 • In the evening, the next day's programme with the suggested departure time; one hour before each stop, a reminder.
 • Map of your stops and directions to each place.
@@ -105,6 +122,7 @@ RESPONSIBLE AND TRANSPARENT
 YOUR DATA
 • Without an account, your trips stay on your phone.
 • With an account (sign-in with a code sent by email, no password), find your trips on all your devices.
+• A shared trip is visible only to the people you invite.
 • No advertising, no tracking. Data hosted in the European Union. Delete your account at any time.
 
 32 countries supported: the 27 European Union countries, the United Kingdom, Switzerland, Norway, Iceland and Liechtenstein.
@@ -112,11 +130,14 @@ YOUR DATA
 Travel times and place information are indicative: check them before you go.
 <!-- /long:en -->
 
-### Release notes (1.0.0)
+### Release notes (1.2.0)
 
 <!-- notes:en -->
-First release: day-by-day plan, weather, personal stops, reminders, map, PDF export, sync between devices.
+New: share a trip and plan it together, live.
 <!-- /notes:en -->
+
+Previous notes (1.0.0): “First release: day-by-day plan, weather, personal
+stops, reminders, map, PDF export, sync between devices.”
 
 ## Visuels à produire
 
@@ -124,7 +145,7 @@ First release: day-by-day plan, weather, personal stops, reminders, map, PDF exp
 |---|---|---|
 | Icône de l'application | 512 × 512 px, PNG 32 bits, sans transparence imposée par Google (coins arrondis appliqués par le Play Store) | pictogramme de l'application, identique à l'icône Android (`android/app/src/main/res/mipmap-*`) |
 | Image de présentation (feature graphic) | 1024 × 500 px, JPEG ou PNG 24 bits, sans transparence | nom « Mon guide » et une journée type sur fond de carte |
-| Captures d'écran téléphone | 2 à 8, PNG ou JPEG, côté court ≥ 320 px, côté long ≤ 3 840 px, ratio 16:9 ou 9:16 recommandé (ex. 1080 × 1920) | 1. formulaire de création ; 2. planning d'une journée ; 3. panneau « Planning réajusté » ; 4. carte des étapes ; 5. étape personnelle ; 6. bilan carbone ; 7. rappels (réglages) ; 8. export PDF |
+| Captures d'écran téléphone | 2 à 8, PNG ou JPEG, côté court ≥ 320 px, côté long ≤ 3 840 px, ratio 16:9 ou 9:16 recommandé (ex. 1080 × 1920) | 1. formulaire de création ; 2. planning d'une journée ; 3. panneau « Planning réajusté » ; 4. carte des étapes ; 5. étape personnelle ; 6. bilan carbone ; 7. rappels (réglages) ; 8. export PDF. **1.2.0** : écran Participants (« Préparez votre séjour à plusieurs »), à placer en 2e position |
 
 Captures à faire en français et en anglais, sur un séjour réel (pas de données
 inventées), sans adresse personnelle visible.

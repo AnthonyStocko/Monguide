@@ -1,9 +1,9 @@
-# Formulaire « Sécurité des données » (Play Console) — Mon guide 1.0.0
+# Formulaire « Sécurité des données » (Play Console) — Mon guide 1.2.0
 
 Réponses à reporter dans Play Console > Règles et programmes > Sécurité des
 données. Établies d'après le code au 24 septembre 2026, mises à jour le
-30 septembre 2026 (relecture par l'assistant IA) et le 13 octobre 2026
-(rappels de la version web) ; à revoir à chaque évolution qui touche aux
+30 septembre 2026 (relecture par l'assistant IA), le 13 octobre 2026
+(rappels de la version web) et le 16 octobre 2026 (séjours partagés) ; à revoir à chaque évolution qui touche aux
 données.
 
 ## Vue d'ensemble
@@ -28,12 +28,13 @@ sans contrat, d'où la déclaration prudente « partagée » pour la position).
 
 | Donnée (catégorie Play) | Collectée | Partagée | Traitement éphémère | Obligatoire ou facultative | Finalités | Chiffrée en transit | Supprimable | Pourquoi |
 |---|---|---|---|---|---|---|---|---|
-| Adresse e-mail (Informations personnelles > Adresse e-mail) | Oui, avec un compte | Non | Non | Facultative (compte facultatif) | Gestion du compte | Oui | Oui (suppression du compte) | Envoi du code de connexion, identification du compte pour la synchronisation |
-| ID utilisateur (Informations personnelles > ID utilisateur) : identifiant du compte Supabase | Oui, avec un compte | Non | Non | Facultatif (compte facultatif) | Gestion du compte | Oui | Oui (suppression du compte, effacement en cascade des séjours) | Rattacher les séjours synchronisés au compte (`trips.user_id`) |
+| Adresse e-mail (Informations personnelles > Adresse e-mail) | Oui, avec un compte | Non | Non | Facultative (compte facultatif) | Gestion du compte | Oui | Oui (suppression du compte) | Envoi du code de connexion, identification du compte pour la synchronisation. **Depuis 1.2.0** : aussi l'adresse d'une personne invitée à un séjour, saisie par l'organisateur (`trip_invites`) ; aucun e-mail envoyé ; effacée dès l'invitation acceptée, désactivée ou expirée, 30 jours au plus (purge horaire, migration `20261016200000_invite_purge.sql`) |
+| ID utilisateur (Informations personnelles > ID utilisateur) : identifiant du compte Supabase | Oui, avec un compte | Non | Non | Facultatif (compte facultatif) | Gestion du compte | Oui | Oui (suppression du compte, effacement en cascade des séjours) | Rattacher les séjours synchronisés au compte (`trips.user_id`, `trip_members`) |
+| **Nom** (Informations personnelles > Nom) : prénom affiché, depuis 1.2.0 | Oui, seulement au premier partage d'un séjour | **Non** : montré aux seuls participants que l'utilisateur a choisis, à son initiative (voir Décisions) | Non | Facultatif (le partage est facultatif) | Fonctionnalités de l'application | Oui | Oui (modifiable ; effacé à la suppression du compte) | Montrer aux participants d'un séjour partagé qui a fait quelle modification (`profiles.display_name`, avec une couleur de pastille) |
 | Position précise (Position > Position exacte) | Oui, seulement au toucher de « Utiliser ma position » | **Oui** : transmise à Photon (komoot) pour trouver l'adresse | Oui : la position n'est pas conservée (seule l'adresse choisie l'est, si elle devient un hébergement) | Facultative | Fonctionnalités de l'application | Oui | Sans objet (non conservée) ; l'adresse enregistrée l'est avec le séjour | Proposer l'adresse d'un hébergement ou d'une étape à partir de la position |
 | Position approximative (Position > Position approximative) | Oui : lieux recherchés, destination, hébergements envoyés au serveur | **Oui** : coordonnées transmises aux services de données (Open-Meteo, OpenStreetMap/Overpass, Wikidata, données publiques françaises) | **Non** : la destination est conservée avec le séjour si compte (`trips.destination`), et dans les caches du serveur (journaux : position arrondie à environ 1 km) | Obligatoire pour préparer un séjour | Fonctionnalités de l'application | Oui | Oui (suppression du séjour ou du compte) ; caches non liés au compte | Météo, lieux à visiter et restaurants autour de la destination |
 | Adresses saisies (Informations personnelles > Adresse) : hébergements, lieux des étapes personnelles | Oui : recherche d'adresse (Photon) ; conservées avec le séjour si compte | **Oui** : texte recherché transmis à Photon | Recherche : oui ; séjour : non (conservé tant que le compte existe) | Facultatives | Fonctionnalités de l'application | Oui | Oui (suppression du séjour ou du compte) | Calcul des trajets et de l'heure de départ ; retrouver ses séjours sur ses appareils |
-| Contenu des séjours (Activité dans l'application > Autre contenu généré par l'utilisateur) : titres, dates, planning, notes, étapes personnelles | Oui, avec un compte | Non | Non | Facultatif | Fonctionnalités de l'application | Oui | Oui (suppression du séjour ou du compte) | Synchronisation entre appareils |
+| Contenu des séjours (Activité dans l'application > Autre contenu généré par l'utilisateur) : titres, dates, planning, notes, étapes personnelles | Oui, avec un compte | Non | Non | Facultatif | Fonctionnalités de l'application | Oui | Oui (suppression du séjour ou du compte) | Synchronisation entre appareils ; **depuis 1.2.0**, séjour partagé : contenu, liste des participants et historique des modifications (200 dernières, avec leur auteur) visibles des participants choisis par l'utilisateur |
 | Relecture par l'assistant IA (Activité dans l'application > Autre contenu généré par l'utilisateur ; Messages > Autres messages dans l'application pour le texte « Vos envies ») : destination, dates, voyageurs, mode, profil, préférences de repas, lieux publics du planning et leurs horaires, distances, pluie, texte « Vos envies » | Oui, seulement si l'utilisateur active la relecture | **Non** : Mistral AI agit comme prestataire pour notre compte (à confirmer par l'accord de traitement des données du fournisseur) | **Non** : le texte « Vos envies » est enregistré avec le séjour (`trip.params.wishes`, synchronisé si compte) ; le résumé envoyé à l'IA et sa réponse ne sont pas conservés (compteur quotidien sans contenu) | Facultative (consentement à la première génération, réglage « Relecture par l'assistant IA ») | Fonctionnalités de l'application (personnalisation du planning) | Oui | Oui (« Vos envies » : suppression du séjour ou du compte) ; résumé et réponse non conservés | Proposer des ajustements du planning, vérifiés par l'application ; jamais d'adresse, de coordonnées, d'e-mail, ni de titre ou note d'étape personnelle |
 | Identifiants d'appareil ou autres | Non | Non | — | — | — | — | — | Aucun identifiant d'appareil ni publicitaire. L'adresse IP n'est conservée que sous forme d'empreinte salée pendant un jour (limitation des abus) |
 | Journaux de plantage, diagnostics | Non | Non | — | — | — | — | — | Aucun outil de rapport de plantage |
@@ -62,6 +63,22 @@ par le serveur : il faudrait alors déclarer « Identifiants d'appareil ou
 autres » (collectés, non partagés, fonctionnalités de l'application).
 
 ## Décisions
+
+- **Séjours partagés : « collectés », pas « partagés »** (16 octobre 2026,
+  Prompt 8.0). Le prénom affiché et le contenu d'un séjour partagé sont
+  transmis aux autres participants. C'est l'utilisateur qui les choisit : il
+  envoie un lien ou saisit une adresse. D'après la définition de Google Play,
+  une transmission à un tiers faite à l'initiative de l'utilisateur, qu'il
+  s'attend raisonnablement à voir partagée, n'est pas un « partage ».
+  Les nouveautés de 1.2.0 dans le formulaire :
+  - ajouter le type **Nom** ;
+  - garder « Adresse e-mail » (son usage s'étend aux invitations) ;
+  - garder « Autre contenu généré par l'utilisateur ».
+  La politique de confidentialité le décrit dans la section « Séjours
+  partagés ». Elle doit être en ligne **avant** l'envoi de la 1.2.0 :
+  - https://anthonystocko.github.io/Monguide/fr/confidentialite.html
+    (adresse déclarée sur Google Play) ;
+  - https://monguide.mgapp.workers.dev/confidentialite.html.
 
 - **Position et adresses : déclarées « partagées »** (décision du 24 septembre
   2026) : la position précise (« Utiliser ma position ») et le texte des

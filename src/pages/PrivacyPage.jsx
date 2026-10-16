@@ -3,7 +3,7 @@ import Page from '../components/layout/Page.jsx';
 import Card from '../components/ui/Card.jsx';
 import { usePublicLinks } from '../config/links.js';
 
-const SECTIONS = ['data', 'server', 'ai', 'push', 'purpose', 'hosting', 'retention', 'rights', 'contact'];
+const SECTIONS = ['data', 'server', 'ai', 'push', 'sharing', 'purpose', 'hosting', 'retention', 'rights', 'contact'];
 
 /** Confidentialité : données collectées, traitement, hébergement, droits. */
 export default function PrivacyPage() {

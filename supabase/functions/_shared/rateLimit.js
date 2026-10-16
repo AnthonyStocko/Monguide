@@ -28,19 +28,21 @@ export async function clientId(req, caller) {
 
 /**
  * Fenêtre et limite d'un type de requête : modifications de séjour par
- * minute (tripOpsPerMinute), les autres par fenêtre de windowMin minutes.
- * @param {'generate' | 'tripOps' | 'default'} kind
+ * minute (tripOpsPerMinute), invitations (créer, rejoindre, rattacher) et
+ * les autres par fenêtre de windowMin minutes.
+ * @param {'generate' | 'tripOps' | 'invites' | 'default'} kind
  * @returns {{ windowMs: number, limit: number }}
  */
-export function rateWindow(kind, { windowMin, generatePerWindow, otherPerWindow, tripOpsPerMinute = 120 }) {
+export function rateWindow(kind, { windowMin, generatePerWindow, otherPerWindow, tripOpsPerMinute = 120, invitesPerWindow = 60 }) {
   if (kind === 'tripOps') return { windowMs: 60_000, limit: tripOpsPerMinute };
+  if (kind === 'invites') return { windowMs: windowMin * 60_000, limit: invitesPerWindow };
   return { windowMs: windowMin * 60_000, limit: kind === 'generate' ? generatePerWindow : otherPerWindow };
 }
 
 /**
  * Compte la requête dans une fenêtre fixe et refuse au-delà de la limite.
  * En cas de panne de la base, la requête passe (journalisé).
- * @param {{ req: Request, caller: { type: string, userId?: string }, kind: 'generate' | 'tripOps' | 'default', rules: any }} params
+ * @param {{ req: Request, caller: { type: string, userId?: string }, kind: 'generate' | 'tripOps' | 'invites' | 'default', rules: any }} params
  * @throws {AppError} 429 avec l'en-tête Retry-After
  */
 export async function enforceRateLimit({ req, caller, kind, rules }) {

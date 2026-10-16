@@ -803,7 +803,7 @@
     "deleteHint": "Supprime votre compte et tous les séjours enregistrés dans votre compte. Cette action est définitive.",
     "delete": "Supprimer mon compte",
     "confirm1Title": "Supprimer votre compte ?",
-    "confirm1Text": "Votre compte et tous vos séjours synchronisés seront supprimés, sur tous vos appareils.",
+    "confirm1Text": "Votre compte et tous vos séjours synchronisés seront supprimés, sur tous vos appareils. Un séjour partagé que vous avez créé passera au participant le plus ancien.",
     "continue": "Continuer",
     "confirm2Title": "Confirmation définitive",
     "confirm2Text": "Cette action est irréversible : aucun séjour ne pourra être récupéré. Confirmez-vous la suppression ?",
@@ -816,7 +816,8 @@
       "title": "Données collectées",
       "text": [
         "Sans compte, vos séjours sont enregistrés uniquement sur votre appareil.",
-        "Avec un compte : votre adresse e-mail (pour vous envoyer le code de connexion) et vos séjours, y compris les adresses de vos hébergements et de vos étapes personnelles."
+        "Avec un compte : votre adresse e-mail (pour vous envoyer le code de connexion) et vos séjours, y compris les adresses de vos hébergements et de vos étapes personnelles.",
+        "Si vous partagez un séjour : votre prénom affiché et, pour les invitations par e-mail, l’adresse de la personne invitée (30 jours au plus)."
       ]
     },
     "server": {
@@ -844,13 +845,14 @@
       "title": "Durée de conservation",
       "text": [
         "Vos séjours sont conservés tant que votre compte existe.",
-        "Un séjour supprimé est immédiatement effacé du serveur ; seul un marqueur technique sans contenu est conservé 90 jours pour propager la suppression à vos autres appareils."
+        "Un séjour supprimé est immédiatement effacé du serveur ; seul un marqueur technique sans contenu est conservé 90 jours pour propager la suppression à vos autres appareils.",
+        "Historique d’un séjour partagé : ses 200 dernières modifications, tant que le séjour existe."
       ]
     },
     "rights": {
       "title": "Vos droits",
       "text": [
-        "Vous pouvez supprimer votre compte à tout moment depuis les réglages : votre compte et tous vos séjours sont alors effacés.",
+        "Vous pouvez supprimer votre compte à tout moment depuis les réglages : votre compte et vos séjours sont alors effacés (un séjour partagé passe au participant le plus ancien).",
         "Vous pouvez aussi demander l’accès à vos données ou leur rectification en nous écrivant."
       ]
     },
@@ -875,6 +877,15 @@
         "Dans la version web, si vous activez les rappels, votre navigateur crée un abonnement aux notifications. Nos serveurs enregistrent cet abonnement (une adresse technique fournie par le service de notifications de votre navigateur : Apple, Google, Mozilla ou Microsoft), un identifiant aléatoire de l’appareil, la langue et, si vous êtes connecté, le lien avec votre compte.",
         "Ils enregistrent aussi les rappels à envoyer : heure, texte et lien vers le planning. Ce texte contient le titre du séjour et le nom des lieux publics, jamais d’adresse ni le titre de vos étapes personnelles. Le message est chiffré : le service de notifications du navigateur ne peut pas le lire.",
         "Les rappels sont supprimés 7 jours après leur envoi ; l’abonnement l’est après 90 jours sans utilisation, ou à la première tentative d’envoi après le retrait de l’autorisation. L’application Android n’est pas concernée : ses rappels restent sur le téléphone."
+      ]
+    },
+    "sharing": {
+      "title": "Séjours partagés",
+      "text": [
+        "Le partage est facultatif et réservé aux comptes. Au premier partage, l’application vous demande un prénom, visible seulement des personnes avec qui vous partagez un séjour.",
+        "Les participants que vous choisissez (10 au plus) voient tout le contenu du séjour, y compris les adresses des hébergements et les étapes personnelles, ainsi que la liste des participants (prénoms) et l’historique des modifications. Votre adresse e-mail n’est jamais montrée aux autres participants.",
+        "Lien d’invitation : valable 7 jours et désactivable ; seule une empreinte irréversible est enregistrée. Invitation par adresse e-mail : aucun e-mail n’est envoyé ; l’adresse est effacée dès que l’invitation est acceptée, désactivée ou expirée, soit 30 jours au plus.",
+        "Si l’organisateur supprime son compte, ses séjours partagés passent au participant le plus ancien."
       ]
     }
   },

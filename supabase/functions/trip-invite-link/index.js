@@ -14,6 +14,7 @@ import { readJsonBody } from '../_shared/validate.js';
 serveFunction({
   name: 'trip-invite-link',
   methods: ['POST'],
+  rateLimitKind: 'invites',
   handle: async ({ req, caller, appConfig }) => {
     if (caller.type !== 'user') throw new AppError(401, 'unauthorized', 'A signed-in user is required');
     const tripId = readTripId(await readJsonBody(req));

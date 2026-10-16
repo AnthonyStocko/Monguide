@@ -93,3 +93,63 @@ de la soumission.
       exemple 20 %, puis 100 %).
 - [ ] Après publication : vérifier les pages web, la suppression de compte et
       la réception des e-mails de connexion (SMTP configuré, voir README).
+
+## 7. Mise à jour 1.2.0 : séjours partagés (Prompt 8.0, Phase F)
+
+À faire **dans cet ordre**. La politique de confidentialité doit être en ligne
+avant l'envoi sur Google Play.
+
+1. [ ] **Pages en ligne** après le push sur `main` :
+   - <https://anthonystocko.github.io/Monguide/fr/confidentialite.html> et
+     `/en/privacy.html` (workflow `pages.yml`, adresse déclarée sur Google
+     Play) ;
+   - <https://monguide.mgapp.workers.dev/confidentialite.html> (Cloudflare) ;
+   - sur chacune : section « Séjours partagés » et date du 16 octobre 2026 ;
+   - suppression de compte : phrase sur le transfert des séjours partagés.
+2. [ ] **Cloudflare** : variable `ANDROID_CERT_SHA256`, l'empreinte SHA-256
+   du certificat de signature de l'application (Play Console > Intégrité de
+   l'application). Rebuild, puis
+   `/.well-known/assetlinks.json` doit renvoyer du JSON.
+3. [ ] **Scénario à trois comptes** : A sur Android (APK release de l'étape 6),
+   B sur iPhone (Safari, version web), C sur ordinateur. Chaque point doit se
+   passer sans erreur.
+   - [ ] A crée un séjour, touche « Partager » et donne son prénom.
+   - [ ] A crée un lien et l'envoie à B par WhatsApp. B l'ouvre sur iPhone,
+     se connecte, voit l'aperçu (ville, dates, prénom de A) et rejoint le
+     séjour.
+   - [ ] A invite l'adresse e-mail de C, **qui n'a pas de compte**. C crée son
+     compte avec cette adresse sur l'ordinateur et voit « A vous a ajouté au
+     séjour ». Dans « Participants », A ne voit plus l'invitation en attente.
+   - [ ] **Modifications simultanées** : A change un horaire pendant que B
+     remplace un lieu. Les deux modifications sont visibles chez les trois en
+     moins de 3 s, avec le message en direct. « Modifications » montre qui a
+     fait quoi.
+   - [ ] **Hors ligne** :
+     - A passe en mode avion et fait trois modifications : « Hors ligne · 3
+       modifications en attente » ;
+     - pendant ce temps, C supprime une étape que A a modifiée ;
+     - A force l'arrêt de l'application, la rouvre, puis se reconnecte :
+       « Modifications envoyées », et le message « … C a supprimé cette étape ».
+   - [ ] **Retrait** : A retire C. Le séjour disparaît chez C à la
+     synchronisation suivante, avec le message « Vous ne participez plus… ».
+   - [ ] **Départ volontaire** : B touche « Quitter ce séjour ». Le séjour
+     disparaît de son iPhone, et A voit un participant de moins. B rouvre
+     ensuite le lien, toujours valable, et rejoint de nouveau le séjour.
+   - [ ] **Suppression** : A supprime le séjour. Il disparaît chez B avec le
+     message « Le séjour … a été supprimé par A ».
+4. [ ] **Capture d'écran** de l'écran Participants (séjour réel, sans adresse
+   e-mail personnelle visible), en FR et en EN ; à mettre en 2e position dans
+   la fiche.
+5. [ ] **Play Console** :
+   - « Sécurité des données » mis à jour d'après `store/data-safety.md`
+     (nouveau type « Nom ») ;
+   - fiche FR et EN reprise de `store/listing.md`, avec la section
+     « Préparez votre séjour à plusieurs ».
+6. [ ] **Version** : `git tag v1.2.0 && git push origin v1.2.0`.
+   - `release.yml` en tire la versionName 1.2.0 et une versionCode égale au
+     numéro d'exécution, supérieure à celle de la 1.1.x.
+   - Téléverser l'`.aab` avec les notes de version de `store/listing.md` :
+     « Nouveau : partagez un séjour et préparez-le à plusieurs, en direct. »
+7. [ ] Une fois la 1.2.0 installée par la plupart des utilisateurs, relever
+   `minAppVersion` puis retirer les politiques `trips_insert_legacy` et
+   `trips_update_legacy`, par une migration.

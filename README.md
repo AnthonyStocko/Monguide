@@ -221,26 +221,21 @@ de logique métier.
   `suppression-compte.html`) dans `public/`, publiées avec la version web.
   La variable GitHub `WEB_APP_URL` ne sert plus qu'aux anciennes pages
   GitHub Pages (`site/`, `pages.yml`).
-- **Liens ouverts par l'application Android** (Android App Links) : préparé,
-  pas encore activé. L'application sait déjà ouvrir une adresse de la version
-  web (`onAppUrlOpen`), et le build web publie
-  `/.well-known/assetlinks.json` quand la variable GitHub
-  `ANDROID_CERT_SHA256` est renseignée (empreinte du certificat : Play
-  Console > Intégrité de l'application). Il reste à déclarer l'adresse dans
-  `android/app/src/main/AndroidManifest.xml`, une fois le domaine choisi,
-  dans l'activité principale :
+- **Liens ouverts par l'application Android** (Android App Links, depuis
+  1.2.0) : les liens d'invitation `https://monguide.mgapp.workers.dev/rejoindre/…`
+  ouvrent l'application quand elle est installée (intent-filter
+  `autoVerify` de `android/app/src/main/AndroidManifest.xml`, adresse lue par
+  `onAppUrlOpen`). Le build web publie `/.well-known/assetlinks.json` à
+  partir de la variable de **build** Cloudflare `ANDROID_CERT_SHA256` :
+  - elle contient les empreintes SHA-256 séparées par des virgules ;
+  - y mettre la clé de signature de Google Play (Play Console, page
+    « Protégé avec Play ») et la clé d'importation (APK de test de
+    `release.yml`) ;
+  - renseignée le 2026-10-16 ;
+  - vérification : <https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://monguide.mgapp.workers.dev&relation=delegate_permission/common.handle_all_urls>.
 
-  ```xml
-  <intent-filter android:autoVerify="true">
-      <action android:name="android.intent.action.VIEW" />
-      <category android:name="android.intent.category.DEFAULT" />
-      <category android:name="android.intent.category.BROWSABLE" />
-      <data android:scheme="https" android:host="app.votre-domaine" />
-  </intent-filter>
-  ```
-
-  D'ici là, un lien de la version web s'ouvre dans le navigateur, y compris
-  sur Android.
+  Sans application installée, ou avec la 1.1.x, le lien s'ouvre dans le
+  navigateur.
 - **Sur le web, par rapport à Android** : pas de vibrations ni de réglage
   « Wi-Fi uniquement » (les photos d'un séjour sont enregistrées dès qu'il y
   a du réseau) ; « À propos » affiche « Version web » (numéro fourni par
@@ -382,6 +377,50 @@ Développement local du serveur (facultatif, Docker requis) :
 ```
 npx supabase start
 npx supabase functions serve
+```
+
+## Séjours partagés : charge et offre gratuite de Supabase
+
+Estimation du 2026-10-16 pour **1 000 séjours partagés actifs**. Limites de
+l'offre gratuite relevées le même jour (sources tierces, à vérifier sur
+<https://supabase.com/pricing>).
+
+Hypothèses :
+- 3 participants par séjour, soit 3 000 comptes ;
+- séjour utilisé 20 jours dans le mois ;
+- 10 envois par jour et par séjour : les modifications rapprochées partent en un
+  seul appel (`sync.debounceMs`, 1,5 s) ;
+- un autre participant a le planning ouvert au moment de l'envoi ;
+- séjour de 3 jours : 4 Ko mesurés sur un séjour généré par les tests, 30 Ko
+  retenus pour un vrai séjour (photos, horaires, adresses).
+
+| Ressource | Ce qui la consomme | Estimation par mois | Offre gratuite | Seuil |
+|---|---|---|---|---|
+| Connexions Realtime simultanées | une par appareil dont le planning d'un séjour partagé est **ouvert au premier plan** (fermée en arrière-plan, `services/liveTrip.js`) | pointe de 3 % des 3 000 comptes : **~90** | 200 | **~2 200 séjours** actifs à cette proportion ; 200 plannings partagés ouverts en même temps |
+| Messages Realtime | une ligne `trip_changes` par envoi, reçue par chaque participant ouvert dessus | 1 000 × 20 × 10 × 1 = **200 000** | 2 millions | ~10 000 séjours |
+| Appels de fonctions Edge | `trip-apply-ops` (200 000) ; à chaque ouverture, `config`, `trip-invites-claim`, météo et lieux (~360 000 pour 2 ouvertures par jour) | **~560 000** | 500 000 | **~850 séjours** : limite atteinte la première |
+| Sortie de données (egress) | réponse de `trip-apply-ops` (séjour complet) et relecture du séjour par l'autre participant | 200 000 × 2 × 30 Ko ≈ **12 Go** brut, ~3 Go compressé | 5 Go | ~1 600 séjours compressés ; à mesurer |
+| Taille de la base | séjours (~30 Mo), `trip_changes` (200 lignes par séjour, ~80 Mo), `trip_applied_ops` (30 jours, ~70 Mo) | **~200 Mo** | 500 Mo | ~2 500 séjours |
+| Comptes actifs (MAU) | comptes connectés | 3 000 | 50 000 | — |
+
+Au-delà de 200 connexions, le direct ne s'établit plus pour les nouveaux
+appareils : ils voient les modifications des autres à la prochaine
+synchronisation, et rien n'est perdu. Les appels au-delà du quota sont
+facturés en Pro, qui coûte 25 $ par mois : 2 millions d'appels, 500 connexions
+Realtime, 5 millions de messages et 250 Go de sortie de données.
+Il faut passer en Pro **avant ~800 séjours partagés actifs**, ou dès que
+l'usage d'un mois dépasse 80 % de l'un des quotas.
+
+Mesures à faire dans le tableau de bord (Reports, Usage) et en SQL :
+
+```sql
+-- Taille réelle d'un séjour (octets, compressés par Postgres)
+select avg(pg_column_size(planning) + pg_column_size(params))::int from public.trips where not deleted;
+-- Séjours partagés actifs ce mois-ci
+select count(distinct trip_id) from public.trip_changes where created_at > now() - interval '30 days'
+  and trip_id in (select trip_id from public.trip_members group by trip_id having count(*) > 1);
+-- Envois par jour
+select date_trunc('day', created_at) d, count(*) from public.trip_changes group by 1 order by 1 desc limit 14;
 ```
 
 ## API et données utilisées

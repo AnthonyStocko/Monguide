@@ -13,6 +13,7 @@ import { claimEmailInvites } from '../_shared/trips/invites.js';
 serveFunction({
   name: 'trip-invites-claim',
   methods: ['POST'],
+  rateLimitKind: 'invites',
   handle: async ({ caller }) => {
     if (caller.type !== 'user') throw new AppError(401, 'unauthorized', 'A signed-in user is required');
     const db = getAdminClient();

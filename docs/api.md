@@ -47,6 +47,7 @@ défaut) :
 | Type | Fonctions | Limite par défaut |
 |---|---|---|
 | `generate` | `generate` | `rateLimits.generatePerWindow` = 30 |
+| `invites` | `trip-invite-link`, `trip-invite-email`, `trip-join`, `trip-invites-claim` | `rateLimits.invitesPerWindow` = 60 |
 | `default` | toutes les autres | `rateLimits.otherPerWindow` = 600 |
 
 Client = identifiant utilisateur s'il est connecté, sinon empreinte salée de
@@ -693,6 +694,11 @@ barre finale) ; absente : `503 not_configured`.
   compte ou non. Invitation valable 30 jours (renouvelée si elle existe déjà).
   Aucun e-mail n'est envoyé. Limite : 20 invitations par jour et par
   utilisateur (`429 invite_limit`).
+- **Conservation** : l'invitation (et l'adresse) est effacée dans l'heure
+  qui suit son rattachement, sa désactivation ou son expiration, soit
+  30 jours au plus (`purge_trip_invites`, migration
+  `20261016200000_invite_purge.sql`). Un lien expiré ou désactivé est
+  effacé 30 jours plus tard.
 
 #### `trip-invites-claim` — rattachement à l'ouverture
 
@@ -856,3 +862,4 @@ envoi, abonnements après 90 jours sans nouvelles de l'appareil.
 | 1 | 2026-10-16 | Ajouts compatibles : fonctions `trip-invite-link`, `trip-invite-email`, `trip-invites-claim`, `trip-join` ; clé réservée `web_url` de `app_config` ; `ownerId` dans les séjours lus. |
 | 1 | 2026-10-16 | Ajouts compatibles : `trip_changes` en direct (Realtime), `step_ids` et `summary_count` ; `last_seen_version` modifiable par chacun ; `push-subscribe` : `tripChanges`. |
 | 1 | 2026-10-16 | Ajouts compatibles : `config.minSharedSchemaVersion` (clé `min_shared_schema_version`) ; `trip-apply-ops` : `schemaVersion`, `409 shared_schema_outdated`, `rejected[].by`. |
+| 1 | 2026-10-16 | Ajouts compatibles : limite `invites` (60 appels par heure) pour les fonctions d'invitation ; invitations effacées après usage (`purge_trip_invites`). |

@@ -803,7 +803,7 @@
     "deleteHint": "Deletes your account and all the trips saved in it. This cannot be undone.",
     "delete": "Delete my account",
     "confirm1Title": "Delete your account?",
-    "confirm1Text": "Your account and all your synced trips will be deleted, on all your devices.",
+    "confirm1Text": "Your account and all your synced trips will be deleted, on all your devices. A shared trip you created will pass to the longest-standing participant.",
     "continue": "Continue",
     "confirm2Title": "Final confirmation",
     "confirm2Text": "This is irreversible: no trip can be recovered. Do you confirm the deletion?",
@@ -816,7 +816,8 @@
       "title": "Data collected",
       "text": [
         "Without an account, your trips are saved on your device only.",
-        "With an account: your email address (to send you the sign-in code) and your trips, including the addresses of your accommodation and personal stops."
+        "With an account: your email address (to send you the sign-in code) and your trips, including the addresses of your accommodation and personal stops.",
+        "If you share a trip: your display first name and, for email invitations, the invited person's address (30 days at most)."
       ]
     },
     "server": {
@@ -844,13 +845,14 @@
       "title": "Retention",
       "text": [
         "Your trips are kept as long as your account exists.",
-        "A deleted trip is erased from the server immediately; only a technical marker with no content is kept for 90 days to pass the deletion on to your other devices."
+        "A deleted trip is erased from the server immediately; only a technical marker with no content is kept for 90 days to pass the deletion on to your other devices.",
+        "History of a shared trip: its last 200 changes, as long as the trip exists."
       ]
     },
     "rights": {
       "title": "Your rights",
       "text": [
-        "You can delete your account at any time from Settings: your account and all your trips are then erased.",
+        "You can delete your account at any time from Settings: your account and your trips are then erased (a shared trip passes to the longest-standing participant).",
         "You can also ask to access or correct your data by writing to us."
       ]
     },
@@ -875,6 +877,15 @@
         "In the web version, if you turn reminders on, your browser creates a notification subscription. Our servers store that subscription (a technical address supplied by your browser’s notification service: Apple, Google, Mozilla or Microsoft), a random device identifier, the language and, if you are signed in, the link to your account.",
         "They also store the reminders to send: time, text and link to the itinerary. The text contains the trip title and the names of public places, never an address or the title of your personal stops. The message is encrypted: the browser’s notification service cannot read it.",
         "Reminders are deleted 7 days after they are sent; the subscription is deleted after 90 days without use, or at the first delivery attempt after you withdraw permission. The Android app is not concerned: its reminders stay on the phone."
+      ]
+    },
+    "sharing": {
+      "title": "Shared trips",
+      "text": [
+        "Sharing is optional and requires an account. The first time you share, the app asks for a first name, visible only to the people you share a trip with.",
+        "The participants you choose (10 at most) see the whole content of the trip, including accommodation addresses and personal stops, as well as the list of participants (first names) and the history of changes. Your email address is never shown to other participants.",
+        "Invitation link: valid for 7 days and can be disabled; only an irreversible fingerprint is stored. Invitation by email address: no email is sent; the address is erased as soon as the invitation is accepted, disabled or expired, that is 30 days at most.",
+        "If the organiser deletes their account, their shared trips pass to the longest-standing participant."
       ]
     }
   },

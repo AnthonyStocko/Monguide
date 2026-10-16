@@ -15,6 +15,7 @@ import { readJsonBody } from '../_shared/validate.js';
 serveFunction({
   name: 'trip-invite-email',
   methods: ['POST'],
+  rateLimitKind: 'invites',
   handle: async ({ req, caller }) => {
     if (caller.type !== 'user') throw new AppError(401, 'unauthorized', 'A signed-in user is required');
     const body = await readJsonBody(req);
