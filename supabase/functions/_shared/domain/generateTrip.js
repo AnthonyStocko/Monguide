@@ -12,6 +12,7 @@ import { effectiveRadiusKm, travelMinutes } from './travel.js';
 import { includesRestaurants } from './tripDraft.js';
 import { arbitrateWeather, dayWeather } from './weatherArbitration.js';
 import { computeCarbon, computeFuelCost } from './carbon.js';
+import { dayId } from './stableId.js';
 
 /**
  * Moteur de génération d'un séjour (fonction pure, exécutée par la fonction
@@ -232,7 +233,7 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
     const kept = new Set(schedule.steps.map((s) => s.id));
     for (const r of raw) if (!kept.has(r.id) && r.place) used.delete(r.place.id);
 
-    const day = { date, weatherAvailable: Boolean(weatherDays.find((w) => w.date === date)?.available), steps: schedule.steps };
+    const day = { id: dayId(trip.id, date), date, weatherAvailable: Boolean(weatherDays.find((w) => w.date === date)?.available), steps: schedule.steps };
     const weather = dayWeather(weatherDays.find((w) => w.date === date));
     if (weather) day.weather = weather;
     const holiday = holidays.find((h) => h.date === date && h.global);

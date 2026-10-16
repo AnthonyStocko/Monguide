@@ -542,19 +542,27 @@ rien n'est modifié.
 ### Table `trips` — séjours des comptes (accès direct, RLS)
 
 Accès par l'API REST de Supabase (`supabase.from('trips')`), uniquement pour
-un utilisateur connecté. RLS : chacun ne lit, ne crée, ne modifie et ne
-supprime que ses lignes (`user_id = auth.uid()`, fixé par la base).
+un utilisateur connecté. RLS (migration `20261016100000_shared_trips.sql`) :
+lecture par les participants du séjour (`trip_members`), suppression par
+l'owner seulement. Écriture directe (création, `upsert`) : ancien chemin
+gardé jusqu'au Bloc B du Prompt 8.0, réservé à l'owner d'un séjour **non
+partagé** ; un séjour partagé n'est jamais modifiable directement.
 
 | Colonne | Type | Contenu |
 |---|---|---|
 | `id` | uuid | identifiant du séjour (créé sur l'appareil) |
-| `user_id` | uuid | propriétaire (défaut `auth.uid()`, suppression en cascade) |
+| `user_id` | uuid | owner (défaut `auth.uid()` ; suit la ligne owner de `trip_members`) |
 | `title`, `destination` | text, jsonb | titre, destination |
 | `start_date`, `end_date` | date | dates du séjour |
 | `params` | jsonb | reste du séjour (`domain/tripRow.js`) |
 | `planning` | jsonb | journées (`Trip.days`) |
 | `created_at`, `updated_at` | timestamptz | horodatages de l'appareil ; conflit : le plus récent l'emporte |
 | `deleted` | boolean | suppression logique, propagée aux autres appareils |
+| `version` | integer | 1 à la création, +1 à chaque modification ; fixé par la base, jamais par l'appareil |
+
+Journées (`planning[]`) et étapes : identifiant `id` stable (UUID).
+Journée générée ou migrée (schemaVersion 3) : UUID version 5 de
+`day:<séjour>:<date>` (`domain/stableId.js`, même calcul que la migration SQL).
 
 Synchronisation (`src/services/sync.js`) : lecture des lignes
 `updated_at > dernière synchronisation`, puis `upsert` des séjours modifiés
@@ -565,12 +573,32 @@ Un séjour supprimé est envoyé comme marqueur sans contenu (`title` vide,
 pg_cron `monguide-purge-deleted-trips` efface les marqueurs de plus de
 90 jours (`rules.sync.deletedRetentionDays`).
 
+### Séjours partagés — tables (Prompt 8.0, Bloc A)
+
+Aucune écriture depuis le client sauf indication : les fonctions serveur
+(Bloc B) écrivent. RLS activée sur toutes ; aucun accès `anon`.
+
+| Table | Contenu | Accès du client |
+|---|---|---|
+| `profiles` | `user_id`, `display_name` (1 à 40 caractères), `avatar_color` (nom de couleur de la palette), `updated_at` | lit, crée et modifie le sien ; lit ceux des personnes avec qui il partage un séjour |
+| `trip_members` | `trip_id`, `user_id`, `role` (`owner` \| `editor`), `joined_at`, `last_seen_version` ; un owner, 10 participants au plus | lecture entre participants ; suppression de sa ligne (quitter) ou par l'owner (retirer), jamais de la ligne owner |
+| `trip_invites` | `kind` (`link` \| `email`), `token_hash` (SHA-256 hexadécimal, jamais le jeton), `email_normalized`, `created_by`, `expires_at` (7 jours), `revoked_at`, `uses` | owner : lecture, et désactivation (`revoked_at`, définitive) |
+| `trip_changes` | `version`, `author_id` (NULL : « Ancien participant »), `op_type`, `summary` (280 caractères au plus) ; 200 dernières par séjour (pg_cron `monguide-purge-trip-changes`) | lecture par les participants |
+
+Fonctions utilisées par les politiques : `is_trip_member(trip_id)`,
+`is_trip_owner(trip_id)`, `is_trip_shared(trip_id)` (false pour un
+non-participant), `shares_trip_with(user_id)` ; elles ne renseignent que sur
+l'utilisateur appelant. Tests : `supabase/tests/database/shared_trips.test.sql`
+(pgTAP, job `db-tests` du workflow de déploiement du serveur).
+
 ### `delete-account` — suppression du compte
 
 - **Méthode** : `POST`, sans corps ; utilisateur connecté uniquement
   (`401 unauthorized` en mode invité).
-- **Sortie** : `{ "deleted": true }`. Le compte est supprimé ; ses séjours
-  le sont en cascade.
+- **Sortie** : `{ "deleted": true }`. Le compte est supprimé. Chaque séjour
+  dont il était owner passe au participant le plus ancien, ou est supprimé
+  s'il en était le seul participant (déclencheur sur `auth.users`) ; ses
+  entrées d'historique restent, sans auteur.
 - **Erreurs** : codes communs ; `500 internal_error` si la suppression échoue.
 
 ### Rappels de la version web (Web Push)
@@ -651,3 +679,4 @@ envoi, abonnements après 90 jours sans nouvelles de l'appareil.
 | 1 | 2026-09-29 | Ajouts compatibles : fonction `images` (photos Wikimedia Commons et crédits) ; `Place.image`, `Trip.hero`, `Trip.destination.wikidata` ; `places` : `wikidata` des lieux Mérimée et Muséofile. |
 | 1 | 2026-09-29 | Ajout compatible : `generate` en flux NDJSON (`Accept: application/x-ndjson`), événements `start`, `step`, `result`, `error`. |
 | 1 | 2026-10-13 | Ajouts compatibles : rappels de la version web, fonctions `push-subscribe`, `push-schedule`, `push-send` ; code `404 not_subscribed`. |
+| 1 | 2026-10-16 | Ajouts compatibles : séjours partagés, Bloc A (tables `profiles`, `trip_members`, `trip_invites`, `trip_changes`, colonne `trips.version`, RLS par participant) ; `Day.id` (schemaVersion 3) dans les séjours de `generate`. |

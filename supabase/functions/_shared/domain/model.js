@@ -7,8 +7,9 @@
 /**
  * Version courante du schéma des séjours (voir migrations.js, phase 5).
  * 2 : dîner (Trip.dinner, étapes de type "dinner").
+ * 3 : identifiant stable des journées (Day.id), pour les séjours partagés.
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /**
  * @typedef {object} PlaceFood Renseigné uniquement pour les restaurants.
@@ -119,7 +120,7 @@ export const DINNER_OPTIONS = Object.freeze(['restaurant', 'free']);
 
 /**
  * @typedef {object} Step
- * @property {string} id
+ * @property {string} id uuid stable, conservé quand l'étape change d'horaire ou de journée
  * @property {'culture' | 'lunch' | 'outdoor' | 'relax' | 'dinner' | 'personal'} type
  *   dinner sans lieu : "Soirée libre" (dîner libre, ou aucun restaurant trouvé : badge free_time)
  * @property {string} start "HH:mm"
@@ -151,6 +152,8 @@ export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed'
 
 /**
  * @typedef {object} Day
+ * @property {string} id uuid stable (ne change jamais, même si la journée est réordonnée) : dayId() de
+ *   stableId.js pour une journée générée ou migrée
  * @property {string} date "YYYY-MM-DD"
  * @property {string} [startLodgingId]
  * @property {string} [endLodgingId]

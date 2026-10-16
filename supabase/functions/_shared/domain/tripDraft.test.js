@@ -145,7 +145,7 @@ describe('buildTrip', () => {
   it('construit un Trip complet : pays, fuseau, monnaie, préférences', () => {
     const trip = buildTrip(validDraft({ lunch: 'both', prefs: { vegetarian: true, wheelchair: false } }), { id: 'trip-9', now: '2026-09-24T10:00:00.000Z', makeId });
     expect(trip).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       lunch: 'both',
       dinner: 'restaurant',
       id: 'trip-9',

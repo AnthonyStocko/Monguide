@@ -4,8 +4,9 @@ import { log } from '../_shared/log.js';
 import { getAdminClient } from '../_shared/supabaseAdmin.js';
 
 // POST /functions/v1/delete-account -> { deleted: true } (docs/api.md)
-// Réservée à un utilisateur connecté : supprime son compte ; ses séjours
-// (table trips) sont supprimés en cascade par la base. La clé de service
+// Réservée à un utilisateur connecté : supprime son compte. Ses séjours
+// partagés passent au participant le plus ancien, les autres sont supprimés
+// (déclencheur de la migration 20261016100000_shared_trips.sql). La clé de service
 // n'existe que côté serveur (secret fourni par Supabase aux fonctions).
 serveFunction({
   name: 'delete-account',
