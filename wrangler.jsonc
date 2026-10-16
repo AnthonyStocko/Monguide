@@ -7,7 +7,12 @@
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./dist-web",
-    // Routage côté application : toute adresse inconnue renvoie index.html.
+    // Fichiers servis à leur adresse exacte : /confidentialite.html n'est pas
+    // redirigée vers /confidentialite (pages statiques de public/, adresses
+    // déclarées sur Google Play et dans rules.js).
+    "html_handling": "none",
+    // Routage côté application : toute adresse sans fichier renvoie index.html ;
+    // un fichier existant est toujours servi tel quel.
     "not_found_handling": "single-page-application"
   }
 }

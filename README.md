@@ -213,10 +213,14 @@ de logique métier.
     supprime à la première tentative, et chaque appareil doit réactiver ses
     rappels (Réglages > Rappels). Vider `push_subscriptions` au moment du
     changement évite ces envois inutiles.
-- **Adresse de la version web** : variable GitHub `WEB_APP_URL`
-  (`https://app.…`). Elle alimente le bouton « Utiliser sur iPhone et
-  ordinateur » de la page de présentation (`pages.yml`, masqué tant qu'elle
-  manque) et `VITE_WEB_APP_URL` dans les builds.
+- **Adresses publiques et contact** (version web, Play Store, pages
+  légales, adresse e-mail) : rubrique `public` de `rules.js`, surchargeable
+  par `app_config` sans nouvelle version (`docs/api.md`) ; liste complète
+  et liens suivis dans `docs/liens-publics.md`. Pages statiques
+  (`decouvrir.html`, `confidentialite.html`, `mentions-legales.html`,
+  `suppression-compte.html`) dans `public/`, publiées avec la version web.
+  La variable GitHub `WEB_APP_URL` ne sert plus qu'aux anciennes pages
+  GitHub Pages (`site/`, `pages.yml`).
 - **Liens ouverts par l'application Android** (Android App Links) : préparé,
   pas encore activé. L'application sait déjà ouvrir une adresse de la version
   web (`onAppUrlOpen`), et le build web publie

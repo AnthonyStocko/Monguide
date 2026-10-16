@@ -11,7 +11,6 @@ import { setRules } from './rules.js';
  * @property {number | null} apiVersion version du contrat annoncée par le serveur
  * @property {string | null} minAppVersion
  * @property {typeof RULES} rules règles effectives
- * @property {string | null} contact contact de l'équipe (écran Confidentialité)
  * @property {{ source: string, dataDate: string | null, countries: Record<string, string> | null } | null} osm source des lieux OSM, date de la version en service et des données de chaque pays importé (écran À propos, /debug)
  * @property {string | null} fetchedAt date de réception par le serveur (ISO)
  * @property {boolean} updateRequired l'application est trop ancienne
@@ -25,7 +24,6 @@ export function defaultConfig(error) {
     apiVersion: null,
     minAppVersion: null,
     rules: RULES,
-    contact: null,
     osm: null,
     fetchedAt: null,
     updateRequired: error?.code === 'app_outdated',
@@ -63,7 +61,6 @@ function fromServer(data, source, fetchedAt, error) {
     apiVersion: Number.isInteger(data?.apiVersion) ? data.apiVersion : null,
     minAppVersion,
     rules,
-    contact: typeof data?.contact === 'string' && data.contact ? data.contact : null,
     osm: readOsm(data?.osm),
     fetchedAt,
     updateRequired: tooOld || error?.code === 'app_outdated',

@@ -17,7 +17,7 @@ import PlanningPage from './pages/PlanningPage.jsx';
 import PrivacyPage from './pages/PrivacyPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import ThemeDebugPage from './pages/ThemeDebugPage.jsx';
-import { WEB_APP_URL } from './config/links.js';
+import { publicLinks } from './config/links.js';
 import { onAppUrlOpen } from './platform/lifecycle.js';
 import { initNotifications } from './services/notifications.js';
 import { appPathFromUrl } from './utils/navigation.js';
@@ -37,7 +37,7 @@ function DeepLinksBridge() {
   useEffect(
     () =>
       onAppUrlOpen((url) => {
-        const path = appPathFromUrl(url, WEB_APP_URL);
+        const path = appPathFromUrl(url, publicLinks().webApp);
         if (path) navigate(path);
       }),
     [navigate]

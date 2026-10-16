@@ -1,24 +1,28 @@
-/** Pages web publiques (GitHub Pages, dossier site/ du dépôt). */
-export const SITE_URL = 'https://anthonystocko.github.io/Monguide';
+import { useConfig } from '../hooks/useConfig.js';
+import { getRules } from '../services/rules.js';
 
 /**
- * Adresse de la version web (https://app.…, sans barre finale), fournie au
- * build par VITE_WEB_APP_URL ; vide tant qu'elle n'est pas configurée.
+ * Adresses publiques et contact (version web, Play Store, pages légales,
+ * adresse e-mail) : rubrique "public" des règles, écrite dans rules.js et
+ * surchargeable par app_config. Aucune adresse n'est écrite ailleurs dans
+ * l'application.
+ * @typedef {typeof import('@domain/config/rules.js').RULES.public} PublicLinks
  */
-export const WEB_APP_URL = (import.meta.env.VITE_WEB_APP_URL ?? '').replace(/\/+$/, '');
-
-/** Fiche de l'application Android sur Google Play (identifiant de capacitor.config.json). */
-export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.monguide.app';
-
-const PAGES = {
-  fr: { privacy: 'fr/confidentialite.html', deleteAccount: 'fr/suppression-compte.html' },
-  en: { privacy: 'en/privacy.html', deleteAccount: 'en/delete-account.html' }
-};
 
 /**
- * @param {'privacy' | 'deleteAccount'} page
- * @param {string} lang langue de l'interface
+ * Valeurs courantes, hors composant React (règles reçues du serveur au
+ * lancement, sinon valeurs embarquées).
+ * @returns {PublicLinks}
  */
-export function sitePage(page, lang) {
-  return `${SITE_URL}/${(PAGES[lang] ?? PAGES.en)[page]}`;
+export function publicLinks() {
+  return getRules().public;
+}
+
+/**
+ * Valeurs courantes dans un composant : l'écran se met à jour quand la
+ * configuration du serveur arrive.
+ * @returns {PublicLinks}
+ */
+export function usePublicLinks() {
+  return useConfig().config.rules.public;
 }

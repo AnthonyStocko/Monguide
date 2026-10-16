@@ -374,5 +374,20 @@ export const RULES = Object.freeze({
     fuel: 3600,
     /** Photos Wikimedia Commons, y compris les "pas d'image" : 30 jours. */
     images: 2592000
+  },
+
+  /**
+   * Adresses publiques et contact, SEUL endroit où elles sont écrites (avec
+   * les pages statiques de public/ et docs/liens-publics.md). Surcharge sans
+   * nouvelle version : app_config, clé "public.contactEmail" par exemple.
+   */
+  public: {
+    webApp: 'https://monguide.mgapp.workers.dev',
+    playStore: 'https://play.google.com/store/apps/details?id=com.monguide.app',
+    presentation: 'https://monguide.mgapp.workers.dev/decouvrir.html',
+    privacy: 'https://monguide.mgapp.workers.dev/confidentialite.html',
+    legal: 'https://monguide.mgapp.workers.dev/mentions-legales.html',
+    accountDeletion: 'https://monguide.mgapp.workers.dev/suppression-compte.html',
+    contactEmail: 'monguide.app@outlook.com'
   }
 });

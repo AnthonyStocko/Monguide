@@ -16,7 +16,8 @@
 //    @capacitor/assets) et icône de l'écran de démarrage, en vecteurs ;
 //  - assets/web/ : icônes de la version web installable (manifeste et iPhone), copiées
 //    dans dist-web/icons/ par le build web (vite.config.js) ;
-//  - public/favicon.svg, site/assets/favicon.svg, site/assets/logo.svg et logo-dark.svg.
+//  - public/favicon.svg, site/assets/favicon.svg, site/assets/logo.svg et logo-dark.svg,
+//    public/pages/logo.svg (pages statiques de la version web).
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -102,6 +103,7 @@ const favicon = iconSvg({ size: 64, scale: 1.2 });
 out('public/favicon.svg', `${favicon}\n`);
 out('site/assets/favicon.svg', `${favicon}\n`);
 out('site/assets/logo.svg', `${logoSvg()}\n`);
+out('public/pages/logo.svg', `${logoSvg()}\n`);
 // Site en mode sombre : nom en sable.
 out('site/assets/logo-dark.svg', `${logoSvg({ textColor: C.sand })}\n`);
 

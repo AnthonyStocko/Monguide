@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Politique de confidentialité — Mon guide</title>
+  <meta name="description" content="Données collectées par Mon guide (Android et version web), finalités, hébergement, conservation et droits.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/pages/pages.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/decouvrir.html"><img src="/pages/logo.svg" alt="Mon guide" width="161" height="40"></a>
+      <a class="back" href="/">← Retour à l'application</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1>Politique de confidentialité</h1>
+    <p class="muted">Application « Mon guide » (Android et version web). Éditeur : Anthony Mourier. Dernière mise à jour : 14 octobre 2026.</p>
+
+    <section class="card">
+      <h2>En bref</h2>
+      <ul>
+        <li>Sans compte, vos séjours restent sur votre appareil.</li>
+        <li>Avec un compte, seuls votre adresse e-mail et vos séjours sont conservés, pour les retrouver sur vos appareils.</li>
+        <li>Aucune publicité, aucun suivi, aucune mesure d'audience, aucune revente de données.</li>
+        <li>Données hébergées dans l'Union européenne. Vous pouvez supprimer votre compte à tout moment.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Données collectées</h2>
+      <ul>
+        <li><strong>Adresse e-mail</strong> (avec un compte seulement) : pour vous envoyer le code de connexion et identifier votre compte.</li>
+        <li><strong>Séjours</strong> (avec un compte seulement) : destination, dates, préférences, planning, y compris les <strong>adresses de vos hébergements</strong> et des <strong>lieux de vos étapes personnelles</strong>, avec leurs titres et notes.</li>
+        <li><strong>Position au moment de l'utilisation</strong> : seulement si vous touchez « Utiliser ma position » (autorisation demandée par le téléphone ou le navigateur à ce moment-là). Elle sert à retrouver l'adresse correspondante et n'est pas conservée en tant que telle.</li>
+        <li><strong>Lieux recherchés</strong> (destination, hébergements) : envoyés à notre serveur pour préparer le séjour.</li>
+      </ul>
+      <p>Sur Android, les rappels (notifications) sont programmés sur le téléphone : leur contenu ne quitte pas l'appareil. Pour la version web, voir « Rappels de la version web » ci-dessous.</p>
+    </section>
+
+    <section class="card">
+      <h2>Finalités</h2>
+      <p>Ces données servent uniquement à préparer vos séjours, à vous connecter et à retrouver vos séjours sur vos appareils. Elles ne sont ni vendues, ni louées, ni utilisées à des fins publicitaires ou de profilage.</p>
+    </section>
+
+    <section class="card">
+      <h2>Hébergement</h2>
+      <p>Comptes, séjours et serveur sont hébergés par <strong>Supabase</strong>, dans sa région de l'Union européenne (Irlande). Les communications entre l'application et le serveur sont chiffrées (HTTPS).</p>
+      <p>Les fichiers de la version web et ces pages sont servis par <strong>Cloudflare</strong>, qui reçoit l'adresse IP de votre appareil pour les acheminer. Aucune donnée de compte ni de séjour n'y est stockée.</p>
+    </section>
+
+    <section class="card">
+      <h2>Traitement des demandes par le serveur</h2>
+      <p>Pour préparer un séjour, notre serveur interroge des services de données publiques (OpenStreetMap, Photon, Open-Meteo, Wikidata, données du ministère de la Culture, jours fériés…). Il leur transmet les lieux nécessaires au calcul, jamais votre adresse e-mail.</p>
+      <p>La recherche d'adresses et « Utiliser ma position » passent par le service Photon (komoot, Allemagne), qui reçoit le texte recherché ou la position, sans aucune information sur votre compte.</p>
+      <p>Les positions ne sont pas conservées en clair : nos caches et nos journaux techniques n'en gardent qu'une valeur arrondie (environ 1 km). Les journaux ne contiennent ni adresse e-mail, ni adresse postale. Pour limiter les abus, le serveur conserve une empreinte irréversible (hachage salé) de l'adresse IP pendant un jour, jamais l'adresse IP elle-même.</p>
+      <p>Le fond de carte est chargé par l'application directement depuis les serveurs de tuiles d'OpenStreetMap, qui reçoivent donc l'adresse IP de votre appareil (<a href="https://osmfoundation.org/wiki/Privacy_Policy">politique de confidentialité de la fondation OpenStreetMap</a>).</p>
+    </section>
+
+    <section class="card">
+      <h2>Relecture du planning par un assistant d'intelligence artificielle</h2>
+      <p>Cette relecture est <strong>facultative</strong> : elle est proposée à la première préparation d'un séjour et peut être activée ou désactivée à tout moment dans les réglages (« Relecture par l'assistant IA »). Si vous l'activez, le planning d'un nouveau séjour est relu par un service d'intelligence artificielle, <strong>Mistral AI</strong> (France), qui propose des ajustements ; Mon guide vérifie chacun d'eux avant de l'appliquer.</p>
+      <p><strong>Données transmises</strong> par notre serveur : ville et pays de destination, dates, nombre de voyageurs, mode de déplacement, profil et préférences de repas, noms, catégories et horaires des lieux publics du planning, distances, probabilité de pluie, et le texte « Vos envies » s'il est rempli. <strong>Jamais</strong> d'adresse (ni celle de votre hébergement), de coordonnées, d'adresse e-mail, ni le titre ou la note de vos étapes personnelles.</p>
+      <p><strong>Finalité</strong> : améliorer votre planning. Nos journaux ne conservent ni le texte envoyé ni la réponse ; un compteur quotidien sans contenu (identifiant de compte, ou empreinte salée de l'adresse IP) limite le nombre de relectures et est effacé après 90 jours. Le traitement de ces données par le fournisseur est régi par ses propres conditions (<a href="https://mistral.ai/terms/">conditions de Mistral AI</a>).</p>
+    </section>
+
+    <section class="card">
+      <h2>Rappels de la version web</h2>
+      <p>La version web de Mon guide (iPhone, Mac, PC) ne peut pas programmer de notification sur l'appareil : si vous activez les rappels, ils sont envoyés par nos serveurs à l'heure prévue. L'application Android n'est pas concernée, ses rappels restent sur le téléphone.</p>
+      <ul>
+        <li>Abonnement : une adresse technique fournie par le service de notifications de votre navigateur (Apple, Google, Mozilla ou Microsoft) et ses clés de chiffrement, un identifiant aléatoire de l'appareil, la langue et, si vous êtes connecté, le lien avec votre compte.</li>
+        <li>Rappels à envoyer : heure, texte et lien vers le planning. Le texte contient le titre du séjour et le nom des lieux publics ; il ne contient jamais d'adresse ni le titre de vos étapes personnelles (« Dans 1 h : votre étape personnelle »).</li>
+        <li>Le message est chiffré de bout en bout : le service de notifications du navigateur le transmet sans pouvoir le lire.</li>
+        <li>La permission n'est demandée que si vous touchez « Activer les rappels ». Refuser ou retirer l'autorisation ne change rien d'autre au fonctionnement.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Durées de conservation</h2>
+      <ul>
+        <li>Adresse e-mail et séjours : tant que votre compte existe.</li>
+        <li>Rappels de la version web : supprimés 7 jours après leur envoi. Abonnement aux notifications : supprimé après 90 jours sans utilisation, ou à la première tentative d'envoi après le retrait de l'autorisation.</li>
+        <li>Séjour supprimé : effacé immédiatement du serveur ; seul un marqueur technique sans contenu est conservé 90 jours, pour propager la suppression à vos autres appareils.</li>
+        <li>Suppression du compte : le compte et tous ses séjours sont effacés immédiatement (<a href="/suppression-compte.html">comment supprimer mon compte</a>).</li>
+        <li>Données sans compte : uniquement sur votre appareil, jusqu'à ce que vous les supprimiez ou désinstalliez l'application.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Vos droits (RGPD)</h2>
+      <p>Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données.</p>
+      <ul>
+        <li>Supprimer votre compte : dans l'application ou sur le site (Réglages &gt; Supprimer mon compte), ou par e-mail : voir <a href="/suppression-compte.html">Supprimer mon compte</a>.</li>
+        <li>Exporter vos séjours : dans l'application (Planning &gt; Exporter en PDF).</li>
+        <li>Toute autre demande : écrivez-nous à l'adresse ci-dessous ; nous répondons sous un mois.</li>
+      </ul>
+      <p>Vous pouvez aussi adresser une réclamation à la CNIL (<a href="https://www.cnil.fr">cnil.fr</a>).</p>
+    </section>
+
+    <section class="card">
+      <h2>Responsable du traitement et contact</h2>
+      <p>Responsable du traitement : Anthony Mourier, éditeur de l'application Mon guide.</p>
+      <p>Pour toute question sur vos données : <a href="mailto:monguide.app@outlook.com">monguide.app@outlook.com</a></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <nav class="wrap" aria-label="Liens du site">
+      <ul>
+        <li><a href="/decouvrir.html">Découvrir Mon guide</a></li>
+        <li><a href="/">Ouvrir l'application</a></li>
+        <li><a href="/confidentialite.html">Confidentialité</a></li>
+        <li><a href="/mentions-legales.html">Mentions légales</a></li>
+        <li><a href="/suppression-compte.html">Supprimer mon compte</a></li>
+        <li><a href="mailto:monguide.app@outlook.com">Nous contacter</a></li>
+      </ul>
+      <p>© 2026 Mon guide · Données cartographiques © contributeurs OpenStreetMap</p>
+    </nav>
+  </footer>
+</body>
+</html>

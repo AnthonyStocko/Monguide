@@ -296,7 +296,9 @@
     },
     "fuel": {
       "failed": "Prix du carburant momentanément indisponible."
-    }
+    },
+    "contactEmail": "Adresse de contact",
+    "webApp": "Adresse de la version web"
   },
   "food": {
     "cuisine": "Cuisine",
@@ -679,7 +681,6 @@
   },
   "privacy": {
     "title": "Confidentialité",
-    "contactUnknown": "Le contact de l’équipe n’a pas pu être chargé. Réessayez une fois en ligne.",
     "data": {
       "title": "Données collectées",
       "text": [
@@ -982,13 +983,19 @@
     "mapTiles": "Fond de carte : tuiles OpenStreetMap (© contributeurs OpenStreetMap, ODbL), chargées directement par l’application.",
     "creditsTitle": "Composants utilisés",
     "privacyOnline": "Politique de confidentialité (en ligne)",
-    "deleteOnline": "Supprimer mon compte depuis un navigateur",
+    "deleteOnline": "Comment supprimer mon compte",
     "osmDataDate": "Lieux OpenStreetMap, données du {{date}}.",
     "osmCountriesTitle": "Lieux OpenStreetMap, date des données par pays :",
     "osmCountryDate": "{{country}} : données du {{date}}",
     "odbl": "Licence ODbL 1.0 (Open Database License)",
     "versionWeb": "Version web {{version}}",
-    "playStore": "Application Android sur Google Play"
+    "playStore": "Disponible sur Google Play",
+    "legalOnline": "Mentions légales",
+    "webApp": "Aussi disponible sur iPhone et ordinateur",
+    "share": "Partager le lien",
+    "shareTitle": "Mon guide",
+    "shareText": "Mon guide, guide de voyage sur-mesure, aussi sur iPhone et ordinateur :",
+    "contact": "Nous contacter"
   },
   "countriesIn": {
     "AT": "en Autriche",

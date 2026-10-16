@@ -41,6 +41,12 @@ describe('RULES', () => {
     expect(Object.values(RULES.osm.limits).reduce((a, b) => a + b, 0)).toBe(200);
   });
 
+  it('a des adresses publiques en https et une adresse de contact valide', () => {
+    const { contactEmail, ...urls } = RULES.public;
+    for (const [key, url] of Object.entries(urls)) expect(new URL(url).protocol, key).toBe('https:');
+    expect(contactEmail).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/);
+  });
+
   it('reprend les valeurs du cahier des charges', () => {
     expect(RULES.travel.detourFactor).toBe(1.3);
     expect(RULES.travel.modes).toEqual({

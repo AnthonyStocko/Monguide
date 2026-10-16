@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { TILE_URL } from '../../src/config/map.js';
-import { WEB_HEAD_TAGS, WEB_ICONS, WEB_MANIFEST, workboxOptions } from './pwa.js';
+import { STATIC_PAGES, WEB_HEAD_TAGS, WEB_ICONS, WEB_MANIFEST, workboxOptions } from './pwa.js';
 
 describe('manifeste de la version web', () => {
   it('nom, affichage, couleurs et langue', () => {
@@ -29,6 +29,16 @@ describe('service worker', () => {
   it('met l’application en cache et renvoie toute adresse vers index.html', () => {
     expect(options.globPatterns).toEqual(['**/*.{js,css,html,svg,png,woff2,ttf}']);
     expect(options.navigateFallback).toBe('/index.html');
+  });
+
+  it('sert les pages statiques telles quelles, sans les renvoyer vers l’application', () => {
+    const denied = (path) => options.navigateFallbackDenylist.some((re) => re.test(path));
+    for (const page of STATIC_PAGES) {
+      expect(existsSync(`public/${page}.html`), page).toBe(true);
+      expect(denied(`/${page}.html`), page).toBe(true);
+      expect(denied(`/${page}`), page).toBe(true);
+    }
+    for (const path of ['/', '/settings', '/account', '/planning/abc', '/decouvrirXhtml']) expect(denied(path), path).toBe(false);
   });
 
   it('ne met en cache que les tuiles de la carte : 200 au plus, 7 jours', () => {

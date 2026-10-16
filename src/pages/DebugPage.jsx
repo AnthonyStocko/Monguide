@@ -93,6 +93,8 @@ export default function DebugPage() {
                 {format.date(`${date}T12:00:00Z`, { dateStyle: 'medium', timeZone: 'UTC' })}
               </Row>
             ))}
+            <Row label={t('debug.contactEmail')}>{config.rules.public.contactEmail}</Row>
+            <Row label={t('debug.webApp')}>{config.rules.public.webApp}</Row>
             <Row label={t('debug.rainThreshold')}>
               {format.number(config.rules.weather.rainThresholdPct / 100, { style: 'percent' })}
             </Row>

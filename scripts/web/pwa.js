@@ -39,13 +39,22 @@ export const WEB_HEAD_TAGS = [
   { tag: 'meta', attrs: { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }, injectTo: 'head' }
 ];
 
+/**
+ * Pages statiques de public/ (présentation, pages légales), publiées à côté
+ * de l'application : jamais remplacées par index.html, ni par le service
+ * worker ni par Cloudflare (wrangler.jsonc ne renvoie vers index.html que
+ * les adresses sans fichier).
+ */
+export const STATIC_PAGES = ['decouvrir', 'confidentialite', 'mentions-legales', 'suppression-compte'];
+
 /** Limites du cache des tuiles de la carte. */
 export const TILE_CACHE = { cacheName: 'map-tiles', maxEntries: 200, maxAgeSeconds: SEVEN_DAYS_IN_SECONDS };
 
 /**
  * Réglages du service worker.
  * - Application (HTML, JS, CSS, polices, icônes) mise en cache à l'installation :
- *   démarrage hors ligne, toute adresse renvoyée vers index.html.
+ *   démarrage hors ligne, toute adresse renvoyée vers index.html, sauf les pages
+ *   statiques (STATIC_PAGES, avec ou sans .html), servies telles quelles.
  * - Aucune règle pour Supabase : ses réponses ne passent jamais par le cache du
  *   service worker (l'application a son propre cache IndexedDB).
  * - Tuiles de la carte : seules celles déjà affichées sont gardées, 200 au plus,
@@ -65,6 +74,7 @@ export function workboxOptions({ tileUrl, importScripts = [] }) {
     globIgnores: ['**/html2canvas-*.js', '**/purify.es-*.js'],
     maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
     navigateFallback: '/index.html',
+    navigateFallbackDenylist: [new RegExp(`^/(${STATIC_PAGES.join('|')})(\\.html)?$`)],
     cleanupOutdatedCaches: true,
     skipWaiting: false,
     importScripts,

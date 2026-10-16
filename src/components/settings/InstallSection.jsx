@@ -1,7 +1,7 @@
 import { useState, useSyncExternalStore } from 'react';
 import { Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { PLAY_STORE_URL } from '../../config/links.js';
+import { usePublicLinks } from '../../config/links.js';
 import { getInstallMode, onInstallModeChange, promptInstall } from '../../platform/install.js';
 import IosInstallHelp from '../install/IosInstallHelp.jsx';
 import Button from '../ui/Button.jsx';
@@ -17,6 +17,7 @@ export default function InstallSection() {
   const { t } = useTranslation();
   const mode = useSyncExternalStore(onInstallModeChange, getInstallMode);
   const [help, setHelp] = useState(false);
+  const { playStore } = usePublicLinks();
   if (mode === 'installed' || mode === 'none') return null;
 
   return (
@@ -25,7 +26,7 @@ export default function InstallSection() {
       <p className="text-ink-muted">{t(mode === 'playStore' ? 'install.playStoreHint' : 'install.hint')}</p>
       {mode === 'playStore' ? (
         <a
-          href={PLAY_STORE_URL}
+          href={playStore}
           target="_blank"
           rel="noreferrer"
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary-strong px-5 font-semibold text-white shadow-sm hover:bg-primary-hover"

@@ -296,7 +296,9 @@
     },
     "fuel": {
       "failed": "Fuel price temporarily unavailable."
-    }
+    },
+    "contactEmail": "Contact address",
+    "webApp": "Web version address"
   },
   "food": {
     "cuisine": "Cuisine",
@@ -679,7 +681,6 @@
   },
   "privacy": {
     "title": "Privacy",
-    "contactUnknown": "The team contact could not be loaded. Try again once online.",
     "data": {
       "title": "Data collected",
       "text": [
@@ -982,13 +983,19 @@
     "mapTiles": "Base map: OpenStreetMap tiles (© OpenStreetMap contributors, ODbL), loaded directly by the app.",
     "creditsTitle": "Components used",
     "privacyOnline": "Privacy policy (online)",
-    "deleteOnline": "Delete my account from a browser",
+    "deleteOnline": "How to delete my account",
     "osmDataDate": "OpenStreetMap places, data as of {{date}}.",
     "osmCountriesTitle": "OpenStreetMap places, data date by country:",
     "osmCountryDate": "{{country}}: data as of {{date}}",
     "odbl": "ODbL 1.0 licence (Open Database License)",
     "versionWeb": "Web version {{version}}",
-    "playStore": "Android app on Google Play"
+    "playStore": "Available on Google Play",
+    "legalOnline": "Legal notice",
+    "webApp": "Also available on iPhone and computer",
+    "share": "Share the link",
+    "shareTitle": "Mon guide",
+    "shareText": "Mon guide, your tailored travel guide, also on iPhone and computer:",
+    "contact": "Contact us"
   },
   "countriesIn": {
     "AT": "in Austria",

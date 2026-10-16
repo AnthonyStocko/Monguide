@@ -114,7 +114,7 @@ Appelée au lancement de l'application.
   | `apiVersion` | entier | version courante du contrat côté serveur |
   | `minAppVersion` | chaîne `x.y.z` | version minimale de l'application (`0.0.0` si non définie) |
   | `rules` | objet | règles effectives : valeurs par défaut de `rules.js` fusionnées avec `app_config` |
-  | `contact` | chaîne ? | contact de l'équipe (secret `MONGUIDE_CONTACT`), affiché dans l'écran Confidentialité ; `null` si non défini |
+  | `contact` | chaîne ? | contact de l'équipe (secret `MONGUIDE_CONTACT`) ; `null` si non défini. Conservé pour les versions antérieures et les pages GitHub Pages (`site/`) : l'application lit désormais `rules.public.contactEmail` |
   | `osm` | objet | source des lieux OSM (`tiles`, `overpass`, `off`) et `dataDate` (`YYYY-MM-DD`) de la version des tuiles en service, `null` si inconnue ; `countries` : date des données de chaque pays importé (`null` hors mode tuiles ou manifeste illisible) ; affichés dans « À propos et sources » (par pays) et sur `/debug` |
 
 - **Cache serveur** : 5 minutes (`cacheTtlSec.config`), invalidé dès qu'une
@@ -131,6 +131,16 @@ insert into public.app_config (key, value) values ('weather.rainThresholdPct', '
 on conflict (key) do update set value = excluded.value;
 
 insert into public.app_config (key, value) values ('minAppVersion', '"0.2.0"')
+on conflict (key) do update set value = excluded.value;
+```
+
+Adresses publiques et contact (rubrique `public` de `rules.js` :
+`webApp`, `playStore`, `presentation`, `privacy`, `legal`,
+`accountDeletion`, `contactEmail`), pris en compte au prochain lancement de
+l'application :
+
+```sql
+insert into public.app_config (key, value) values ('public.contactEmail', '"contact@exemple.org"')
 on conflict (key) do update set value = excluded.value;
 ```
 

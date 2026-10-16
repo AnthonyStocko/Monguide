@@ -1,25 +1,25 @@
 import { useTranslation } from 'react-i18next';
 import Page from '../components/layout/Page.jsx';
 import Card from '../components/ui/Card.jsx';
-import { useConfig } from '../hooks/useConfig.js';
-import { sitePage } from '../config/links.js';
+import { usePublicLinks } from '../config/links.js';
 
 const SECTIONS = ['data', 'server', 'ai', 'push', 'purpose', 'hosting', 'retention', 'rights', 'contact'];
 
 /** Confidentialité : données collectées, traitement, hébergement, droits. */
 export default function PrivacyPage() {
-  const { t, i18n } = useTranslation();
-  const { contact } = useConfig().config;
+  const { t } = useTranslation();
+  const links = usePublicLinks();
   return (
     <Page>
       <Card as="section" className="space-y-1">
         <p>{t('privacy.online')}</p>
         {[
-          ['privacy', t('about.privacyOnline')],
-          ['deleteAccount', t('about.deleteOnline')]
-        ].map(([page, label]) => (
-          <p key={page}>
-            <a href={sitePage(page, i18n.resolvedLanguage)} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center font-medium text-primary-strong underline">
+          [links.privacy, t('about.privacyOnline')],
+          [links.accountDeletion, t('about.deleteOnline')],
+          [links.legal, t('about.legalOnline')]
+        ].map(([href, label]) => (
+          <p key={href}>
+            <a href={href} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center font-medium text-primary-strong underline">
               {label}
             </a>
           </p>
@@ -33,16 +33,13 @@ export default function PrivacyPage() {
           {t(`privacy.${s}.text`, { returnObjects: true }).map((p) => (
             <p key={p}>{p}</p>
           ))}
-          {s === 'contact' &&
-            (contact ? (
-              <p>
-                <a href={contact.includes('@') ? `mailto:${contact}` : contact} className="inline-flex min-h-12 items-center font-medium text-primary-strong underline">
-                  {contact}
-                </a>
-              </p>
-            ) : (
-              <p className="text-ink-muted">{t('privacy.contactUnknown')}</p>
-            ))}
+          {s === 'contact' && (
+            <p>
+              <a href={`mailto:${links.contactEmail}`} className="inline-flex min-h-12 items-center font-medium text-primary-strong underline">
+                {links.contactEmail}
+              </a>
+            </p>
+          )}
         </Card>
       ))}
     </Page>

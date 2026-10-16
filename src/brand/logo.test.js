@@ -29,6 +29,7 @@ describe('logo « Mon guide »', () => {
     expect(read('assets/brand/logo.svg')).toBe(`${logoSvg()}\n`);
     expect(read('assets/brand/icon.svg')).toBe(`${iconSvg()}\n`);
     expect(read('site/assets/logo.svg')).toBe(`${logoSvg()}\n`);
+    expect(read('public/pages/logo.svg')).toBe(`${logoSvg()}\n`);
     expect(read('public/favicon.svg')).toBe(`${iconSvg({ size: 64, scale: 1.2 })}\n`);
   });
 });
