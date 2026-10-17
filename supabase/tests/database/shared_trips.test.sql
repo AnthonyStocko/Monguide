@@ -13,7 +13,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(69);
+select plan(71);
 
 -- ---------------------------------------------------------------------------
 -- Données (rôle postgres, comme les fonctions serveur)
@@ -113,6 +113,12 @@ select is_empty($$update public.profiles set display_name = 'Pirate' where user_
 select isnt_empty($$update public.profiles set display_name = 'Béatrice' where user_id = 'aaaaaaaa-0000-4000-8000-00000000000b' returning 1$$, 'B modifie son profil');
 select throws_ok($$update public.profiles set display_name = repeat('x', 41) where user_id = 'aaaaaaaa-0000-4000-8000-00000000000b'$$,
   '23514', null, 'prénom de 40 caractères au plus');
+-- Forme exacte envoyée par l'application (upsert PostgREST, services/api.js).
+select lives_ok($$insert into public.profiles (user_id, display_name, avatar_color) values ('aaaaaaaa-0000-4000-8000-00000000000b', 'Bea', 'teal')
+  on conflict (user_id) do update set user_id = excluded.user_id, display_name = excluded.display_name, avatar_color = excluded.avatar_color$$, 'B enregistre son profil par upsert');
+select throws_ok($$insert into public.profiles (user_id, display_name, avatar_color) values ('aaaaaaaa-0000-4000-8000-00000000000a', 'Pirate', 'teal')
+  on conflict (user_id) do update set user_id = excluded.user_id, display_name = excluded.display_name, avatar_color = excluded.avatar_color$$,
+  '42501', null, 'B n''écrase pas le profil de A par un upsert');
 
 -- ---------------------------------------------------------------------------
 -- A, owner
