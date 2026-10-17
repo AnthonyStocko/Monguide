@@ -113,6 +113,18 @@ describe('applyReview : cas précis', () => {
     expect(r.review.rejectedOps.map((o) => o.rejection)).toEqual(['overlap', 'late', 'invalid_time']);
   });
 
+  it('dîner : jamais avancé avant l’heure minimale du pays (Espagne 20:30) ; 21:00 accepté', () => {
+    const day = { ...standardDay('2026-10-06') };
+    day.steps = [...day.steps, { id: 'dinner', type: 'dinner', start: '21:00', end: '22:30', indoor: true, status: 'planned', customTime: false, locked: false, badges: [], place: { ...restaurant, id: 'night', food: { regional: true, openingHours: 'Mo-Su 13:00-16:30,20:00-24:00' } } }];
+    const es = { ...trip([day]), destination: { name: 'Sevilla', countryCode: 'ES', lat: 37.3891, lon: -5.9845, radiusKm: 10 }, timezone: 'Europe/Madrid' };
+    const r = run(es, ok([
+      { op: 'shift', step: 'dinner', newStart: '20:00', reason: 'Dîner plus tôt.' },
+      { op: 'shift', step: 'dinner', newStart: '21:15', reason: 'Plus de temps.' }
+    ]));
+    expect(r.review.rejectedOps.map((o) => o.rejection)).toEqual(['meal_time']);
+    expect(byId(r.days[0], 'dinner')).toMatchObject({ start: '21:15', end: '22:45' });
+  });
+
   it('au plus rules.ai.maxOpsPerTrip opérations examinées', () => {
     const ops = Array.from({ length: rules.ai.maxOpsPerTrip + 2 }, () => ({ op: 'teleport' }));
     const r = run(sample(), ok(ops));

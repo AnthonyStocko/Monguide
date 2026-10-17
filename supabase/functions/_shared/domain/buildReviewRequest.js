@@ -1,9 +1,15 @@
 import { ACTIVITY_TYPES } from './config/activityTypes.js';
+import { mealTimesFor } from './config/mealTimes.js';
 import { displayName } from './displayName.js';
 import { distanceKm } from './geo.js';
 import { placeOpeningHours } from './openingHours.js';
 import { isFixed, isPersonal } from './stepTiming.js';
 
+/** Horaires habituels des repas du pays : plage de début du déjeuner, heure minimale du dîner. */
+function mealsOf(countryCode, rules) {
+  const { lunch, dinner } = mealTimesFor(countryCode, rules);
+  return { lunch: `${lunch.window.start}-${lunch.window.end}`, dinnerFrom: dinner.earliest };
+}
 /**
  * Résumé du séjour envoyé à l'IA de relecture (docs/ai-review.md) : compact
  * et anonymisé. Contenu :
@@ -155,6 +161,8 @@ export function buildReviewRequest(trip, { language, wishes }, rules) {
       profile: trip.profile,
       lunch: trip.lunch,
       dinner: trip.dinner ?? 'free',
+      // Habitudes du pays (config/mealTimes.js) : un dîner à 21:00 en Espagne n'est pas une anomalie.
+      meals: mealsOf(trip.destination.countryCode, rules),
       vegetarian: Boolean(trip.prefs?.vegetarian),
       wheelchair: Boolean(trip.prefs?.wheelchair)
     },

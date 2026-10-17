@@ -1,4 +1,5 @@
 import { scheduleLimits } from './activity.js';
+import { mealTimesFor } from './config/mealTimes.js';
 import { checkDayInvariants } from './checkDayInvariants.js';
 import { checkSlotTiming } from './checkSlotTiming.js';
 import { recomputeTravel } from './dayEdits.js';
@@ -23,7 +24,8 @@ import { toMinutes } from './time.js';
  *    type compatible (un restaurant ne remplace qu'un repas), jamais déjà
  *    utilisé, ouvert sur la plage (horaires inconnus : accepté, comme à la
  *    génération), à au plus rules.travel.maxTravelMin des étapes voisines ;
- *  - shift : une étape commence à newStart, même durée, même ordre.
+ *  - shift : une étape commence à newStart, même durée, même ordre ; un
+ *    dîner jamais avant l'heure minimale du pays (meal_time).
  * Contrôles après chaque opération : checkSlotTiming des étapes touchées
  * (aucun chevauchement, lieu ouvert, durée minimale, fin tardive, début au
  * plus tard ; pluie : refusée si elle n'était pas déjà prévue sur l'étape),
@@ -45,6 +47,7 @@ export const REVIEW_REJECTIONS = Object.freeze([
   'closed',
   'travel',
   'invalid_time',
+  'meal_time',
   'overlap',
   'too_short',
   'late',
@@ -189,6 +192,8 @@ function applyOperation(trip, op, resolve, ctx, rules) {
   const end = start + (endOf(step) - startOf(step));
   if (end >= 24 * 60) return { rejection: 'invalid_time' };
   if (start === startOf(step)) return { rejection: 'invalid_time' };
+  // Jamais un dîner avant l'heure minimale du pays (config/mealTimes.js).
+  if (step.type === 'dinner' && start < toMinutes(mealTimesFor(ctx.countryCode, rules).dinner.earliest)) return { rejection: 'meal_time' };
   const before = trip.days[target.dayIndex];
   const after = recomputeTravel({ ...before, steps: before.steps.map((s) => (s.id === step.id ? withTimes(s, start, end) : s)) }, trip, rules);
   const next = withDay(trip, target.dayIndex, after);

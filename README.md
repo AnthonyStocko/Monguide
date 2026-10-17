@@ -551,6 +551,21 @@ aux frontières) ; la date des données de chaque pays s'affiche dans
 vingtaine de minutes, surtout le téléchargement (5 Go) ; 261 886 lieux,
 1 811 tuiles, 7,8 Mo (version du 2026-09-24).
 
+**Pays importés** (`scripts/osm-tiles/countries.json`) :
+
+| Pays | Extrait Geofabrik | Premier import | Lieux | Tuiles | Taille (une version) |
+|---|---|---|---:|---:|---:|
+| France | `europe/france` | 2026-09-24 | 262 288 | 1 811 | 7,9 Mo |
+| Belgique | `europe/belgium` | 2026-09-28 | 27 967 | 133 | 1,0 Mo |
+| Luxembourg | `europe/luxembourg` | 2026-09-28 | 3 566 | 15 | 0,1 Mo |
+| Grèce | `europe/greece` | 2026-10-01 | 27 364 | 606 | 1,1 Mo |
+| Espagne (péninsule, Baléares, Ceuta, Melilla) | `europe/spain` | 2026-10-17 | 131 669 | 1 468 | 4,2 Mo |
+
+Chiffres de la dernière version de chaque pays (Espagne : données du
+2026-10-16 ; autres pays : 2026-10-02). Espace occupé avec deux versions par
+pays : 23,1 Mo pour un plafond de 200 Mo. Canaries : extrait séparé
+(`africa/canary-islands`), préparé mais désactivé dans `countries.json`.
+
 **Relancer à la main.** GitHub > Actions > « Tuiles de lieux OSM » > Run
 workflow. Paramètres : `pays` (`BE`, `BE,LU` ou `all` ; les pays non
 demandés gardent leurs tuiles), `publier` (décoché : génération et

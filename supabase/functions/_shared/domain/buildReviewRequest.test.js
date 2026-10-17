@@ -49,9 +49,14 @@ describe('buildReviewRequest : anonymisation', () => {
   it('séjour : ville, pays, dates, voyageurs, mode, profil, repas ; pluie par demi-journée', () => {
     expect(r.payload.trip).toEqual({
       city: 'Villefranche-sur-Saône', country: 'FR', start: '2026-10-06', end: '2026-10-06', travelers: 2, mode: 'walk',
-      profile: 'explorer', lunch: 'both', dinner: 'free', vegetarian: false, wheelchair: false
+      profile: 'explorer', lunch: 'both', dinner: 'free', meals: { lunch: '12:30-14:00', dinnerFrom: '19:00' }, vegetarian: false, wheelchair: false
     });
     expect(r.payload.days[0].rainPct).toEqual({ morning: 30, afternoon: 80, evening: 5 });
+  });
+
+  it('Espagne : horaires des repas du pays dans le contexte (déjeuner 13:30-14:30, dîner dès 20:30)', () => {
+    const es = { ...trip([dayWithDinner('2026-10-06')]), destination: { name: 'Sevilla', countryCode: 'ES', lat: 37.3891, lon: -5.9845, radiusKm: 10 }, timezone: 'Europe/Madrid' };
+    expect(buildReviewRequest(es, { language: 'fr' }, rules).payload.trip.meals).toEqual({ lunch: '13:30-14:30', dinnerFrom: '20:30' });
   });
 
   it('candidats : alias, catégorie, nom, intérieur, distance au lieu d\'ancrage du jour (hébergement)', () => {
