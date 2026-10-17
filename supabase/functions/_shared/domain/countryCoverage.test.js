@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SUPPORTED_COUNTRIES } from './config/countries.js';
+import { COVERAGE_ONLY_COUNTRIES, SUPPORTED_COUNTRIES } from './config/countries.js';
 import { COUNTRY_SHAPES } from './config/countryShapes.js';
 import { countriesInCircle } from './countryCoverage.js';
 
@@ -48,8 +48,14 @@ describe('countriesInCircle (formes de test)', () => {
 describe('countriesInCircle (contours Geofabrik)', () => {
   const at = (lat, lon, r) => countriesInCircle({ lat, lon }, r);
 
-  it('un contour pour chaque pays pris en charge', () => {
-    expect(Object.keys(COUNTRY_SHAPES).sort()).toEqual(Object.keys(SUPPORTED_COUNTRIES).sort());
+  it('un contour pour chaque pays pris en charge et chaque voisin reconnu', () => {
+    expect(Object.keys(COUNTRY_SHAPES).sort()).toEqual([...Object.keys(SUPPORTED_COUNTRIES), ...COVERAGE_ONLY_COUNTRIES].sort());
+  });
+
+  it('Espagne : Andorre et Portugal reconnus près des frontières, pas les Canaries', () => {
+    expect(at(42.358, 1.456, 15)).toEqual(['AD', 'ES']); // La Seu d'Urgell (France à plus de 15 km)
+    expect(at(38.879, -6.97, 15)).toEqual(['ES', 'PT']); // Badajoz
+    expect(at(28.4636, -16.2518, 10)).toEqual([]); // Santa Cruz de Tenerife : extrait africa/canary-islands
   });
 
   it('villes loin des frontières : un seul pays', () => {

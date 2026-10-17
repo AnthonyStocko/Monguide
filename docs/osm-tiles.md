@@ -248,6 +248,11 @@ dédoublonne par `id`.
   tuiles : ses lieux manquent (source `osm` en `partial` si la zone touche
   aussi un pays importé, `not_covered` sinon, sans attendre de délai). Un
   pays retiré de `countries.json` sort du manifeste au lancement suivant.
+  Les pays touchés sont lus dans les contours de `config/countryShapes.js` :
+  pays pris en charge, plus les voisins reconnus mais jamais importés
+  (`COVERAGE_ONLY_COUNTRIES` : Andorre). Gibraltar n'y est pas : ses lieux
+  sont dans l'extrait de l'Espagne. Les Canaries (extrait séparé) ne sont
+  dans aucun contour : un séjour y obtient `ok` sans lieu OSM, jusqu'à leur import.
 - `counts` : nombre de lieux par catégorie, pour le contrôle de la génération
   (valeurs de l'exemple : ordres de grandeur taginfo, pas une vraie génération).
 - `tiles` : cases non vides du pays ; une case absente de la liste n'est pas

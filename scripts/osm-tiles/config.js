@@ -16,12 +16,16 @@ import { BASE_NAME_LANGUAGES } from '../../supabase/functions/_shared/domain/con
  * @property {boolean} heritageFallback inclure monuments (heritage=1|2) et musées :
  *   repli du patrimoine quand Wikidata échoue ; inutile en France (Mérimée, Muséofile)
  * @property {number} minRestaurants contrôle d'un premier import : nombre minimum de restaurants
+ * @property {boolean} [enabled] false : entrée préparée mais ignorée (ex. Canaries)
  */
 
 const CONFIG = JSON.parse(readFileSync(new URL('./countries.json', import.meta.url), 'utf8'));
 
-/** @type {CountryConfig[]} */
-export const COUNTRIES = CONFIG.countries;
+/** Pays traités : les entrées enabled: false sont ignorées. @type {CountryConfig[]} */
+export const COUNTRIES = CONFIG.countries.filter((c) => c.enabled !== false);
+
+/** Entrées préparées mais désactivées. @type {CountryConfig[]} */
+export const DISABLED_COUNTRIES = CONFIG.countries.filter((c) => c.enabled === false);
 
 /** Plafond de l'espace occupé par le bucket après publication (octets). */
 export const MAX_STORAGE_BYTES = CONFIG.maxStorageMb * 1024 * 1024;

@@ -53,6 +53,14 @@ export const SUPPORTED_COUNTRIES = Object.freeze({
   LI: { currency: 'CHF', provider: 'eu', languages: ['de'] }
 });
 
+/**
+ * Pays voisins NON pris en charge (aucune destination possible), reconnus
+ * seulement pour signaler une couverture partielle des lieux OSM près de leur
+ * frontière : contour dans config/countryShapes.js, jamais importés. Gibraltar
+ * n'y est pas : sans extrait Geofabrik, ses lieux sont dans celui de l'Espagne.
+ */
+export const COVERAGE_ONLY_COUNTRIES = Object.freeze(['AD']);
+
 /** Membres de l'Union européenne (couverts par le Bulletin pétrolier). */
 export const EU_MEMBERS = Object.freeze(
   Object.keys(SUPPORTED_COUNTRIES).filter((c) => !['GB', 'CH', 'NO', 'IS', 'LI'].includes(c))

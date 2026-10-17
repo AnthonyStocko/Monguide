@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BASE_NAME_LANGUAGES, countryInfo } from '../../supabase/functions/_shared/domain/config/countries.js';
-import { COUNTRIES, MAX_STORAGE_BYTES, configuredNameLanguages, countryConfig, selectCountries } from './config.js';
+import { COUNTRIES, DISABLED_COUNTRIES, MAX_STORAGE_BYTES, configuredNameLanguages, countryConfig, selectCountries } from './config.js';
 
 describe('countries.json', () => {
   it('pays pris en charge, codes uniques, champs complets', () => {
@@ -20,6 +20,13 @@ describe('countries.json', () => {
 
   it('la France reste sans repli du patrimoine (Mérimée, Muséofile)', () => {
     expect(countryConfig('FR')).toMatchObject({ geofabrik: 'europe/france', heritageFallback: false, minRestaurants: 60000 });
+  });
+
+  it('Espagne : péninsule, Baléares, Ceuta, Melilla ; Canaries préparées, désactivées', () => {
+    expect(countryConfig('ES')).toMatchObject({ geofabrik: 'europe/spain', heritageFallback: true, minRestaurants: 40000 });
+    expect(countryConfig('ES').languages).toEqual(['es', 'ca', 'eu', 'gl', 'fr', 'en']);
+    expect(DISABLED_COUNTRIES.map((c) => c.geofabrik)).toEqual(['africa/canary-islands']);
+    expect(selectCountries('all').map((c) => c.geofabrik)).not.toContain('africa/canary-islands');
   });
 
   it('plafond de stockage : 200 Mo (Bloc A)', () => {

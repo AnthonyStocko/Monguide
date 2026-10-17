@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Contours approximatifs des pays pris en charge, pour signaler une
+ * Contours approximatifs des pays pris en charge et des voisins reconnus
+ * (COVERAGE_ONLY_COUNTRIES), pour signaler une
  * couverture partielle des lieux OSM (docs/osm-tiles.md, « Couverture
  * partielle ») :
  *
@@ -15,7 +16,7 @@
  * modifier à la main).
  */
 import { readFileSync, writeFileSync } from 'node:fs';
-import { SUPPORTED_COUNTRIES } from '../../supabase/functions/_shared/domain/config/countries.js';
+import { COVERAGE_ONLY_COUNTRIES, SUPPORTED_COUNTRIES } from '../../supabase/functions/_shared/domain/config/countries.js';
 import { TOLERANCE_DEG, simplifyGeometry } from './simplify.js';
 
 const INDEX_URL = 'https://download.geofabrik.de/index-v1.json';
@@ -28,7 +29,7 @@ async function main() {
     : await (await fetch(INDEX_URL, { headers: { 'User-Agent': USER_AGENT } })).text();
   const index = JSON.parse(text);
   const shapes = {};
-  for (const code of Object.keys(SUPPORTED_COUNTRIES).sort()) {
+  for (const code of [...Object.keys(SUPPORTED_COUNTRIES), ...COVERAGE_ONLY_COUNTRIES].sort()) {
     // Extrait du pays entier : celui du code ISO dont le parent n'est pas un extrait du même pays.
     const matches = index.features.filter((f) => (f.properties['iso3166-1:alpha2'] ?? []).includes(code));
     const ids = new Set(matches.map((f) => f.properties.id));
