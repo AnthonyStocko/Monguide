@@ -296,7 +296,9 @@ Workflow `.github/workflows/osm-tiles.yml`, script `scripts/osm-tiles/`
   Geofabrik (`https://download.geofabrik.de/<extrait>-latest.osm.pbf`, somme
   MD5 dans `….osm.pbf.md5`), langues gardées dans `names`, repli du
   patrimoine, seuil de restaurants d'un premier import. Au départ : France,
-  Belgique, Luxembourg ; Grèce ajoutée le 2026-10-01.
+  Belgique, Luxembourg ; Grèce ajoutée le 2026-10-01 ; Espagne le
+  2026-10-17 (péninsule, Baléares, Ceuta, Melilla : les Canaries sont un
+  extrait Geofabrik séparé, `africa/canary-islands`, pas encore importé).
 - **Pays par pays, séquentiellement** : chaque extrait est téléchargé,
   vérifié, filtré, puis supprimé avant le pays suivant (disque de
   l'exécuteur : 14 Go, extrait le plus gros : 5 Go) ; chaque pays est
