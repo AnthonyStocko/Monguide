@@ -28,6 +28,7 @@ UN PLANNING QUI VOUS RESSEMBLE
 • Trois profils : patrimoine certifié, équilibré, ou explorateur.
 • Monuments historiques, musées, parcs, points de vue, marchés et producteurs locaux.
 • Restaurants choisis près de vos visites, ouverts au bon moment, avec les options végétariennes et l'accès en fauteuil quand l'information existe.
+• Voir les avis Google Maps et Tripadvisor en un appui, pour chaque restaurant proposé.
 
 QUI S'ADAPTE À LA JOURNÉE
 • La météo est prise en compte : s'il pleut, une visite en intérieur est proposée.
@@ -62,11 +63,14 @@ VOS DONNÉES
 Les temps de trajet et les informations des lieux sont indicatifs : vérifiez-les avant de vous déplacer.
 <!-- /long:fr -->
 
-### Notes de version (1.2.0)
+### Notes de version (1.3.0)
 
 <!-- notes:fr -->
-Nouveau : partagez un séjour et préparez-le à plusieurs, en direct.
+Nouveau : voyez les avis d'un restaurant sur Google Maps ou Tripadvisor en un appui.
 <!-- /notes:fr -->
+
+Notes précédentes (1.2.0) : « Nouveau : partagez un séjour et préparez-le à
+plusieurs, en direct. »
 
 Notes précédentes (1.0.0) : « Première version : planning jour par jour,
 météo, étapes personnelles, rappels, carte, export PDF, synchronisation entre
@@ -96,6 +100,7 @@ A PLAN THAT SUITS YOU
 • Three profiles: certified heritage, balanced, or explorer.
 • Historic monuments, museums, parks, viewpoints, markets and local producers.
 • Restaurants chosen near your visits, open at the right time, with vegetarian options and wheelchair access when the information exists.
+• See Google Maps and Tripadvisor reviews in one tap, for every suggested restaurant.
 
 THAT ADAPTS TO YOUR DAY
 • The weather is taken into account: if it rains, an indoor visit is suggested.
@@ -130,11 +135,13 @@ YOUR DATA
 Travel times and place information are indicative: check them before you go.
 <!-- /long:en -->
 
-### Release notes (1.2.0)
+### Release notes (1.3.0)
 
 <!-- notes:en -->
-New: share a trip and plan it together, live.
+New: see a restaurant's reviews on Google Maps or Tripadvisor in one tap.
 <!-- /notes:en -->
+
+Previous notes (1.2.0): “New: share a trip and plan it together, live.”
 
 Previous notes (1.0.0): “First release: day-by-day plan, weather, personal
 stops, reminders, map, PDF export, sync between devices.”

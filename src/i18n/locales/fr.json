@@ -838,7 +838,8 @@
         "Pour préparer un séjour, l’application envoie à nos serveurs les lieux nécessaires au calcul (destination, hébergements, position si vous l’autorisez). Ils ne sont pas conservés en clair : nos caches et nos journaux techniques n’en gardent qu’une position arrondie (environ 1 km).",
         "Nos journaux techniques ne contiennent ni adresse e-mail, ni adresse postale.",
         "La recherche d’adresses et « Utiliser ma position » passent par le service Photon (komoot, Allemagne), sans aucune information sur votre compte.",
-        "Pour limiter les abus, le serveur garde un jour une empreinte irréversible de l’adresse IP, jamais l’adresse IP elle-même."
+        "Pour limiter les abus, le serveur garde un jour une empreinte irréversible de l’adresse IP, jamais l’adresse IP elle-même.",
+        "Les boutons « Voir les avis » d’un restaurant ouvrent Google Maps ou Tripadvisor, services tiers soumis à leurs propres règles de confidentialité. Mon guide ne leur transmet que le nom et la ville du restaurant contenus dans le lien."
       ]
     },
     "purpose": {

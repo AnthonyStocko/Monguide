@@ -153,3 +153,26 @@ avant l'envoi sur Google Play.
 7. [ ] Une fois la 1.2.0 installée par la plupart des utilisateurs, relever
    `minAppVersion` puis retirer les politiques `trips_insert_legacy` et
    `trips_update_legacy`, par une migration.
+
+## 8. Mise à jour 1.3.0 : « Voir les avis » (Prompt 9.0, Phase B)
+
+La politique de confidentialité doit être en ligne avant l'envoi sur Google Play.
+
+1. [ ] **Pages en ligne** après le push sur `main` :
+   <https://monguide.mgapp.workers.dev/confidentialite.html> contient la phrase
+   « Les boutons « Voir les avis » d'un restaurant ouvrent des services tiers… »
+   et la date du 17 octobre 2026 ; `/decouvrir.html` mentionne les avis.
+2. [ ] **Sécurité des données** : rien à changer. L'application ne collecte
+   rien de plus : elle ouvre seulement des liens publics hors de l'application.
+3. [ ] **Essais sur appareil** (Phase A) : « Avis Google Maps » ouvre
+   l'application Google Maps sur le bon restaurant ; « Avis Tripadvisor » ouvre
+   la recherche Tripadvisor (format `/Search?q=` à confirmer) ; sur iPhone et
+   ordinateur, nouvel onglet, Mon guide reste ouvert ; hors ligne, choix
+   désactivés.
+4. [ ] **Version** : `git tag v1.3.0 && git push origin v1.3.0` (versionName
+   1.3.0, versionCode = numéro d'exécution de `release.yml`).
+5. [ ] **Play Console** : téléverser l'`.aab`, notes de version de
+   `store/listing.md` (« Nouveau : voyez les avis d'un restaurant sur Google
+   Maps ou Tripadvisor en un appui. »), fiche FR et EN reprise de
+   `store/listing.md` (ligne « Voir les avis Google Maps et Tripadvisor en un
+   appui »).

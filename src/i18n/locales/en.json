@@ -838,7 +838,8 @@
         "To prepare a trip, the app sends our servers the places needed for the calculation (destination, accommodation, your location if you allow it). They are not stored as such: our caches and technical logs only keep a rounded position (about 1 km).",
         "Our technical logs contain no email address or street address.",
         "Address search and “Use my location” go through the Photon service (komoot, Germany), with no information about your account.",
-        "To prevent abuse, the server keeps an irreversible fingerprint of the IP address for one day, never the IP address itself."
+        "To prevent abuse, the server keeps an irreversible fingerprint of the IP address for one day, never the IP address itself.",
+        "A restaurant’s “See reviews” buttons open Google Maps or Tripadvisor, third-party services subject to their own privacy policies. Mon guide only sends them the restaurant’s name and city contained in the link."
       ]
     },
     "purpose": {
