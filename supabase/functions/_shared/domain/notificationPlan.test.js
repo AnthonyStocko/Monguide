@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { Settings } from 'luxon';
+import { DateTime, Settings } from 'luxon';
 import { notificationId, planTripNotifications, reconcilePlan } from './notificationPlan.js';
 import { dayWithDinner, personal, rules, standardDay, step, trip } from './testing/dayFixture.js';
 
@@ -53,6 +53,21 @@ describe('planTripNotifications', () => {
     const t = { ...threeDays(), timezone: 'Europe/Lisbon' };
     const plan = planTripNotifications(t, { now: Date.UTC(2026, 9, 1), summaries: false, reminders: true }, rules);
     expect(iso(plan[0])).toBe('2026-10-06T08:00:00.000Z'); // 09:00 à Lisbonne (UTC+1)
+  });
+
+  it('Las Palmas (Canaries) depuis un téléphone réglé sur Paris : rappel de 10:00 à 10:00 aux Canaries, 11:00 à Paris', () => {
+    Settings.defaultZone = 'Europe/Paris';
+    const base = trip([{ ...standardDay('2026-11-10'), steps: [step('visit', 'culture', '11:00', '12:30', standardDay().steps[0].place)] }]);
+    const t = { ...base, title: 'Las Palmas', destination: { name: 'Las Palmas de Gran Canaria', countryCode: 'ES', lat: 28.1235, lon: -15.4363, radiusKm: 10 }, timezone: 'Atlantic/Canary' };
+    const plan = planTripNotifications(t, { now: Date.UTC(2026, 9, 1), summaries: true, reminders: true }, rules);
+    const reminder = plan.find((n) => n.kind === 'reminder');
+    expect(reminder.data).toMatchObject({ start: '11:00', end: '12:30' }); // horaires affichés : ceux de Las Palmas
+    const at = DateTime.fromJSDate(reminder.at);
+    expect(at.setZone('Atlantic/Canary').toFormat('HH:mm')).toBe('10:00');
+    expect(at.setZone('Europe/Paris').toFormat('HH:mm')).toBe('11:00');
+    expect(at.toFormat('HH:mm')).toBe('11:00'); // fuseau du téléphone
+    const summary = plan.find((n) => n.kind === 'summary');
+    expect(DateTime.fromJSDate(summary.at).setZone('Atlantic/Canary').toFormat('yyyy-MM-dd HH:mm')).toBe('2026-11-09 19:00');
   });
 
   it('jamais dans le passé : en cours de séjour, seules les notifications à venir', () => {

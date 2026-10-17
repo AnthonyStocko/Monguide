@@ -8,10 +8,10 @@
  *   autres pays) ;
  * - languages : langues locales, pour les noms de lieux quand ils n'existent
  *   pas dans la langue de l'interface ni en anglais ;
- * - lunchTime (facultatif) : heure habituelle du déjeuner "HH:mm", à la place
- *   de rules.dayTemplate.lunch (12:30) ;
- * - dinnerTime (facultatif) : heure habituelle du dîner "HH:mm", à la place
- *   de rules.dayTemplate.dinner (19:30). Valeurs modifiables ici.
+ * - regionalCuisines (facultatif) : valeurs OSM "cuisine" d'un restaurant
+ *   « régional » dans ce pays, à la place de rules.places.regionalCuisines
+ *   (pensées pour la France).
+ * Horaires des repas : config/mealTimes.js.
  *
  * Aucun fuseau horaire ici : il est déterminé par le serveur pour chaque
  * destination (plusieurs pays en ont plusieurs : Portugal, Espagne…).
@@ -26,21 +26,26 @@ export const SUPPORTED_COUNTRIES = Object.freeze({
   DE: { currency: 'EUR', provider: 'eu', languages: ['de'] },
   DK: { currency: 'DKK', provider: 'eu', languages: ['da'] },
   EE: { currency: 'EUR', provider: 'eu', languages: ['et'] },
-  ES: { currency: 'EUR', provider: 'eu', languages: ['es', 'ca', 'eu', 'gl'], dinnerTime: '21:00' },
+  ES: {
+    currency: 'EUR',
+    provider: 'eu',
+    languages: ['es', 'ca', 'eu', 'gl'],
+    regionalCuisines: ['regional', 'spanish', 'tapas', 'andalusian', 'basque', 'catalan', 'galician', 'asturian', 'valencian']
+  },
   FI: { currency: 'EUR', provider: 'eu', languages: ['fi', 'sv'] },
   FR: { currency: 'EUR', provider: 'fr', languages: ['fr'] },
-  GR: { currency: 'EUR', provider: 'eu', languages: ['el'], lunchTime: '14:00', dinnerTime: '21:00' },
+  GR: { currency: 'EUR', provider: 'eu', languages: ['el'] },
   HR: { currency: 'EUR', provider: 'eu', languages: ['hr'] },
   HU: { currency: 'HUF', provider: 'eu', languages: ['hu'] },
   IE: { currency: 'EUR', provider: 'eu', languages: ['en', 'ga'] },
-  IT: { currency: 'EUR', provider: 'eu', languages: ['it'], dinnerTime: '20:00' },
+  IT: { currency: 'EUR', provider: 'eu', languages: ['it'] },
   LT: { currency: 'EUR', provider: 'eu', languages: ['lt'] },
   LU: { currency: 'EUR', provider: 'eu', languages: ['lb', 'fr', 'de'] },
   LV: { currency: 'EUR', provider: 'eu', languages: ['lv'] },
   MT: { currency: 'EUR', provider: 'eu', languages: ['mt', 'en'] },
   NL: { currency: 'EUR', provider: 'eu', languages: ['nl'] },
   PL: { currency: 'PLN', provider: 'eu', languages: ['pl'] },
-  PT: { currency: 'EUR', provider: 'eu', languages: ['pt'], dinnerTime: '20:00' },
+  PT: { currency: 'EUR', provider: 'eu', languages: ['pt'] },
   RO: { currency: 'RON', provider: 'eu', languages: ['ro'] },
   SE: { currency: 'SEK', provider: 'eu', languages: ['sv'] },
   SI: { currency: 'EUR', provider: 'eu', languages: ['sl'] },
@@ -88,7 +93,7 @@ export function nameLanguages(countryCodes) {
 
 /**
  * @param {string} countryCode code ISO 3166-1 alpha-2, casse indifférente
- * @returns {{ code: string, currency: string, provider: string, languages: string[], lunchTime?: string, dinnerTime?: string } | null}
+ * @returns {{ code: string, currency: string, provider: string, languages: string[], regionalCuisines?: string[] } | null}
  */
 export function countryInfo(countryCode) {
   if (typeof countryCode !== 'string') return null;
@@ -98,23 +103,13 @@ export function countryInfo(countryCode) {
 }
 
 /**
- * Heure du déjeuner proposée dans un pays : lunchTime du pays, sinon
- * rules.dayTemplate.lunch.
- * @param {string} countryCode
- * @returns {string} "HH:mm"
+ * Cuisines OSM d'un restaurant « régional » dans un pays : celles du pays,
+ * sinon rules.places.regionalCuisines.
+ * @param {string | undefined} countryCode
+ * @returns {string[]}
  */
-export function lunchTimeFor(countryCode, rules) {
-  return countryInfo(countryCode)?.lunchTime ?? rules.dayTemplate.lunch;
-}
-
-/**
- * Heure du dîner proposée dans un pays : dinnerTime du pays, sinon
- * rules.dayTemplate.dinner.
- * @param {string} countryCode
- * @returns {string} "HH:mm"
- */
-export function dinnerTimeFor(countryCode, rules) {
-  return countryInfo(countryCode)?.dinnerTime ?? rules.dayTemplate.dinner;
+export function regionalCuisinesFor(countryCode, rules) {
+  return countryInfo(countryCode ?? '')?.regionalCuisines ?? rules.places.regionalCuisines;
 }
 
 /** @param {string} countryCode */

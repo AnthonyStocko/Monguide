@@ -10,6 +10,18 @@ describe('displayName', () => {
     expect(displayName(grandPlace, 'fr')).toBe('Grand-Place');
   });
 
+  it('Espagne : nom local sans variante française gardé tel quel', () => {
+    const sagrada = place({ name: 'Sagrada Família', names: { ca: 'Basílica de la Sagrada Família', es: 'Basílica de la Sagrada Familia' } });
+    expect(displayName(sagrada, 'fr')).toBe('Sagrada Família');
+    expect(displayName(place({ name: 'Sagrada Família' }), 'en')).toBe('Sagrada Família');
+  });
+
+  it('Espagne : nom bilingue « Donostia / San Sebastián » remplacé par la variante française', () => {
+    const donostia = place({ name: 'Donostia / San Sebastián', names: { fr: 'Saint-Sébastien', eu: 'Donostia', es: 'San Sebastián' } });
+    expect(displayName(donostia, 'fr')).toBe('Saint-Sébastien');
+    expect(displayName(donostia, 'en')).toBe('Donostia / San Sebastián');
+  });
+
   it('garde le nom bilingue quand la langue n’a pas de variante', () => {
     expect(displayName(grandPlace, 'en')).toBe('Grand-Place - Grote Markt');
   });

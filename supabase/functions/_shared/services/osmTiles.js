@@ -1,4 +1,5 @@
 import { genericPlaceName } from '../domain/displayName.js';
+import { regionalCuisinesFor } from '../domain/config/countries.js';
 import { countriesInCircle } from '../domain/countryCoverage.js';
 import { distanceKm } from '../domain/geo.js';
 import { tileIdsForRadius } from '../domain/osmGrid.js';
@@ -294,12 +295,13 @@ export function entryToElement([id, category, subcategory, name, lat, lon, tags,
 
 /**
  * Place d'un lieu compact ; les lieux sans nom ne sont gardés que pour les
- * sous-catégories de rules.osm.unnamedTypes, sous un nom générique.
+ * sous-catégories de rules.osm.unnamedTypes, sous un nom générique. Cuisine
+ * régionale : celle du pays du lieu (cc, 9e champ ; regionalCuisinesFor).
  */
 function entryToPlace(entry, { rules, lang }) {
   const element = entryToElement(entry);
   if (!element) return null;
-  const options = { lang, regionalCuisines: rules.places.regionalCuisines };
+  const options = { lang, regionalCuisines: regionalCuisinesFor(entry[8], rules) };
   const named = element.tags[`name:${lang}`] ?? element.tags.name;
   if (!named?.trim()) {
     const generic = genericPlaceName(entry[2], lang);

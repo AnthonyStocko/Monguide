@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BASE_NAME_LANGUAGES, EU_MEMBERS, SUPPORTED_COUNTRIES, countryInfo, dinnerTimeFor, lunchTimeFor, isSupportedCountry, nameLanguages } from './countries.js';
+import { BASE_NAME_LANGUAGES, EU_MEMBERS, SUPPORTED_COUNTRIES, countryInfo, isSupportedCountry, nameLanguages, regionalCuisinesFor } from './countries.js';
 import { RULES } from './rules.js';
 
 describe('countries', () => {
@@ -26,22 +26,12 @@ describe('countries', () => {
     }
   });
 
-  it("heure du dîner : 21:00 en Espagne, 20:00 au Portugal et en Italie, 19:30 ailleurs", () => {
-    expect(dinnerTimeFor('ES', RULES)).toBe('21:00');
-    expect(dinnerTimeFor('pt', RULES)).toBe('20:00');
-    expect(dinnerTimeFor('IT', RULES)).toBe('20:00');
-    expect(dinnerTimeFor('FR', RULES)).toBe('19:30');
-    expect(dinnerTimeFor('XX', RULES)).toBe('19:30');
-    expect(dinnerTimeFor('GR', RULES)).toBe('21:00');
-    for (const { dinnerTime } of Object.values(SUPPORTED_COUNTRIES)) if (dinnerTime) expect(dinnerTime).toMatch(/^\d{2}:\d{2}$/);
-  });
-
-  it('heure du déjeuner : 14:00 en Grèce, 12:30 ailleurs', () => {
-    expect(lunchTimeFor('gr', RULES)).toBe('14:00');
-    expect(lunchTimeFor('FR', RULES)).toBe('12:30');
-    expect(lunchTimeFor('BE', RULES)).toBe('12:30');
-    expect(lunchTimeFor('XX', RULES)).toBe('12:30');
-    for (const { lunchTime } of Object.values(SUPPORTED_COUNTRIES)) if (lunchTime) expect(lunchTime).toMatch(/^\d{2}:\d{2}$/);
+  it('cuisines régionales : propres à l’Espagne, celles de rules ailleurs (France)', () => {
+    expect(regionalCuisinesFor('es', RULES)).toEqual(expect.arrayContaining(['regional', 'spanish', 'tapas', 'basque', 'catalan']));
+    expect(regionalCuisinesFor('ES', RULES)).not.toContain('french');
+    expect(regionalCuisinesFor('FR', RULES)).toEqual(RULES.places.regionalCuisines);
+    expect(regionalCuisinesFor('GR', RULES)).toEqual(RULES.places.regionalCuisines);
+    expect(regionalCuisinesFor(undefined, RULES)).toEqual(RULES.places.regionalCuisines);
   });
 
   it('donne au moins une langue locale par pays', () => {

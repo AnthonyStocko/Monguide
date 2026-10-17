@@ -104,10 +104,11 @@ export function osmInfo(rules, pointer) {
 
 /**
  * Forme des Place OSM, dans les clés de cache : 2 = name tel quel et variantes
- * dans names (displayName.js). Les réponses en cache d'avant n'ont pas names :
- * elles ne sont plus servies.
+ * dans names (displayName.js) ; 3 = cuisine régionale propre au pays du lieu
+ * (regionalCuisinesFor). Les réponses en cache d'un format antérieur ne sont
+ * plus servies.
  */
-const PLACE_FORMAT = 2;
+const PLACE_FORMAT = 3;
 
 /**
  * Lieux OSM (restaurants, marchés, nature, petit patrimoine) autour du point.
@@ -127,7 +128,7 @@ export async function osmPlacesSource(point, radiusKm, includeRestaurants, ctx) 
       params,
       ttlSec: ctx.rules.cacheTtlSec.osm,
       cache: ctx.cache,
-      fetcher: () => fetchOsmPlaces(point, radiusKm, { rules: ctx.rules, lang: ctx.lang, includeRestaurants })
+      fetcher: () => fetchOsmPlaces(point, radiusKm, { rules: ctx.rules, lang: ctx.lang, includeRestaurants, countryCode: ctx.countryCode })
     });
     return { ...outcome, source: 'overpass' };
   }

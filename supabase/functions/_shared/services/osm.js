@@ -1,4 +1,5 @@
 import { boundingBox, distanceKm } from '../domain/geo.js';
+import { regionalCuisinesFor } from '../domain/config/countries.js';
 import { ExternalError } from '../errors.js';
 import { fetchExternal } from '../http.js';
 import { osmElementToPlace, osmHeritageElementToPlace } from './osmMapping.js';
@@ -94,12 +95,12 @@ async function runOverpass(query, rules) {
  * patrimoine), limités au rayon.
  * @param {{ lat: number, lon: number }} point
  * @param {number} radiusKm
- * @param {{ rules: any, lang: string, includeRestaurants: boolean }} options
+ * @param {{ rules: any, lang: string, includeRestaurants: boolean, countryCode?: string }} options countryCode : pays de la destination (cuisine régionale)
  * @returns {Promise<import('../domain/model.js').Place[]>}
  */
-export async function fetchOsmPlaces(point, radiusKm, { rules, lang, includeRestaurants }) {
+export async function fetchOsmPlaces(point, radiusKm, { rules, lang, includeRestaurants, countryCode }) {
   const elements = await runOverpass(buildOverpassQuery(point, radiusKm, rules, { includeRestaurants }), rules);
-  const options = { lang, regionalCuisines: rules.places.regionalCuisines };
+  const options = { lang, regionalCuisines: regionalCuisinesFor(countryCode, rules) };
   const foodRadiusKm = Math.min(radiusKm, rules.osm.restaurantRadiusKm);
   return elements
     .map((el) => osmElementToPlace(el, options))

@@ -30,6 +30,13 @@ describe('fetchHourlyForecast', () => {
     expect(FORECAST_DAYS).toBe(16);
   });
 
+  it('Canaries : prévision demandée dans le fuseau Atlantic/Canary, heures locales de Las Palmas', async () => {
+    const hourly = { time: ['2026-11-10T10:00'], precipitation_probability: [10], temperature_2m: [23], weather_code: [1] };
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ hourly })));
+    expect(await fetchHourlyForecast({ lat: 28.12, lon: -15.44 }, 'Atlantic/Canary')).toEqual(hourly);
+    expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('timezone')).toBe('Atlantic/Canary');
+  });
+
   it('refuse une réponse sans données horaires', async () => {
     fetchMock.mockResolvedValue(new Response('{}'));
     await expect(fetchHourlyForecast({ lat: 45.99, lon: 4.73 }, 'Europe/Paris')).rejects.toThrow(TypeError);

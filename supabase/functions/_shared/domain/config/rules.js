@@ -9,29 +9,29 @@
  * Conventions : heures "HH:mm" dans le fuseau du séjour, durées en minutes
  * (suffixe Min), secondes (Sec), millisecondes (Ms), distances en km ou m.
  * Les valeurs marquées "proposition" ne sont pas fixées par le cahier des
- * charges et restent à valider.
+ * charges et restent à valider. Horaires des repas : config/mealTimes.js
+ * (valeurs par défaut ici, valeurs de chaque pays là-bas).
  */
+import { DEFAULT_MEAL_TIMES } from './mealTimes.js';
+
 export const RULES = Object.freeze({
   /**
    * Gabarit de journée : horaires de la génération initiale, puis retour à
    * l'hébergement. departure sert aussi de départ conseillé quand une journée
-   * commence par un temps libre. dinner : heure par défaut du dîner, sauf pays
-   * qui ont la leur (dinnerTime dans config/countries.js).
+   * commence par un temps libre. lunch, relax et dinner : heures par défaut,
+   * propres à chaque pays dans config/mealTimes.js (mealTimesFor).
    */
   dayTemplate: {
     departure: '09:00',
     culture: '10:00',
-    lunch: '12:30',
+    lunch: DEFAULT_MEAL_TIMES.lunch.start,
     outdoor: '14:30',
-    relax: '17:30',
-    dinner: '19:30'
+    relax: DEFAULT_MEAL_TIMES.visits.relax,
+    dinner: DEFAULT_MEAL_TIMES.dinner.start
   },
 
-  /** Plage horaire dans laquelle le déjeuner doit commencer. */
-  lunchWindow: {
-    start: '12:30',
-    end: '14:00'
-  },
+  /** Plage horaire dans laquelle le déjeuner doit commencer (par pays : config/mealTimes.js). */
+  lunchWindow: { ...DEFAULT_MEAL_TIMES.lunch.window },
 
   /**
    * Durées par type d'activité, en minutes : conseillée (durée par défaut
@@ -50,7 +50,8 @@ export const RULES = Object.freeze({
     trail: { recommendedMin: 120, minimumMin: 90 },
     /** marché, producteur */
     market: { recommendedMin: 45, minimumMin: 30 },
-    restaurant: { recommendedMin: 75, minimumMin: 60 },
+    /** déjeuner : durée conseillée par pays dans config/mealTimes.js */
+    restaurant: { recommendedMin: DEFAULT_MEAL_TIMES.lunch.durationMin, minimumMin: 60 },
     /** dîner (restaurant ou soirée libre), quel que soit le lieu */
     dinner: { recommendedMin: 90, minimumMin: 60 },
     /** détente, temps libre */

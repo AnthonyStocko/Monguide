@@ -467,11 +467,14 @@ rien n'est modifié.
   facultatif : absent (application antérieure), aucun dîner n'est généré.
 - **Sortie** : `{ "trip": Trip, "warnings": Warning[], "sources": Source[] }`
   - `trip.days` : une journée par date, étapes `culture` (10h00), `lunch`
-    (12h30 ; 14h00 en Grèce : `lunchTime` de `config/countries.js`, plage
-    d'ouverture du restaurant et `outdoor` décalées d'autant), `outdoor`
-    (14h30), `relax` (17h30), puis `dinner` (19h30 ; 21h00 en Espagne et en
-    Grèce, 20h00 au Portugal et en Italie : `dinnerTime` de
-    `config/countries.js`) avec `start`/`end`
+    (12h30), `outdoor` (14h30), `relax` (17h30), puis `dinner` (19h30).
+    Horaires du pays de la destination (`config/mealTimes.js`) : Espagne,
+    déjeuner à 14h00 (plage 13h30-14h30, 1 h 15), `relax` à 18h30, dîner à
+    21h00 (jamais avant 20h30) ; Grèce, déjeuner à 14h00 et dîner à 21h00 ;
+    Portugal et Italie, dîner à 20h00. Un déjeuner plus tardif décale
+    d'autant `outdoor`. Un lieu aux horaires connus n'est proposé que s'il
+    est ouvert pendant tout son créneau (jamais pendant une fermeture de
+    mi-journée). Étapes avec `start`/`end`
     ("HH:mm", fuseau du séjour), `travelFromPreviousMin`, `badges`
     (`weather_adapted`, `hours_unconfirmed`, `info_missing`,
     `free_time`), `specialties` (appellations, pause au marché) ; dîner :

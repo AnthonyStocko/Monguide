@@ -13,6 +13,18 @@ describe('openingState', () => {
     expect(openingState(oh, { ...where, date: '2026-10-05', from: '12:30', to: '13:30' })).toBe('closed');
   });
 
+  it('fermeture de mi-journée espagnole "Mo-Sa 10:00-14:00,17:00-20:30" (Séville)', () => {
+    const oh = 'Mo-Sa 10:00-14:00,17:00-20:30';
+    const sevilla = { lat: 37.3891, lon: -5.9845, countryCode: 'ES', date: '2026-11-13' }; // vendredi
+    expect(openingState(oh, { ...sevilla, from: '10:00', to: '11:30' })).toBe('open');
+    expect(openingState(oh, { ...sevilla, from: '14:00', to: '17:00' })).toBe('closed');
+    expect(openingState(oh, { ...sevilla, from: '16:00', to: '17:00' })).toBe('closed');
+    expect(openingState(oh, { ...sevilla, from: '13:00', to: '15:00' })).toBe('partial');
+    expect(openingState(oh, { ...sevilla, from: '17:00', to: '20:30' })).toBe('open');
+    expect(openingState(oh, { ...sevilla, date: '2026-11-15', from: '10:00', to: '11:00' })).toBe('closed'); // dimanche
+    expect(openingHoursOfDay(oh, sevilla)).toBe('10:00–14:00, 17:00–20:30');
+  });
+
   it('renvoie "unknown" pour des horaires absents ou illisibles', () => {
     expect(openingState(undefined, { ...where, date: TUESDAY, from: '12:30', to: '13:30' })).toBe('unknown');
     expect(openingState('xyz', { ...where, date: TUESDAY, from: '12:30', to: '13:30' })).toBe('unknown');
