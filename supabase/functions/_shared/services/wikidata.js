@@ -12,17 +12,23 @@ import { MUSEUM_TYPES, P, WIKIDATA_SPARQL_URL } from '../providers/eu/wikidata-c
  *  - musées : liste fermée de types (VALUES), jamais wdt:P279* ;
  *  - LIMIT dans une sous-requête : les libellés ne sont calculés que pour les
  *    éléments retenus (sinon, plus de 60 s mesurées pour Barcelone) ;
+ *  - monuments : les plus proches d'abord (ORDER BY ?dist avant le LIMIT).
+ *    Sans tri, le service en rend 300 au hasard dans le rayon : à Barcelone
+ *    (5 628 monuments à 10 km), médiane à 5,1 km au lieu de 0,2 km, et des
+ *    séjours à pied dont les visites sont trop loin des restaurants. Musées :
+ *    pas de tri (rarement plus de 300, et le tri allonge une requête déjà lente) ;
  *  - libellés dans la langue de l'interface, sinon en anglais, sinon dans les
  *    langues locales du pays.
  */
 
 const WIKIDATA_URL = () => globalThis.Deno?.env.get('WIKIDATA_SPARQL_URL') ?? WIKIDATA_SPARQL_URL;
 
-function around(point, radiusKm) {
+/** @param {{ distance?: boolean }} [options] distance : ?dist, distance au centre en km */
+function around(point, radiusKm, { distance = false } = {}) {
   return (
     `SERVICE wikibase:around { ?item wdt:${P.coordinates} ?coord . ` +
     `bd:serviceParam wikibase:center "Point(${point.lon} ${point.lat})"^^geo:wktLiteral ; ` +
-    `wikibase:radius "${radiusKm}" . }`
+    `wikibase:radius "${radiusKm}"${distance ? ' ; wikibase:distance ?dist' : ''} . }`
   );
 }
 
@@ -49,10 +55,10 @@ export function labelLanguages(lang, localLanguages) {
 export function buildMonumentsQuery(point, radiusKm, languages, limit) {
   return [
     'SELECT ?item ?itemLabel ?coord WHERE {',
-    `  { SELECT DISTINCT ?item ?coord WHERE {`,
-    `    ${around(point, radiusKm)}`,
+    `  { SELECT DISTINCT ?item ?coord ?dist WHERE {`,
+    `    ${around(point, radiusKm, { distance: true })}`,
     `    ?item wdt:${P.heritageDesignation} ?designation .`,
-    `  } LIMIT ${limit} }`,
+    `  } ORDER BY ?dist LIMIT ${limit} }`,
     `  ${labels(languages)}`,
     '}'
   ].join('\n');

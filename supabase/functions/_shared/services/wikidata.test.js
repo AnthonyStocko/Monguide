@@ -24,6 +24,15 @@ describe('requêtes SPARQL', () => {
     expect(q).toContain('wikibase:language "fr,en,es,ca,mul"');
   });
 
+  it('monuments : les plus proches d’abord (tri par distance avant le LIMIT) ; musées sans tri', () => {
+    const monuments = buildMonumentsQuery(BARCELONA, 20, LANGS, 300);
+    expect(monuments).toContain('wikibase:distance ?dist');
+    expect(monuments).toMatch(/\} ORDER BY \?dist LIMIT 300 \}/);
+    const museums = buildMuseumsQuery(BARCELONA, 20, LANGS, 300);
+    expect(museums).not.toContain('?dist');
+    expect(museums).not.toContain('ORDER BY');
+  });
+
   it('sépare monuments (P1435) et musées (liste fermée de types)', () => {
     const monuments = buildMonumentsQuery(BARCELONA, 20, LANGS, 300);
     const museums = buildMuseumsQuery(BARCELONA, 20, LANGS, 300);

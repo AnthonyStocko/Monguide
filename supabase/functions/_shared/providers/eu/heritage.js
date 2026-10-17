@@ -29,7 +29,8 @@ export async function heritage(point, radiusKm, ctx) {
     runSource({
       name: 'monuments',
       cacheSource: 'wikidata-monuments',
-      params,
+      // Les plus proches d'abord (buildMonumentsQuery) : nouvelle clé, les échantillons d'avant ne sont plus servis.
+      params: { ...params, order: 'distance' },
       ttlSec,
       cache,
       query: monumentsQuery,
