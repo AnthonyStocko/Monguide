@@ -183,7 +183,7 @@ export default function MapPage() {
           ))}
         </MapContainer>
       </div>
-      {selected && day && <PlaceSheet step={selected.step} order={selected.order} date={day.date} onClose={() => setSelected(null)} />}
+      {selected && day && <PlaceSheet step={selected.step} order={selected.order} date={day.date} city={trip.destination.name} onClose={() => setSelected(null)} />}
     </div>
   );
 }

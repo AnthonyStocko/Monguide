@@ -7,6 +7,7 @@ import { usePlaceName } from '../../../i18n/usePlaceName.js';
 import { cascadeProps } from '../../../ui/motion.js';
 import Badge from '../../ui/Badge.jsx';
 import { usePhoto } from '../../ui/Photo.jsx';
+import ReviewLinks from '../ReviewLinks.jsx';
 import TravelTime from '../TravelTime.jsx';
 
 const OPENING_TONES = { open: 'primary', closed: 'danger', unknown: 'warning' };
@@ -14,12 +15,13 @@ const OPENING_TONES = { open: 'primary', closed: 'danger', unknown: 'warning' };
 /**
  * Carte d'un lieu de la liste « + Ajouter une étape » : vignette (photo ou
  * illustration), nom, trajet estimé « ≈ », ouvert ou fermé à l'heure
- * choisie, badges, « Déjà prévu ». Toute la carte est un bouton qui ouvre la
- * fiche du lieu.
+ * choisie, badges, « Déjà prévu ». La carte est un bouton qui ouvre la fiche
+ * du lieu ; un restaurant a en dessous son lien « Avis » (hors du bouton).
  * @param {{ item: import('@domain/listCandidates.js').CandidateItem, time: string, mode: string, dayName: (date: string) => string,
- *   onOpen: () => void, cascade: { index: number, animate: boolean } }} props
+ *   city?: string, onOpen: () => void, cascade: { index: number, animate: boolean } }} props
+ *   city : ville de la destination du séjour (recherche des avis)
  */
-export default function CandidateCard({ item, time, mode, dayName, onOpen, cascade }) {
+export default function CandidateCard({ item, time, mode, city, dayName, onOpen, cascade }) {
   const { t } = useTranslation();
   const { placeName } = usePlaceName();
   const format = useFormat();
@@ -31,11 +33,11 @@ export default function CandidateCard({ item, time, mode, dayName, onOpen, casca
   const { media } = usePhoto({ image: place.image, illustration: illustrationForCategory(place.category), alt: '', className: 'size-20 shrink-0 rounded-xl', credit: 'none' });
 
   return (
-    <m.li {...cascadeProps(cascade.index, cascade.animate)}>
+    <m.li {...cascadeProps(cascade.index, cascade.animate)} className="rounded-3xl bg-surface shadow-sm">
       <button
         type="button"
         onClick={onOpen}
-        className="flex w-full items-start gap-3 rounded-3xl border-2 border-transparent bg-surface p-3 text-left shadow-sm hover:border-line-strong focus-visible:border-primary-strong"
+        className="flex w-full items-start gap-3 rounded-3xl border-2 border-transparent p-3 text-left hover:border-line-strong focus-visible:border-primary-strong"
       >
         {media}
         <span className="min-w-0 flex-1 space-y-1">
@@ -59,6 +61,11 @@ export default function CandidateCard({ item, time, mode, dayName, onOpen, casca
           </span>
         </span>
       </button>
+      {place.category === 'restaurant' && (
+        <div className="flex justify-end px-3 pb-2">
+          <ReviewLinks place={place} city={city} name={name} variant="link" />
+        </div>
+      )}
     </m.li>
   );
 }

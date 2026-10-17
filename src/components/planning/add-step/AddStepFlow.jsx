@@ -221,6 +221,7 @@ export default function AddStepFlow({ trip, dayIndex, afterIndex, rules, blockin
                     item={item}
                     time={time}
                     mode={trip.mode}
+                    city={trip.destination.name}
                     dayName={dayName}
                     cascade={{ index, animate: animateAllowed }}
                     onOpen={() => setSelected({ item, times: proposedTimes({ day, afterIndex, place: item.place, type, time, mode: trip.mode }, rules) })}

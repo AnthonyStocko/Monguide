@@ -14,12 +14,14 @@ import Button from '../../ui/Button.jsx';
 import FieldError from '../../ui/FieldError.jsx';
 import Photo from '../../ui/Photo.jsx';
 import RestaurantDetails from '../RestaurantDetails.jsx';
+import ReviewLinks from '../ReviewLinks.jsx';
 import { TimeSelect, useWarningText } from '../TimeEditorDialog.jsx';
 import TravelTime from '../TravelTime.jsx';
 
 /**
  * Fiche d'un lieu du parcours « + Ajouter une étape » (panneau du bas) :
- * photo et crédit, horaires (et, pour un restaurant, téléphone et site),
+ * photo et crédit, horaires (et, pour un restaurant, téléphone, site et
+ * « Voir les avis »),
  * heures de début et de fin modifiables (durée conseillée pré-remplie),
  * avertissements en direct (checkSlotTiming, comme une étape personnelle),
  * bouton « Ajouter à HH:mm ». Un lieu déjà au programme ne peut pas être
@@ -70,7 +72,10 @@ export default function PlaceDetailsSheet({ trip, dayIndex, rules, type, item, i
       {place.description && <p>{place.description}</p>}
 
       {place.food ? (
-        <RestaurantDetails place={place} date={day.date} countryCode={countryCode} badges={item.badges} />
+        <>
+          <RestaurantDetails place={place} date={day.date} countryCode={countryCode} badges={item.badges} />
+          <ReviewLinks place={place} city={trip.destination.name} name={name} />
+        </>
       ) : (
         hours && <p>{t('addStep.hours', { hours })}</p>
       )}

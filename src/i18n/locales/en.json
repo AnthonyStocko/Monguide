@@ -699,6 +699,18 @@
     "website": "Website",
     "osmNotice": "OpenStreetMap information, to be checked with the restaurant."
   },
+  "reviews": {
+    "open": "See reviews",
+    "short": "Reviews",
+    "openNamed": "See reviews: {{name}}",
+    "title": "Reviews: {{name}}",
+    "google": "Google Maps reviews",
+    "tripadvisor": "Tripadvisor reviews",
+    "website": "Restaurant website",
+    "external": " (opens an external app)",
+    "offline": "A connection is needed to see reviews.",
+    "notice": "You are leaving Mon guide: these reviews come from Google Maps and Tripadvisor, not from Mon guide."
+  },
   "timing": {
     "title": "Time: {{name}}",
     "start": "Start",

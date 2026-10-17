@@ -13,15 +13,17 @@ import Illustration, { illustrationForCategory } from '../../illustrations/index
 import Badge from '../ui/Badge.jsx';
 import Button from '../ui/Button.jsx';
 import Dialog from '../ui/Dialog.jsx';
+import ReviewLinks from './ReviewLinks.jsx';
 import { usePhoto } from '../ui/Photo.jsx';
 import { cascadeProps, useFirstShow, useMotionAllowed } from '../../ui/motion.js';
 import { freeLabelKey } from '../../utils/freeLabel.js';
 
 /**
  * Candidat : vignette (photo, crédit derrière le bouton "i" affiché sous la
- * ligne, sinon illustration de sa catégorie) à côté du bouton de choix.
+ * ligne, sinon illustration de sa catégorie) à côté du bouton de choix ;
+ * lien « Avis » sous un restaurant.
  */
-function Candidate({ place, image, label, detail, badge, onPick, index, animate }) {
+function Candidate({ place, image, label, detail, badge, city, onPick, index, animate }) {
   const { t } = useTranslation();
   const { media, creditBlock } = usePhoto({ image, illustration: illustrationForCategory(place.category), alt: t('image.alt', { name: label }), className: 'size-20 shrink-0 rounded-xl' });
   return (
@@ -41,6 +43,11 @@ function Candidate({ place, image, label, detail, badge, onPick, index, animate 
         </button>
       </div>
       {creditBlock}
+      {place.category === 'restaurant' && (
+        <div className="flex justify-end">
+          <ReviewLinks place={place} city={city} name={label} variant="link" />
+        </div>
+      )}
     </m.li>
   );
 }
@@ -118,6 +125,7 @@ export default function ReplaceStepDialog({ trip, dayIndex, stepIndex, onPick, o
               place={p}
               image={image}
               label={placeName(p)}
+              city={trip.destination.name}
               detail={`${t(`categories.${p.category}`)}${km !== null ? ` · ${t('replace.distance', { km: format.number(km, { maximumFractionDigits: 1 }) })}` : ''}`}
               badge={
                 p.certified &&

@@ -699,6 +699,18 @@
     "website": "Site web",
     "osmNotice": "Informations OpenStreetMap, à vérifier auprès du restaurant."
   },
+  "reviews": {
+    "open": "Voir les avis",
+    "short": "Avis",
+    "openNamed": "Voir les avis : {{name}}",
+    "title": "Avis : {{name}}",
+    "google": "Avis Google Maps",
+    "tripadvisor": "Avis Tripadvisor",
+    "website": "Site du restaurant",
+    "external": " (ouvre une application externe)",
+    "offline": "Connexion nécessaire pour voir les avis.",
+    "notice": "Vous quittez Mon guide : les avis sont ceux de Google Maps et de Tripadvisor, pas de Mon guide."
+  },
   "timing": {
     "title": "Horaire : {{name}}",
     "start": "Début",

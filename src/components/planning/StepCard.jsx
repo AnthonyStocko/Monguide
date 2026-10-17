@@ -13,6 +13,7 @@ import { usePhoto } from '../ui/Photo.jsx';
 import { cascadeProps } from '../../ui/motion.js';
 import ValidatedCheck from '../../ui/ValidatedCheck.jsx';
 import RestaurantDetails from './RestaurantDetails.jsx';
+import ReviewLinks from './ReviewLinks.jsx';
 import { freeLabelKey } from '../../utils/freeLabel.js';
 import { avatarColor } from '../../config/avatarColors.js';
 
@@ -22,7 +23,8 @@ const STATUS_TONES = { planned: 'neutral', done: 'primary', skipped: 'warning' }
  * Carte d'une étape du planning : vignette à gauche (photo du lieu et son
  * crédit écrit en clair, sinon illustration de sa catégorie), plage horaire
  * (bouton de réglage), statut, nom, type et badges ; itinéraire, site du
- * lieu (hors restaurant, qui a le sien) et remplacement. current : prochaine
+ * lieu (hors restaurant, qui a le sien), lien « Avis » d'un restaurant et
+ * remplacement. current : prochaine
  * étape du jour (bordure verte). Jour en cours : "Valider cette étape" et
  * "Passer cette étape". Étape personnelle : modifier ou supprimer (jamais
  * remplacée). Les trajets "≈" entre deux cartes sont affichés par DayView.
@@ -157,6 +159,7 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
             {t('planning.website')}
           </a>
         )}
+        {place && <ReviewLinks place={place} city={trip.destination.name} name={title} variant="link" />}
         {!readOnly &&
           (personal ? (
             <Button variant="secondary" icon={Pencil} onClick={onEditPersonal} aria-label={t('personal.editNamed', { name: title })}>

@@ -42,6 +42,7 @@ const geolocation = await import('./geolocation.native.js');
 const { shareFile } = await import('./shareFile.native.js');
 const { onAppActive, onAppUrlOpen } = await import('./lifecycle.native.js');
 const network = await import('./network.native.js');
+const { openExternalUrl } = await import('./externalUrl.native.js');
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -119,5 +120,18 @@ describe('implémentations natives (plugins Capacitor)', () => {
     expect(listener).toHaveBeenCalledWith('cellular');
     stop();
     await vi.waitFor(() => expect(plugins.removed).toEqual(['networkStatusChange']));
+  });
+});
+
+describe('ouverture d’une adresse externe (natif)', () => {
+  it('navigation de la WebView vers l’adresse : Capacitor la confie à Android (intent ACTION_VIEW)', () => {
+    const assign = vi.fn();
+    vi.stubGlobal('window', { location: { assign } });
+    try {
+      openExternalUrl('https://www.tripadvisor.fr/Search?q=A');
+      expect(assign).toHaveBeenCalledWith('https://www.tripadvisor.fr/Search?q=A');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { openExternalUrl } from './externalUrl.web.js';
 import { getCurrentPosition } from './geolocation.web.js';
 import { hapticsAvailable, impactLight, notifyError, notifySuccess } from './haptics.web.js';
 import { onAppActive } from './lifecycle.web.js';
@@ -156,5 +157,14 @@ describe('remise d’un fichier (web)', () => {
     vi.stubGlobal('navigator', { share: vi.fn(), canShare: () => false });
     await expect(shareFile(file)).resolves.toEqual({ shared: false });
     expect(link.click).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ouverture d’une adresse externe (web)', () => {
+  it('nouvel onglet, sans lien vers Mon guide (noopener, noreferrer)', () => {
+    const open = vi.fn();
+    vi.stubGlobal('window', { open });
+    openExternalUrl('https://www.google.com/maps/search/?api=1&query=A');
+    expect(open).toHaveBeenCalledWith('https://www.google.com/maps/search/?api=1&query=A', '_blank', 'noopener,noreferrer');
   });
 });

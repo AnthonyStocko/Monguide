@@ -8,16 +8,19 @@ import { webUrl } from '../../utils/navigation.js';
 import Badge from '../ui/Badge.jsx';
 import BottomSheet from '../ui/BottomSheet.jsx';
 import Photo from '../ui/Photo.jsx';
+import ReviewLinks from '../planning/ReviewLinks.jsx';
 
 const LINK = 'inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-secondary-strong px-4 font-semibold text-secondary-strong hover:bg-secondary-soft';
 
 /**
  * Fiche d'un lieu de la carte, en panneau : photo (ou illustration de sa
  * catégorie) et crédit écrit en clair, horaire et ordre de visite, label,
- * itinéraire, site, et accès à l'étape dans le planning.
- * @param {{ step: object, order: number, date: string, onClose: () => void }} props
+ * itinéraire, site (« Voir les avis » pour un restaurant), et accès à
+ * l'étape dans le planning.
+ * @param {{ step: object, order: number, date: string, city?: string, onClose: () => void }} props
+ *   city : ville de la destination du séjour (recherche des avis)
  */
-export default function PlaceSheet({ step, order, date, onClose }) {
+export default function PlaceSheet({ step, order, date, city, onClose }) {
   const { t } = useTranslation();
   const { placeName } = usePlaceName();
   const navigate = useNavigate();
@@ -47,6 +50,7 @@ export default function PlaceSheet({ step, order, date, onClose }) {
             {t('planning.website')}
           </a>
         )}
+        <ReviewLinks place={place} city={city} name={name} />
         <button type="button" onClick={() => navigate(`/planning?day=${date}&step=${step.id}`)} className={LINK}>
           <CalendarDays aria-hidden="true" className="size-5" />
           {t('map.openInPlanning')}
