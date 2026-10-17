@@ -166,7 +166,8 @@ La politique de confidentialité doit être en ligne avant l'envoi sur Google Pl
    rien de plus : elle ouvre seulement des liens publics hors de l'application.
 3. [ ] **Essais sur appareil** (Phase A) : « Avis Google Maps » ouvre
    l'application Google Maps sur le bon restaurant ; « Avis Tripadvisor » ouvre
-   la recherche Tripadvisor (format `/Search?q=` à confirmer) ; sur iPhone et
+   la recherche Tripadvisor (format `/Search?q=` confirmé : 25 bons
+   premiers résultats sur 28 vérifiés le 17 octobre 2026) ; sur iPhone et
    ordinateur, nouvel onglet, Mon guide reste ouvert ; hors ligne, choix
    désactivés.
 4. [ ] **Version** : `git tag v1.3.0 && git push origin v1.3.0` (versionName
