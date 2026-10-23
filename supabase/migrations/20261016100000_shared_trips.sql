@@ -365,6 +365,7 @@ create policy "trips_update_legacy" on public.trips
 alter table public.trip_members enable row level security;
 revoke all on table public.trip_members from anon, authenticated;
 grant select, delete on table public.trip_members to authenticated;
+grant select, insert, update, delete on table public.trip_members to service_role;
 
 create policy "trip_members_select_member" on public.trip_members
   for select to authenticated
@@ -379,6 +380,7 @@ alter table public.trip_invites enable row level security;
 revoke all on table public.trip_invites from anon, authenticated;
 grant select on table public.trip_invites to authenticated;
 grant update (revoked_at) on table public.trip_invites to authenticated;
+grant select, insert, update, delete on table public.trip_invites to service_role;
 
 create policy "trip_invites_select_owner" on public.trip_invites
   for select to authenticated
@@ -394,6 +396,8 @@ alter table public.trip_changes enable row level security;
 revoke all on table public.trip_changes from anon, authenticated;
 revoke all on sequence public.trip_changes_id_seq from anon, authenticated;
 grant select on table public.trip_changes to authenticated;
+grant select, insert, update, delete on table public.trip_changes to service_role;
+grant usage, select on sequence public.trip_changes_id_seq to service_role;
 
 create policy "trip_changes_select_member" on public.trip_changes
   for select to authenticated
@@ -406,6 +410,7 @@ revoke all on table public.profiles from anon, authenticated;
 grant select on table public.profiles to authenticated;
 grant insert (user_id, display_name, avatar_color) on table public.profiles to authenticated;
 grant update (display_name, avatar_color) on table public.profiles to authenticated;
+grant select, insert, update, delete on table public.profiles to service_role;
 
 create policy "profiles_select_self_or_co_member" on public.profiles
   for select to authenticated

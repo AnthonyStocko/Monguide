@@ -76,7 +76,7 @@ select ok(not public.is_trip_shared('11111111-1111-4111-8111-111111111111'), 'is
 select is_empty($$select 1 from public.profiles where user_id = 'aaaaaaaa-0000-4000-8000-00000000000a'$$, 'C ne lit pas le profil de A (aucun séjour commun)');
 select is((select display_name from public.profiles where user_id = 'aaaaaaaa-0000-4000-8000-00000000000c'), 'Chloé', 'C lit son propre profil');
 select is_empty($$update public.trips set title = 'Piraté' where id = '11111111-1111-4111-8111-111111111111' returning 1$$, 'C ne modifie pas le séjour');
-select is_empty($$delete from public.trips where id = '11111111-1111-4111-8111-111111111111' returning 1$$, 'C ne supprime pas le séjour');
+select throws_ok($$delete from public.trips where id = '11111111-1111-4111-8111-111111111111'$$, '42501', null, 'C ne supprime pas le séjour (aucun DELETE direct)');
 select is_empty($$delete from public.trip_members where trip_id = '11111111-1111-4111-8111-111111111111' returning 1$$, 'C ne retire personne');
 select throws_ok($$insert into public.trip_members (trip_id, user_id, role) values ('11111111-1111-4111-8111-111111111111', 'aaaaaaaa-0000-4000-8000-00000000000c', 'editor')$$,
   '42501', null, 'C ne s''ajoute pas au séjour');
@@ -98,7 +98,7 @@ select is((select display_name from public.profiles where user_id = 'aaaaaaaa-00
 select is((select avatar_color from public.profiles where user_id = 'aaaaaaaa-0000-4000-8000-00000000000a'), 'teal', 'B lit la couleur de A');
 select is_empty($$select 1 from public.profiles where user_id = 'aaaaaaaa-0000-4000-8000-00000000000c'$$, 'B ne lit pas le profil de C');
 select is_empty($$select 1 from public.trip_invites$$, 'B ne lit pas les invitations');
-select is_empty($$delete from public.trips where id = '11111111-1111-4111-8111-111111111111' returning 1$$, 'B ne supprime pas le séjour');
+select throws_ok($$delete from public.trips where id = '11111111-1111-4111-8111-111111111111'$$, '42501', null, 'B ne supprime pas le séjour (aucun DELETE direct)');
 select is_empty($$delete from public.trip_members where user_id = 'aaaaaaaa-0000-4000-8000-00000000000a' returning 1$$, 'B ne retire pas A');
 select is_empty($$delete from public.trip_members where user_id = 'aaaaaaaa-0000-4000-8000-00000000000d' returning 1$$, 'B ne retire pas D');
 select throws_ok($$insert into public.trip_invites (trip_id, kind, token_hash) values ('11111111-1111-4111-8111-111111111111', 'link', repeat('a', 64))$$,

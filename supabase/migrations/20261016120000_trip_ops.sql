@@ -26,6 +26,7 @@ create index trip_applied_ops_created_idx on public.trip_applied_ops (created_at
 
 alter table public.trip_applied_ops enable row level security;
 revoke all on table public.trip_applied_ops from anon, authenticated;
+grant select, insert, update, delete on table public.trip_applied_ops to service_role;
 
 select cron.schedule(
   'monguide-purge-trip-applied-ops',

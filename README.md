@@ -372,6 +372,47 @@ Toute évolution de la base passe par une migration SQL dans
 bord), sauf les valeurs de `app_config`, faites pour être modifiées en direct
 (voir `docs/api.md`).
 
+### Droits d'accès aux tables
+
+À partir du 30 octobre 2026, Supabase ne donne plus automatiquement de droits
+aux rôles de l'API (`anon`, `authenticated`, `service_role`) sur les
+nouvelles tables du schéma `public`. `supabase/config.toml` applique déjà
+cette règle en local et en CI (`auto_expose_new_tables = false`).
+
+**Règle** : toute migration qui crée une table contient, dans le même
+fichier :
+
+1. `alter table ... enable row level security;`
+2. ses politiques RLS (aucune si seules les Edge Functions y accèdent) ;
+3. ses GRANT, au plus juste :
+   - `anon` : rien, sauf ce qui doit être lu sans connexion (aucune table
+     aujourd'hui) ;
+   - `authenticated` : uniquement les opérations faites par l'application,
+     colonne par colonne si besoin (`grant update (col) ...`) ; rien sur une
+     table écrite seulement par une fonction serveur ;
+   - `service_role` : `select, insert, update, delete` (et
+     `usage, select` sur sa séquence éventuelle).
+
+Une nouvelle fonction SQL commence par
+`revoke all on function ... from public, anon, authenticated, service_role;`,
+puis accorde `execute` au seul rôle qui l'appelle (`service_role` pour les
+Edge Functions, `authenticated` pour une fonction utilisée par une politique ;
+personne pour un déclencheur ou une tâche pg_cron). Une vue est créée
+`with (security_invoker = true)`.
+
+Les droits de tous les objets existants sont écrits dans
+`supabase/migrations/20261023100000_explicit_grants.sql`. Le test
+`supabase/tests/database/grants.test.sql` (job `db-tests` de
+`deploy-server.yml`) échoue si une table n'a pas la RLS ou pas de GRANT
+explicite pour `service_role`, si `anon` a un droit quelconque, ou si
+`authenticated` accède à une table ou une fonction hors de la liste prévue.
+Ajouter une table lue par l'application, c'est donc aussi mettre à jour
+cette liste dans le test.
+
+`authenticated` garde `insert, update` sur `trips` pour l'application 1.1.0
+(upsert direct, politiques `trips_*_legacy`) : à retirer, avec ces
+politiques, quand `minAppVersion` passera à 1.2.0.
+
 Développement local du serveur (facultatif, Docker requis) :
 
 ```
