@@ -11,16 +11,31 @@ export const PLACE_NAME_LANGUAGES = Object.freeze(nameLanguages(Object.keys(SUPP
  * diffèrent (Place.names, affichées par displayName). null sans nom dans la
  * langue demandée ni name.
  * localized, le nom dans la langue demandée, sert au classement intérieur/extérieur.
+ * nameLang : langue de name quand une variante name:<langue> lui est égale
+ * (displayName préfère alors l'anglais à une langue que l'utilisateur ne lit
+ * pas).
  * @param {Record<string, string>} tags
  * @param {string} lang
- * @returns {{ name: string, localized: string, names?: Record<string, string> } | null}
+ * @returns {{ name: string, localized: string, names?: Record<string, string>, nameLang?: string } | null}
  */
 export function osmNames(tags, lang) {
   const localized = (tags[`name:${lang}`] ?? tags.name ?? '').trim();
   if (!localized) return null;
   const name = tags.name?.trim() || localized;
   const names = nameVariants({ ...tags, name }, PLACE_NAME_LANGUAGES);
-  return names ? { name, localized, names } : { name, localized };
+  const nameLang = PLACE_NAME_LANGUAGES.find((l) => tags[`name:${l}`]?.trim() === name);
+  return { name, localized, ...(names ? { names } : {}), ...(nameLang ? { nameLang } : {}) };
+}
+
+/**
+ * Lieu fermé ou disparu d'après ses tags OSM : opening_hours=closed,
+ * disused=yes, abandoned=yes, ou un tag disused:* ou abandoned:*.
+ * @param {Record<string, string>} tags
+ */
+export function isClosedOsm(tags) {
+  if (tags.opening_hours?.trim().toLowerCase() === 'closed') return true;
+  if (tags.disused === 'yes' || tags.abandoned === 'yes') return true;
+  return Object.keys(tags).some((k) => k.startsWith('disused:') || k.startsWith('abandoned:'));
 }
 
 /** Valeurs "historic" retenues comme petit patrimoine. */
@@ -78,11 +93,13 @@ export function osmFood(tags, regionalCuisines) {
 /**
  * Convertit un élément Overpass (node, way ou relation avec "out center")
  * en Place ; null s'il n'a pas de nom, de position ou de catégorie connue.
+ * nameLang (option) : langue du nom à défaut d'une variante égale (pays
+ * d'une seule langue, tuiles).
  * @param {{ type: string, id: number, lat?: number, lon?: number, center?: { lat: number, lon: number }, tags?: Record<string, string> }} element
- * @param {{ lang: string, regionalCuisines: string[] }} options
+ * @param {{ lang: string, regionalCuisines: string[], nameLang?: string }} options
  * @returns {import('../domain/model.js').Place | null}
  */
-export function osmElementToPlace(element, { lang, regionalCuisines }) {
+export function osmElementToPlace(element, { lang, regionalCuisines, nameLang }) {
   const tags = element.tags ?? {};
   const naming = osmNames(tags, lang);
   const lat = element.lat ?? element.center?.lat;
@@ -95,6 +112,7 @@ export function osmElementToPlace(element, { lang, regionalCuisines }) {
     id: `osm:${element.type}/${element.id}`,
     name: naming.name,
     ...(naming.names ? { names: naming.names } : {}),
+    ...(naming.nameLang ?? nameLang ? { nameLang: naming.nameLang ?? nameLang } : {}),
     category: kind.category,
     lat,
     lon,
@@ -105,13 +123,23 @@ export function osmElementToPlace(element, { lang, regionalCuisines }) {
   return withCommonTags(place, tags, kind.category === 'restaurant' ? osmFood(tags, regionalCuisines) : undefined);
 }
 
-/** Site web, description, identifiant Wikidata (dédoublonnage) et champ food. */
+/**
+ * Site web, description, identifiant Wikidata (dédoublonnage), champ food,
+ * et signaux OSM (place.signals, scoring/notoriety.js) : tourism=attraction
+ * ou museum, heritage=* avec un identifiant Wikidata (notoriété), lieu fermé
+ * (isClosedOsm : écarté par scoring/exclusions.js).
+ */
 function withCommonTags(place, tags, food) {
   const website = tags.website ?? tags['contact:website'];
   if (website) place.url = website;
   if (tags.description) place.description = tags.description;
   if (/^Q\d+$/.test(tags.wikidata ?? '')) place.wikidata = tags.wikidata;
   if (food) place.food = food;
+  const signals = {};
+  if (tags.tourism === 'attraction' || tags.tourism === 'museum') signals.osmAttraction = true;
+  if (tags.heritage && place.wikidata) signals.osmHeritage = true;
+  if (isClosedOsm(tags)) signals.osmClosed = true;
+  if (Object.keys(signals).length) place.signals = signals;
   return place;
 }
 

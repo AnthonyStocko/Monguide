@@ -1,7 +1,7 @@
 import { countryInfo } from '../../domain/config/countries.js';
 import { osmHeritageFallback } from '../../services/osmSource.js';
 import { runSource } from '../../services/sourceRunner.js';
-import { bindingsToPlaces, buildMonumentsQuery, buildMuseumsQuery, labelLanguages, runSparql } from '../../services/wikidata.js';
+import { articleLanguages, bindingsToPlaces, buildMonumentsQuery, buildMuseumsQuery, labelLanguages, nameLanguages, runSparql } from '../../services/wikidata.js';
 
 /**
  * Patrimoine hors de France : Wikidata (monuments protégés, musées
@@ -18,32 +18,36 @@ import { bindingsToPlaces, buildMonumentsQuery, buildMuseumsQuery, labelLanguage
  */
 export async function heritage(point, radiusKm, ctx) {
   const { rules, lang, cache } = ctx;
-  const languages = labelLanguages(lang, countryInfo(ctx.countryCode)?.languages ?? []);
+  const local = countryInfo(ctx.countryCode)?.languages ?? [];
+  const languages = labelLanguages(lang, local);
+  const wikis = articleLanguages(lang, local);
+  const names = nameLanguages(lang, local);
   const params = { lat: point.lat, lon: point.lon, radius: radiusKm, lang };
   const ttlSec = rules.cacheTtlSec.wikidata;
   const { timeoutSec, limit } = rules.wikidata;
 
-  const monumentsQuery = buildMonumentsQuery(point, radiusKm, languages, limit);
-  const museumsQuery = buildMuseumsQuery(point, radiusKm, languages, limit);
+  const monumentsQuery = buildMonumentsQuery(point, radiusKm, languages, limit, wikis, names);
+  const museumsQuery = buildMuseumsQuery(point, radiusKm, languages, limit, wikis, names);
   const [monuments, museums] = await Promise.all([
     runSource({
       name: 'monuments',
       cacheSource: 'wikidata-monuments',
-      // Les plus proches d'abord (buildMonumentsQuery) : nouvelle clé, les échantillons d'avant ne sont plus servis.
-      params: { ...params, order: 'distance' },
+      // Les plus proches d'abord (buildMonumentsQuery), avec signaux de notoriété : nouvelle clé,
+      // les échantillons d'avant ne sont plus servis.
+      params: { ...params, order: 'distance', signals: 2 },
       ttlSec,
       cache,
       query: monumentsQuery,
-      fetcher: async () => bindingsToPlaces(await runSparql(monumentsQuery, timeoutSec), 'monument')
+      fetcher: async () => bindingsToPlaces(await runSparql(monumentsQuery, timeoutSec), 'monument', { lang, localLanguages: local })
     }),
     runSource({
       name: 'museums',
       cacheSource: 'wikidata-museums',
-      params,
+      params: { ...params, signals: 2 },
       ttlSec,
       cache,
       query: museumsQuery,
-      fetcher: async () => bindingsToPlaces(await runSparql(museumsQuery, timeoutSec), 'museum')
+      fetcher: async () => bindingsToPlaces(await runSparql(museumsQuery, timeoutSec), 'museum', { lang, localLanguages: local })
     })
   ]);
   if (monuments.status !== 'failed' && museums.status !== 'failed') return [monuments, museums];

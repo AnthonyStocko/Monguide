@@ -110,13 +110,15 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
                 {t(`certifications.${place.certification}`)}
               </Badge>
             )}
+            {step.badges.includes('must_see') && <Badge tone="accent">{t('badges.must_see')}</Badge>}
+            {step.badges.includes('glance') && <Badge tone="neutral">{t('badges.glance')}</Badge>}
             {step.badges.includes('weather_adapted') && <Badge tone="secondary">{t('badges.weather_adapted')}</Badge>}
             {outdoor && rain !== null && (
               <Badge tone={rain > rules.weather.rainThresholdPct ? 'warning' : 'neutral'} icon={CloudRain}>
                 {t('planning.rain', { pct: Math.round(rain) })}
               </Badge>
             )}
-            {!place?.food && step.badges.includes('hours_unconfirmed') && <Badge tone="warning">{t('badges.hours_unconfirmed')}</Badge>}
+            {!place?.food && step.badges.includes('hours_unconfirmed') && <Badge tone="warning">{t('badges.hours_to_check')}</Badge>}
           </div>
           {personal && !place && <p className="text-ink-muted">{t('personal.travelUnknown')}</p>}
           {step.note && <p className="whitespace-pre-line">{step.note}</p>}

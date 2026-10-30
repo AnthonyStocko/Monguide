@@ -14,6 +14,18 @@ export const P = {
   heritageDesignation: 'P1435',
   /** nature de l'élément */
   instanceOf: 'P31',
+  /** partie de (ensemble : galerie d'un passage couvert, maison d'une place) */
+  partOf: 'P361',
+  /** architecte, style architectural, créateur : édifice ou œuvre (lieux connus) */
+  architect: 'P84',
+  architecturalStyle: 'P149',
+  creator: 'P170',
+  /** date de clôture ou fermeture ; date de dissolution, d'abolition ou de démolition ; état d'usage */
+  closureDate: 'P3999',
+  dissolvedDate: 'P576',
+  stateOfUse: 'P5817',
+  /** population (communes, quartiers : écartés des lieux connus) */
+  population: 'P1082',
   /** référence Mérimée (monuments historiques, France) */
   merimeeId: 'P380',
   /** référence Muséofile (musées de France) */

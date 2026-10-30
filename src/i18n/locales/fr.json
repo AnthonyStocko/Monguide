@@ -403,6 +403,10 @@
       "name": "Produits du terroir (AOC/AOP)",
       "failed": "Produits du terroir momentanément indisponibles."
     },
+    "notable": {
+      "name": "Lieux les plus connus (Wikidata)",
+      "failed": "Lieux les plus connus momentanément indisponibles."
+    },
     "duration": "{{value}} s",
     "durationMs": "{{value}} ms",
     "via": "Source : {{source}}",
@@ -685,7 +689,10 @@
   "badges": {
     "weather_adapted": "Adapté à la météo",
     "hours_unconfirmed": "Horaires non confirmés",
-    "info_missing": "Information non renseignée"
+    "hours_to_check": "Horaires à vérifier",
+    "info_missing": "Information non renseignée",
+    "must_see": "Incontournable",
+    "glance": "Coup d’œil"
   },
   "restaurant": {
     "cuisine": "Cuisine : {{list}}",
@@ -736,7 +743,8 @@
       "market": "Un passage au marché",
       "restaurant": "Un repas au restaurant",
       "dinner": "Un dîner",
-      "relax": "Une pause détente"
+      "relax": "Une pause détente",
+      "glance": "Un coup d’œil"
     },
     "TOO_SHORT": "{{activity}} dure en général au moins {{minimum}}. Vous avez prévu {{duration}}.",
     "OVERLAP_PREVIOUS": "Il faut {{travelMin}} min {{mode}} depuis l’étape précédente, qui se termine à {{previousEnd}}.",

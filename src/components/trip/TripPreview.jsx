@@ -7,7 +7,7 @@ import Badge from '../ui/Badge.jsx';
 import Card from '../ui/Card.jsx';
 import { freeLabelKey } from '../../utils/freeLabel.js';
 
-const BADGE_TONES = { weather_adapted: 'secondary', hours_unconfirmed: 'warning', info_missing: 'warning', free_time: 'neutral' };
+const BADGE_TONES = { weather_adapted: 'secondary', hours_unconfirmed: 'warning', info_missing: 'warning', free_time: 'neutral', must_see: 'accent', glance: 'neutral' };
 
 /**
  * Aperçu d'un séjour généré : journées et étapes, bilan carbone, coût
@@ -87,7 +87,7 @@ export default function TripPreview({ trip, warnings }) {
                       .filter((b) => b !== 'free_time')
                       .map((b) => (
                         <Badge key={b} tone={BADGE_TONES[b]}>
-                          {t(`badges.${b}`)}
+                          {t(b === 'hours_unconfirmed' && !step.place?.food ? 'badges.hours_to_check' : `badges.${b}`)}
                         </Badge>
                       ))}
                   </span>

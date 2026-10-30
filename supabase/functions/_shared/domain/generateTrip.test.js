@@ -34,7 +34,8 @@ function placesAround(center, prefix, n = 6) {
   const out = [];
   for (let i = 0; i < n; i += 1) {
     const b = i * (360 / n);
-    out.push(place(`${prefix}-museum-${i}`, 'museum', center, 0.5 + i * 0.4, b));
+    // Horaires connus : sinon jamais proposés le lundi ni le mardi en France (config/museumClosingDays.js).
+    out.push(place(`${prefix}-museum-${i}`, 'museum', center, 0.5 + i * 0.4, b, { openingHours: 'Mo-Su 09:00-19:00' }));
     out.push(place(`${prefix}-monument-${i}`, 'monument', center, 0.8 + i * 0.4, b + 20));
     out.push(place(`${prefix}-park-${i}`, 'park', center, 1 + i * 0.5, b + 40));
     out.push(place(`${prefix}-view-${i}`, 'viewpoint', center, 1.2 + i * 0.5, b + 60));
@@ -122,7 +123,7 @@ describe('generateTrip : planning', () => {
   });
 
   it('indique un temps libre plutôt qu\'inventer un lieu', () => {
-    const { trip: t, warnings } = generateTrip({ trip: trip({ profile: 'certified' }), places: [place('m', 'museum', VILLEFRANCHE, 1, 0)], co2Factors: FACTORS, makeId }, RULES);
+    const { trip: t, warnings } = generateTrip({ trip: trip({ profile: 'certified' }), places: [place('m', 'museum', VILLEFRANCHE, 1, 0, { openingHours: 'Mo-Su 09:00-19:00' })], co2Factors: FACTORS, makeId }, RULES);
     expect(t.days[0].steps[0].place.id).toBe('m');
     expect(t.days[0].steps[2]).toMatchObject({ badges: ['free_time'] });
     expect(t.days[0].steps[2].place).toBeUndefined();

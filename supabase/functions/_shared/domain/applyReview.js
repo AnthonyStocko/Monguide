@@ -20,7 +20,8 @@ import { toMinutes } from './time.js';
  * Opérations :
  *  - swap : deux étapes du même jour échangent leurs plages horaires (repas
  *    avec repas, visite avec visite) ;
- *  - replace : le lieu d'une étape devient un candidat de la réserve, de
+ *  - replace : le lieu d'une étape (jamais un incontournable, badge
+ *    must_see : refus must_see) devient un candidat de la réserve, de
  *    type compatible (un restaurant ne remplace qu'un repas), jamais déjà
  *    utilisé, ouvert sur la plage (horaires inconnus : accepté, comme à la
  *    génération), à au plus rules.travel.maxTravelMin des étapes voisines ;
@@ -39,6 +40,7 @@ export const REVIEW_REJECTIONS = Object.freeze([
   'unknown_step',
   'unknown_candidate',
   'locked_step',
+  'must_see',
   'same_step',
   'different_days',
   'meal_mismatch',
@@ -162,6 +164,7 @@ function applyOperation(trip, op, resolve, ctx, rules) {
   if (op.op === 'replace') {
     const target = editable(op.step);
     if (target.rejection) return target;
+    if (target.step.badges?.includes('must_see')) return { rejection: 'must_see' };
     const candidateId = resolve.candidate(op.candidate);
     const candidate = (trip.candidates ?? []).find((p) => p.id === candidateId);
     if (!candidate) return { rejection: 'unknown_candidate' };

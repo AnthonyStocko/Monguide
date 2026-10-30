@@ -1,4 +1,5 @@
 import OpeningHours from 'opening_hours';
+import { museumClosingDays } from './config/museumClosingDays.js';
 import { destinationLocalDate, toMinutes } from './time.js';
 
 /**
@@ -19,6 +20,18 @@ function parse(openingHours, { lat, lon, countryCode }) {
   } catch {
     return null;
   }
+}
+
+/**
+ * Musée aux horaires inconnus, ce jour étant un jour de fermeture habituel
+ * des musées du pays (config/museumClosingDays.js) : à ne pas proposer.
+ * @param {{ category: string, food?: { openingHours?: string }, openingHours?: string }} place
+ * @param {string} date "YYYY-MM-DD"
+ * @param {string} countryCode
+ */
+export function usuallyClosed(place, date, countryCode) {
+  if (place.category !== 'museum' || placeOpeningHours(place)) return false;
+  return museumClosingDays(countryCode).includes(new Date(`${date}T12:00:00Z`).getUTCDay());
 }
 
 /**

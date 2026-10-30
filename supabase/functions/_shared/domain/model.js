@@ -46,6 +46,9 @@ export const SCHEMA_VERSION = 3;
  * @property {Record<string, string>} [names] variantes du nom par langue, seulement celles qui diffèrent de name
  *   (ex. { fr: "Grand-Place", nl: "Grote Markt" }). Champ facultatif, rétrocompatible, sans changement de
  *   schemaVersion : un séjour enregistré avant ce champ s'affiche avec name, sans migration.
+ * @property {string} [nameLang] langue de name quand elle est connue (libellé Wikidata choisi, pays d'une seule
+ *   langue) : displayName préfère alors names.en à un nom dans une langue que l'utilisateur ne lit pas. Champ
+ *   facultatif, rétrocompatible.
  * @property {PlaceCategory} category
  * @property {number} lat
  * @property {number} lon
@@ -58,6 +61,13 @@ export const SCHEMA_VERSION = 3;
  * @property {string} [url]
  * @property {PlaceFood} [food]
  * @property {boolean} [unnamed] lieu OSM sans nom, affiché sous un nom générique (« Point de vue »)
+ * @property {number} [notoriety] notoriété 0-100 (scoring/notoriety.js), calculée à la collecte
+ * @property {number} [sitelinks] articles Wikipédia de l'élément Wikidata, quand ils sont connus
+ * @property {boolean} [notable] lieu connu (notoriété d'au moins rules.notoriety.notableScore) :
+ *   accepté par le profil « équilibré » même sans label officiel
+ * @property {boolean} [glance] « coup d'œil » : lieu vu en passant (statue, fontaine, façade), étape courte
+ *   (rules.durations.glance). notoriety, sitelinks, notable et glance : champs facultatifs, rétrocompatibles,
+ *   sans changement de schemaVersion.
  * @property {PlaceImage} [image] photo du lieu, ajoutée par l'application après la génération (fonction
  *   images). Champ facultatif, rétrocompatible, sans changement de schemaVersion : un séjour enregistré
  *   avant ce champ s'affiche avec une illustration, sans migration.
@@ -146,9 +156,11 @@ export const STEP_STATUSES = Object.freeze(['planned', 'done', 'skipped']);
 
 /**
  * Badges d'une étape : adaptée à la météo, horaires non confirmés, information
- * (végétarien, fauteuil) non renseignée, temps libre (aucun lieu trouvé).
+ * (végétarien, fauteuil) non renseignée, temps libre (aucun lieu trouvé),
+ * incontournable (mustSee.js : jamais remplacé par l'arbitrage météo ni par
+ * la relecture de l'IA), coup d'œil (lieu vu en passant, étape courte).
  */
-export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed', 'info_missing', 'free_time']);
+export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed', 'info_missing', 'free_time', 'must_see', 'glance']);
 
 /**
  * @typedef {object} Day

@@ -11,7 +11,9 @@ import { routeKm, travelMinutes } from './travel.js';
  *    minimale) pour ne pas empiéter sur le trajet vers l'étape suivante ;
  *  - l'étape suivante commence au plus tôt à fin + trajet : aucun
  *    chevauchement.
- * Une étape sans lieu (temps libre) n'a pas de trajet.
+ * Une étape sans lieu (temps libre) n'a pas de trajet. Une étape marquée
+ * follow (coup d'œil, visite insérée par la génération) commence dès la fin
+ * de la précédente plus le trajet, et n'écourte pas celle-ci.
  *
  * @param {{ slotStart: string, place?: object, badges: string[], [k: string]: any }[]} steps étapes avec leur heure de gabarit
  * @param {{ from: { lat: number, lon: number } | null, to: { lat: number, lon: number } | null, mode: string }} ctx
@@ -33,17 +35,19 @@ export function scheduleDay(steps, { from, to, mode }, rules) {
   const out = [];
   let previousEnd = null;
   steps.forEach((step, i) => {
-    const template = toMinutes(step.slotStart);
+    // Étape insérée (follow : coup d'œil, visite en plus) : juste après la précédente, sans heure de gabarit.
+    const template = step.follow && previousEnd !== null ? previousEnd + travels[i] : toMinutes(step.slotStart);
     const start = previousEnd === null ? template : Math.max(template, previousEnd + travels[i]);
     const { recommendedMin, minimumMin } = stepDurations(step, rules);
     let end = start + recommendedMin;
-    if (i + 1 < steps.length) {
+    // Suivie d'une étape insérée : jamais raccourcie pour elle.
+    if (i + 1 < steps.length && !steps[i + 1].follow) {
       const limit = toMinutes(steps[i + 1].slotStart) - travels[i + 1];
       if (end > limit) end = Math.max(start + minimumMin, limit);
     }
     // Étape commençant trop tard (rules.schedule.latestStart de son type) : abandonnée.
     if (start > toMinutes(scheduleLimits(step, rules).latestStart)) return;
-    const { slotStart, ...rest } = step;
+    const { slotStart: _slot, follow: _follow, ...rest } = step;
     const scheduled = { ...rest, start: fromMinutes(start), end: fromMinutes(end) };
     if (previousEnd !== null || from) scheduled.travelFromPreviousMin = travels[i];
     out.push(scheduled);

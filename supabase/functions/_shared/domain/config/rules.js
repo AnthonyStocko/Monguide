@@ -55,7 +55,9 @@ export const RULES = Object.freeze({
     /** dîner (restaurant ou soirée libre), quel que soit le lieu */
     dinner: { recommendedMin: 90, minimumMin: 60 },
     /** détente, temps libre */
-    relax: { recommendedMin: 60, minimumMin: 30 }
+    relax: { recommendedMin: 60, minimumMin: 30 },
+    /** « coup d'œil » : lieu vu en passant (statue, fontaine, façade), inséré sur un trajet */
+    glance: { recommendedMin: 10, minimumMin: 5 }
   },
 
   /** Trajets : toujours des estimations (aucun moteur d'itinéraire). */
@@ -83,12 +85,14 @@ export const RULES = Object.freeze({
     collectBudgetMs: 16000,
     /**
      * Score d'un lieu (0-100) = proximité (rapportée au rayon effectif du mode)
-     * + bonus certifié + bonus de diversité des catégories.
+     * + bonus certifié + bonus de diversité des catégories + notoriété
+     * (place.notoriety rapportée à 100, scoring/notoriety.js).
      */
     score: {
-      proximity: 60,
-      certified: 25,
-      diversity: 15,
+      proximity: 45,
+      certified: 15,
+      diversity: 10,
+      notoriety: 30,
       /** Malus d'un lieu sans nom (nom générique : « Point de vue »…), qui ne sert qu'à combler un créneau. */
       unnamedPenalty: 20
     },
@@ -170,6 +174,55 @@ export const RULES = Object.freeze({
     maxRadiusKm: 50,
     /** Valeurs OSM "cuisine" qui rendent un restaurant "régional". */
     regionalCuisines: ['regional', 'french']
+  },
+
+  /**
+   * Notoriété des lieux (scoring/notoriety.js), lieux à écarter
+   * (scoring/exclusions.js), incontournables et « coups d'œil »
+   * (mustSee.js). Classes Wikidata : config/placeClasses.js. Propositions,
+   * calibrées sur les séjours de référence (scripts/quality).
+   */
+  notoriety: {
+    /**
+     * Score 0-100. Signal principal : articles Wikipédia (sitelinks), en
+     * échelle logarithmique, plein à sitelinksFull articles. Signaux
+     * secondaires : article dans la langue de l'interface ou du pays, tags
+     * OSM tourism=attraction|museum, heritage=* avec wikidata, désignation
+     * de premier rang (patrimoine mondial, monument classé…).
+     */
+    sitelinksFull: 60,
+    weights: {
+      sitelinks: 70,
+      langArticle: 5,
+      localArticle: 5,
+      osmAttraction: 8,
+      osmHeritage: 4,
+      worldHeritage: 15,
+      topDesignation: 8,
+      tentativeHeritage: 5
+    },
+    /**
+     * Seuil adaptatif des visites (musées, monuments) : percentile de la
+     * distribution locale des scores, jamais sous minScore ; abaissé quand il
+     * reste moins de minVisitsPerDay × jours lieux au-dessus (petite ville).
+     */
+    threshold: { percentile: 75, minScore: 15, minVisitsPerDay: 4 },
+    /** Lieu connu : accepté par le profil « équilibré » même sans label officiel. */
+    notableScore: 40,
+    /** Lieux à écarter : nature générique ou libellé générique sous minSitelinks articles ; non visitable sous glanceScore. */
+    exclusion: { minSitelinks: 3, glanceScore: 45 },
+    /**
+     * Incontournables : perDay par jour (entre min et max) lieux de score au
+     * moins minScore, à moins de radiusKm du logement (rayon effectif du mode
+     * s'il est plus petit), placés en priorité ; maxVisitsPerDay visites et
+     * maxGlancesPerDay coups d'œil par jour au plus ; une étape insérée ne
+     * retarde jamais une étape du gabarit de plus de delayToleranceMin.
+     */
+    mustSee: { min: 5, max: 10, perDay: 3, minScore: 40, radiusKm: 5, maxVisitsPerDay: 3, maxGlancesPerDay: 3, delayToleranceMin: 15 },
+    /** Autres coups d'œil insérés sur les trajets : au plus maxPerDay par jour, détour d'au plus maxDetourMin. */
+    glance: { maxPerDay: 2, maxDetourMin: 10 },
+    /** Requête Wikidata des lieux connus (toutes natures) : au moins minSitelinks articles, les limit plus connus. */
+    notableQuery: { minSitelinks: 5, limit: 150 }
   },
 
   /** Recherche de destination (fonction geocode). */

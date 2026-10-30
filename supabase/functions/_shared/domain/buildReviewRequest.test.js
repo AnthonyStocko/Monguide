@@ -116,3 +116,19 @@ describe('buildReviewRequest : taille pour un séjour de 3 jours', () => {
     expect(r.text).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
   });
 });
+
+describe('buildReviewRequest : notoriété', () => {
+  it('score de chaque étape et candidat, incontournables et coups d’œil signalés', () => {
+    const day = dayWithDinner('2026-10-06');
+    day.steps[0] = { ...day.steps[0], place: { ...day.steps[0].place, notoriety: 72 }, badges: ['must_see'] };
+    day.steps[2] = { ...day.steps[2], place: { ...day.steps[2].place, notoriety: 50, glance: true }, badges: ['glance'] };
+    const t = trip([day], [place('m2', 'museum', 1.2, { name: 'Musée municipal', notoriety: 12 }), place('v1', 'viewpoint', 2, { name: 'Belvédère' })]);
+    const { payload } = buildReviewRequest(t, { language: 'fr' }, rules);
+    const [first, , third] = payload.days[0].steps;
+    expect(first).toMatchObject({ notoriety: 72, mustSee: true });
+    expect(third).toMatchObject({ notoriety: 50, glance: true });
+    expect(payload.days[0].steps[1]).not.toHaveProperty('notoriety');
+    expect(payload.candidates.find((c) => c.name === 'Musée municipal')).toMatchObject({ notoriety: 12 });
+    expect(payload.candidates.find((c) => c.name === 'Belvédère')).not.toHaveProperty('notoriety');
+  });
+});

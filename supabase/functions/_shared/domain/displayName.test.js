@@ -121,3 +121,21 @@ describe('genericPlaceName', () => {
     expect(Object.keys(GENERIC_PLACE_NAMES.en).sort()).toEqual(Object.keys(GENERIC_PLACE_NAMES.fr).sort());
   });
 });
+
+describe('displayName : langue du nom enregistré (nameLang)', () => {
+  it('nom en néerlandais : la version anglaise plutôt qu’une langue que l’utilisateur ne lit pas', () => {
+    const museum = place({ name: 'Koninklijk Museum', nameLang: 'nl', names: { en: 'Royal Museum' } });
+    expect(displayName(museum, 'fr')).toBe('Royal Museum');
+    expect(displayName(museum, 'en')).toBe('Royal Museum');
+  });
+
+  it('nom dans la langue de l’interface : gardé, même avec une variante anglaise', () => {
+    const cathedrale = place({ name: 'Cathédrale Saint-Jean', nameLang: 'fr', names: { en: 'Lyon Cathedral' } });
+    expect(displayName(cathedrale, 'fr')).toBe('Cathédrale Saint-Jean');
+    expect(displayName(cathedrale, 'en')).toBe('Lyon Cathedral');
+  });
+
+  it('sans version française ni anglaise : nom local', () => {
+    expect(displayName(place({ name: 'Moderne Wijk', nameLang: 'nl' }), 'fr')).toBe('Moderne Wijk');
+  });
+});

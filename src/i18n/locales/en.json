@@ -403,6 +403,10 @@
       "name": "Local produce (PDO)",
       "failed": "Local produce temporarily unavailable."
     },
+    "notable": {
+      "name": "Best-known places (Wikidata)",
+      "failed": "Best-known places temporarily unavailable."
+    },
     "duration": "{{value}} s",
     "durationMs": "{{value}} ms",
     "via": "Source: {{source}}",
@@ -685,7 +689,10 @@
   "badges": {
     "weather_adapted": "Adapted to the weather",
     "hours_unconfirmed": "Opening hours not confirmed",
-    "info_missing": "Information not provided"
+    "hours_to_check": "Check opening hours",
+    "info_missing": "Information not provided",
+    "must_see": "Must-see",
+    "glance": "Quick look"
   },
   "restaurant": {
     "cuisine": "Cuisine: {{list}}",
@@ -736,7 +743,8 @@
       "market": "A market visit",
       "restaurant": "A restaurant meal",
       "dinner": "A dinner",
-      "relax": "A relaxing break"
+      "relax": "A relaxing break",
+      "glance": "A quick look"
     },
     "TOO_SHORT": "{{activity}} usually takes at least {{minimum}}. You planned {{duration}}.",
     "OVERLAP_PREVIOUS": "It takes {{travelMin}} min {{mode}} from the previous stop, which ends at {{previousEnd}}.",

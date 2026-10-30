@@ -13,10 +13,13 @@ const CASTLE = /(^|[^a-z])(chateau|castle|castell|castillo|castelo|castello|schl
 const TRAIL = /(^|[^a-z])(sentier|randonnee|trail|hiking|chemin de grande randonnee)([^a-z]|$)/;
 
 /**
- * @param {{ category: string, name?: string }} place
- * @returns {'museum' | 'castle' | 'monument' | 'smallHeritage' | 'park' | 'trail' | 'market' | 'restaurant'}
+ * Coup d'œil (place.glance : statue, fontaine, façade vue en passant,
+ * scoring/exclusions.js) : durée courte, quelle que soit la catégorie.
+ * @param {{ category: string, name?: string, glance?: boolean }} place
+ * @returns {'museum' | 'castle' | 'monument' | 'smallHeritage' | 'park' | 'trail' | 'market' | 'restaurant' | 'glance'}
  */
 export function activityType(place) {
+  if (place.glance === true) return 'glance';
   const name = normalize(place.name);
   switch (place.category) {
     case 'museum':
@@ -67,13 +70,14 @@ export function scheduleLimits(step, rules) {
 /**
  * Catégories de lieux autorisées par profil pour les visites (hors déjeuner).
  *  - certified : patrimoine certifié uniquement ;
- *  - balanced : + parcs, espaces naturels, marchés ;
+ *  - balanced : + parcs, espaces naturels, marchés, et lieux connus (place.notable :
+ *    notoriété d'au moins rules.notoriety.notableScore, sans label officiel) ;
  *  - explorer : tout, y compris petit patrimoine et points de vue.
  */
 export function allowedByProfile(place, profile) {
   if (place.category === 'restaurant') return false;
   if (profile === 'certified') return place.certified === true;
-  if (profile === 'balanced') return place.certified === true || ['park', 'nature', 'market', 'farm'].includes(place.category);
+  if (profile === 'balanced') return place.certified === true || place.notable === true || ['park', 'nature', 'market', 'farm'].includes(place.category);
   return true;
 }
 

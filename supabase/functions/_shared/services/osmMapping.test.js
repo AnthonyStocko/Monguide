@@ -131,3 +131,24 @@ describe('osmElementToPlace', () => {
     expect(osmElementToPlace({ type: 'node', id: 3, lat: 1, lon: 1, tags: { amenity: 'bench', name: 'B' } }, opts)).toBeNull();
   });
 });
+
+describe('lieux OSM fermés et langue du nom', () => {
+  const el = (tags) => ({ type: 'node', id: 7, lat: 50.85, lon: 4.35, tags: { amenity: 'restaurant', name: 'Chez Jules', ...tags } });
+
+  it('disused:*, abandoned:*, opening_hours=closed : signal osmClosed', async () => {
+    const { isClosedOsm } = await import('./osmMapping.js');
+    expect(isClosedOsm({ opening_hours: 'closed' })).toBe(true);
+    expect(isClosedOsm({ 'disused:amenity': 'restaurant' })).toBe(true);
+    expect(isClosedOsm({ 'abandoned:building': 'yes' })).toBe(true);
+    expect(isClosedOsm({ disused: 'yes' })).toBe(true);
+    expect(isClosedOsm({ opening_hours: 'Mo-Fr 12:00-14:00' })).toBe(false);
+    expect(osmElementToPlace(el({ opening_hours: 'closed' }), opts).signals).toEqual({ osmClosed: true });
+    expect(osmElementToPlace(el({}), opts).signals).toBeUndefined();
+  });
+
+  it('langue du nom : variante égale au nom, sinon celle du pays transmise', () => {
+    expect(osmElementToPlace(el({ name: 'Grote Markt', 'name:nl': 'Grote Markt', 'name:en': 'Grand Place' }), opts)).toMatchObject({ nameLang: 'nl', names: { en: 'Grand Place' } });
+    expect(osmElementToPlace(el({}), { ...opts, nameLang: 'fr' }).nameLang).toBe('fr');
+    expect(osmElementToPlace(el({}), opts).nameLang).toBeUndefined();
+  });
+});

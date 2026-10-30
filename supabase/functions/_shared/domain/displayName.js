@@ -56,13 +56,17 @@ export function hasNonLatinLetter(text) {
  * Nom à afficher, dans cet ordre :
  *  - petit patrimoine sans nom (unnamed) : le nom générique traduit ;
  *  - names[uiLanguage] s'il existe ;
+ *  - name s'il est dans la langue de l'interface (nameLang) ;
+ *  - name dans une autre langue connue que l'anglais (nameLang : libellé
+ *    néerlandais à Bruxelles) : names.en s'il existe, jamais une langue que
+ *    l'utilisateur ne lit pas quand une version anglaise existe ;
  *  - name en alphabet non latin : names.en s'il existe, sinon name
  *    translittéré du grec (ELOT 743, translitGreek ; les autres alphabets
  *    restent tels quels) ;
  *  - sinon name tel quel (un nom bilingue « Grand-Place - Grote Markt »
  *    reste compréhensible).
  * Fonctionne aussi pour les séjours enregistrés avant Place.names.
- * @param {Pick<import('./model.js').Place, 'name'> & Partial<Pick<import('./model.js').Place, 'names' | 'unnamed'>>} place
+ * @param {Pick<import('./model.js').Place, 'name'> & Partial<Pick<import('./model.js').Place, 'names' | 'nameLang' | 'unnamed'>>} place
  * @param {string} uiLanguage
  * @returns {string}
  */
@@ -73,6 +77,8 @@ export function displayName(place, uiLanguage) {
   }
   const own = place.names?.[uiLanguage];
   if (own) return own;
+  if (place.nameLang === uiLanguage) return place.name;
+  if (place.nameLang && place.nameLang !== 'en' && place.names?.en) return place.names.en;
   if (!hasNonLatinLetter(place.name)) return place.name;
   return place.names?.en ?? translitGreek(place.name);
 }

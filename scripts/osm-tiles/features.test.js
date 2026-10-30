@@ -62,6 +62,13 @@ describe('pickTags', () => {
 });
 
 describe('featureToEntry', () => {
+  it('lieu fermé ou disparu (disused:*, abandoned:*, opening_hours=closed) : absent des tuiles', () => {
+    const f = (tags) => ({ id: 'n1', geometry: point(4.39, 45.01), properties: { amenity: 'restaurant', name: 'Le Verdun', ...tags } });
+    expect(featureToEntry(f({ opening_hours: 'closed' }), FR)).toBeNull();
+    expect(featureToEntry(f({ 'disused:shop': 'bakery' }), FR)).toBeNull();
+    expect(featureToEntry(f({}), FR)).not.toBeNull();
+  });
+
   it('produit [id, category, subcategory, name, lat, lon, tags, names, cc], coordonnées à 5 décimales', () => {
     const f = { id: 'n4960151502', geometry: point(4.395094, 45.0102349), properties: { amenity: 'restaurant', name: 'Le Verdun', cuisine: 'french' } };
     expect(featureToEntry(f, FR)).toEqual(['n4960151502', 'restaurant', 'restaurant', 'Le Verdun', 45.01023, 4.39509, { cuisine: 'french' }, null, 'FR']);

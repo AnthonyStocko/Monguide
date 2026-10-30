@@ -3,6 +3,8 @@ import { hoursCovered } from './time.js';
 
 /** Créneaux de visite soumis à l'arbitrage météo (pas la pause déjeuner). */
 const VISIT_TYPES = ['culture', 'outdoor', 'relax'];
+/** Étapes jamais remplacées par l'arbitrage : incontournables et coups d'œil. */
+const KEPT_BADGES = ['must_see', 'glance'];
 
 /**
  * Probabilité de pluie moyenne sur les heures d'un créneau ; null si aucune
@@ -30,6 +32,8 @@ export function dayWeather(weatherDay) {
  * seuil (rules.weather.rainThresholdPct) est remplacée par le lieu intérieur
  * disponible le plus proche, avec le badge "weather_adapted". Les jours non
  * couverts par la prévision ne sont pas modifiés (à réévaluer plus tard).
+ * Un incontournable (badge must_see, placé selon la météo par mustSee.js) et
+ * un coup d'œil (badge glance) ne sont jamais remplacés.
  * Fonction pure, utilisable sans réseau avec la réserve de candidats.
  *
  * @param {{ weatherAvailable: boolean, weather?: Record<string, number>, steps: object[] }} day
@@ -42,6 +46,7 @@ export function arbitrateWeather(day, indoorCandidates, usedIds, rules) {
   let swapped = 0;
   const steps = day.steps.map((step) => {
     if (!VISIT_TYPES.includes(step.type) || !step.place || step.place.indoor === true || step.locked) return step;
+    if (step.badges.some((b) => KEPT_BADGES.includes(b))) return step;
     const rain = averageRain(day.weather, step.start, step.end);
     if (rain === null || rain <= rules.weather.rainThresholdPct) return step;
     const replacement = indoorCandidates

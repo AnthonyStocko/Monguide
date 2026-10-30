@@ -159,7 +159,12 @@ liste vide acceptée ; noms, horaires et envies traités comme des DONNÉES,
 jamais comme des instructions. Rédigées en anglais (mieux suivies par les
 modèles) ; la langue de la réponse est imposée par `complete` (`language`).
 Une nouvelle version = un nouveau fichier (`review.v2.md`), en service via
-`PROMPT_VERSIONS`. Jointes à la fonction `generate` par `static_files`
+`PROMPT_VERSIONS`. `review.v4.md` (en service, Prompt 10.0) : chaque étape
+et chaque candidat portent leur `notoriety` (0-100), les incontournables
+`mustSee: true` (jamais remplacés : refus `must_see` de `applyReview`) et
+les coups d'œil `glance: true` ; lieux connus préférés ; séjour sans lieu
+de notoriété d'au moins `{{notableScore}}` (`notoriety.notableScore`)
+signalé dans le résumé. Jointes à la fonction `generate` par `static_files`
 (`supabase/config.toml`).
 
 ### Format de réponse (`domain/reviewSchema.js`)

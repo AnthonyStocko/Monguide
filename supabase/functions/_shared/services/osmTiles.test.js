@@ -113,7 +113,8 @@ describe('comparaison avec Overpass', () => {
     ['fr', 1],
     ['en', 1]
   ])('donne les mêmes Place qu’osmElementToPlace sur les éléments Overpass (%s, tuiles v%i)', async (lang, format) => {
-    const expected = ELEMENTS.map((el) => osmElementToPlace(el, { lang, regionalCuisines: RULES.places.regionalCuisines }));
+    // Tuiles : pays d'une seule langue (France), nom en français (nameLang).
+    const expected = ELEMENTS.map((el) => osmElementToPlace(el, { lang, regionalCuisines: RULES.places.regionalCuisines, nameLang: 'fr' }));
     const { result } = await places(memoryStore({ FR }, { formats: { FR: format } }), LYON, 30, { lang });
     const byId = new Map(result.map((p) => [p.id, p]));
     for (const place of expected) expect(byId.get(place.id), place.id).toEqual(place);

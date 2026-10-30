@@ -1,5 +1,5 @@
 import { genericPlaceName } from '../domain/displayName.js';
-import { regionalCuisinesFor } from '../domain/config/countries.js';
+import { countryInfo, regionalCuisinesFor } from '../domain/config/countries.js';
 import { countriesInCircle } from '../domain/countryCoverage.js';
 import { distanceKm } from '../domain/geo.js';
 import { tileIdsForRadius } from '../domain/osmGrid.js';
@@ -301,7 +301,9 @@ export function entryToElement([id, category, subcategory, name, lat, lon, tags,
 function entryToPlace(entry, { rules, lang }) {
   const element = entryToElement(entry);
   if (!element) return null;
-  const options = { lang, regionalCuisines: regionalCuisinesFor(entry[8], rules) };
+  // Pays d'une seule langue : le nom est dans cette langue (les variantes égales au nom ne sont pas dans les tuiles).
+  const languages = countryInfo(entry[8])?.languages ?? [];
+  const options = { lang, regionalCuisines: regionalCuisinesFor(entry[8], rules), ...(languages.length === 1 ? { nameLang: languages[0] } : {}) };
   const named = element.tags[`name:${lang}`] ?? element.tags.name;
   if (!named?.trim()) {
     const generic = genericPlaceName(entry[2], lang);

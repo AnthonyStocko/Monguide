@@ -12,9 +12,11 @@ import { readFile } from 'node:fs/promises';
  * Version en service de chaque jeu d'instructions. review : v2 (Bloc E) =
  * v1 + envies du type « moins de… » et envies non satisfaites expliquées
  * dans le résumé ; v3 = v2 + horaires des repas du pays (trip.meals), qui ne
- * sont jamais une anomalie (dîner à 21:00 en Espagne).
+ * sont jamais une anomalie (dîner à 21:00 en Espagne) ; v4 = v3 + notoriété
+ * des étapes et des candidats (lieux connus préférés), incontournables jamais
+ * remplacés, séjour sans lieu connu signalé dans le résumé ({{notableScore}}).
  */
-export const PROMPT_VERSIONS = Object.freeze({ review: 'v3' });
+export const PROMPT_VERSIONS = Object.freeze({ review: 'v4' });
 
 const cache = new Map();
 

@@ -32,7 +32,7 @@ describe('heritage (eu)', () => {
 
   it('interroge Wikidata en deux requêtes séparées, labels en français puis anglais puis portugais', async () => {
     fetchMock.mockImplementation(async (url) =>
-      decodeURIComponent(String(url)).includes('P1435')
+      !decodeURIComponent(String(url)).includes('?museumType')
         ? sparql([row('Q1', 'Tour de Belém', -9.2159, 38.6916)])
         : sparql([row('Q2', 'Musée Calouste-Gulbenkian', -9.1545, 38.7372)])
     );

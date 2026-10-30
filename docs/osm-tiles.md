@@ -102,7 +102,10 @@ et Muséofile restent les sources et les tuiles n'en contiennent pas.
 
 Tags conservés, seulement s'ils existent, dans cet ordre : `cuisine`,
 `opening_hours`, `wheelchair`, `diet:vegetarian`, `diet:vegan`, `phone`,
-`website`, `wikidata`, `heritage`, `description`. `contact:phone` et
+`website`, `wikidata`, `heritage`, `tourism`, `description`. `tourism`
+(`attraction`, `museum`) et `heritage` avec `wikidata` sont des signaux de
+notoriété (`domain/scoring/notoriety.js`), pris en compte à partir de
+l'import qui suit leur ajout. `contact:phone` et
 `contact:website` sont ramenés à `phone` et `website` (la valeur directe
 l'emporte si les deux existent). `description` est lue par
 `osmElementToPlace` : sans elle, le `Place` issu des tuiles différerait de

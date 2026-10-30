@@ -38,8 +38,13 @@ describe('collectPlaces', () => {
 
   const ctx = () => ({ rules: OVERPASS_RULES, lang: 'fr', cache: memoryCache() });
 
+  // Wikidata (lieux connus) : aucune ligne ; Overpass : la réponse donnée.
+  const route = (overpass) => async (url) =>
+    String(url).startsWith('https://query.wikidata.org/') ? new Response(JSON.stringify({ results: { bindings: [] } })) : overpass();
+  const overpassCalls = () => fetchMock.mock.calls.filter(([url]) => !String(url).startsWith('https://query.wikidata.org/'));
+
   it('fusionne les sources, dédoublonne et indique l\'état de chacune', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ elements: [osmDuplicate, restaurant] })));
+    fetchMock.mockImplementation(route(() => new Response(JSON.stringify({ elements: [osmDuplicate, restaurant] }))));
     const result = await collectPlaces(provider(), POINT, 20, { lunch: 'both' }, ctx());
     expect(result.places.map((p) => p.id)).toEqual(['merimee:PA1', 'osm:node/1']);
     expect(result.appellations).toEqual([{ name: 'Beaujolais', local: true }]);
@@ -47,30 +52,31 @@ describe('collectPlaces', () => {
       { name: 'monuments', status: 'ok' },
       { name: 'museums', status: 'cache' },
       { name: 'osm', status: 'ok', durationMs: expect.any(Number), source: 'overpass' },
-      { name: 'terroir', status: 'ok' }
+      { name: 'terroir', status: 'ok' },
+      { name: 'notable', status: 'ok', durationMs: expect.any(Number), query: expect.stringContaining('wikibase:sitelinks') }
     ]);
   });
 
   it('un 429 d\'Overpass : une seule requête, les autres sources répondent', async () => {
-    fetchMock.mockResolvedValue(new Response('Too Many Requests', { status: 429 }));
+    fetchMock.mockImplementation(route(() => new Response('Too Many Requests', { status: 429 })));
     const result = await collectPlaces(provider(), POINT, 20, { lunch: 'both' }, ctx());
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(overpassCalls()).toHaveLength(1);
     expect(result.sources).toContainEqual({ name: 'osm', status: 'failed', message: 'upstream 429', durationMs: expect.any(Number), source: 'overpass' });
     expect(result.places.map((p) => p.id)).toEqual(['merimee:PA1']);
     expect(result.appellations).toHaveLength(1);
   });
 
   it('répond même si une source du fournisseur échoue', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ elements: [restaurant] })));
+    fetchMock.mockImplementation(route(() => new Response(JSON.stringify({ elements: [restaurant] }))));
     const result = await collectPlaces(provider({ heritageFails: true }), POINT, 20, { lunch: 'both' }, ctx());
     expect(result.sources[0]).toEqual({ name: 'monuments', status: 'failed', message: 'upstream 500' });
     expect(result.places.map((p) => p.id)).toEqual(['osm:node/1']);
   });
 
   it('ne cherche pas de restaurants quand le déjeuner se fait au marché', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ elements: [] })));
+    fetchMock.mockImplementation(route(() => new Response(JSON.stringify({ elements: [] }))));
     await collectPlaces(provider(), POINT, 20, { lunch: 'market' }, ctx());
-    expect(new URLSearchParams(fetchMock.mock.calls[0][1].body).get('data')).not.toContain('restaurant');
+    expect(new URLSearchParams(overpassCalls()[0][1].body).get('data')).not.toContain('restaurant');
   });
 
   it('cherche les restaurants pour le dîner, même avec un déjeuner au marché', async () => {

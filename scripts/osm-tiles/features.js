@@ -1,6 +1,6 @@
 import { nameVariants } from '../../supabase/functions/_shared/domain/displayName.js';
 import { roundCoord } from '../../supabase/functions/_shared/domain/geo.js';
-import { osmCategory } from '../../supabase/functions/_shared/services/osmMapping.js';
+import { isClosedOsm, osmCategory } from '../../supabase/functions/_shared/services/osmMapping.js';
 import { pointOnSurface } from './pointOnSurface.js';
 
 /**
@@ -16,10 +16,11 @@ export const UNNAMED_CATEGORIES = ['small_heritage', 'viewpoint'];
 
 /**
  * Tags conservés, dans cet ordre (sortie déterministe). description sert au
- * Place ; elle figurait dans l'étude des volumes. Les variantes name:<langue>
+ * Place ; elle figurait dans l'étude des volumes. tourism (attraction,
+ * museum) est un signal de notoriété (scoring/notoriety.js). Les variantes name:<langue>
  * sont à part (champ names).
  */
-const KEPT_TAGS = ['cuisine', 'opening_hours', 'wheelchair', 'diet:vegetarian', 'diet:vegan', 'phone', 'website', 'wikidata', 'heritage', 'description'];
+const KEPT_TAGS = ['cuisine', 'opening_hours', 'wheelchair', 'diet:vegetarian', 'diet:vegan', 'phone', 'website', 'wikidata', 'heritage', 'tourism', 'description'];
 
 const isHeritageListed = (tags) => tags.heritage === '1' || tags.heritage === '2';
 
@@ -83,6 +84,8 @@ export function pickTags(tags) {
  */
 export function featureToEntry(feature, options) {
   const tags = feature.properties ?? {};
+  // Lieu fermé ou disparu (disused:*, abandoned:*, opening_hours=closed) : jamais dans les tuiles.
+  if (isClosedOsm(tags)) return null;
   const kind = classify(tags, options);
   if (!kind) return null;
   const id = osmId(feature.id ?? (tags['@type'] && `${tags['@type'][0]}${tags['@id']}`));

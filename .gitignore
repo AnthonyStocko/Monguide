@@ -12,3 +12,6 @@ supabase/.branches/
 
 # Pages publiques : configuration générée au déploiement (pages.yml)
 site/config.js
+
+# Séjours de référence (scripts/quality) : résultats régénérables
+scripts/quality/results/

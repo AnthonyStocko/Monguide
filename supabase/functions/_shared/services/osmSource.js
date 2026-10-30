@@ -105,10 +105,12 @@ export function osmInfo(rules, pointer) {
 /**
  * Forme des Place OSM, dans les clés de cache : 2 = name tel quel et variantes
  * dans names (displayName.js) ; 3 = cuisine régionale propre au pays du lieu
- * (regionalCuisinesFor). Les réponses en cache d'un format antérieur ne sont
+ * (regionalCuisinesFor) ; 4 = signaux de notoriété (place.signals,
+ * osmMapping.js) ; 5 = langue du nom (nameLang) et lieux fermés
+ * (signals.osmClosed). Les réponses en cache d'un format antérieur ne sont
  * plus servies.
  */
-const PLACE_FORMAT = 3;
+const PLACE_FORMAT = 5;
 
 /**
  * Lieux OSM (restaurants, marchés, nature, petit patrimoine) autour du point.

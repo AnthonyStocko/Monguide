@@ -60,6 +60,16 @@ describe('applyReview : cas précis', () => {
     expect(r.days).toEqual(t.days);
   });
 
+  it('incontournable (badge must_see) : jamais remplacé ; un décalage reste possible', () => {
+    const t = sample();
+    t.days[0].steps[0] = { ...t.days[0].steps[0], badges: ['must_see'] };
+    const replaced = run(t, ok([{ op: 'replace', step: 'culture', candidate: 'museum2', reason: 'x' }]));
+    expect(replaced.review.rejectedOps.map((o) => o.rejection)).toEqual(['must_see']);
+    expect(replaced.days).toEqual(t.days);
+    const shifted = run(t, ok([{ op: 'shift', step: 'culture', newStart: '09:45', reason: 'Plus tôt.' }]));
+    expect(shifted.review.appliedOps.map((o) => o.op)).toEqual(['shift']);
+  });
+
   it('identifiant inventé (étape ou candidat) : rejeté', () => {
     const r = run(sample(), ok([
       { op: 'replace', step: 'tour-eiffel', candidate: 'noon', reason: 'x' },

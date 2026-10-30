@@ -17,11 +17,13 @@ function mealsOf(countryCode, rules) {
  *    repas et préférences ;
  *  - chaque jour : date, pluie par demi-journée, étapes (alias, type,
  *    catégorie, nom public du lieu, plage horaire, intérieur/extérieur,
- *    trajet depuis l'étape précédente) ; une étape fixe (personnelle,
+ *    trajet depuis l'étape précédente, notoriété du lieu, incontournable,
+ *    coup d'œil) ; une étape fixe (personnelle,
  *    horaire choisi, terminée ou passée) n'a que sa plage horaire et
  *    locked: true ;
  *  - candidats (au plus rules.ai.maxCandidates) : alias, catégorie, nom,
- *    intérieur/extérieur, distance au lieu d'ancrage de chaque jour, horaires ;
+ *    intérieur/extérieur, notoriété, distance au lieu d'ancrage de chaque
+ *    jour, horaires ;
  *  - « Vos envies » (texte libre), s'il existe.
  * JAMAIS : e-mail, hébergement (nom, adresse, coordonnées), titre, note ou
  * lieu d'une étape personnelle, coordonnées GPS, identifiants internes.
@@ -125,6 +127,9 @@ export function buildReviewRequest(trip, { language, wishes }, rules) {
         out.category = s.place.category;
         out.name = cleanText(displayName(s.place, language), NAME_MAX);
         out.indoor = s.place.indoor === true;
+        if (typeof s.place.notoriety === 'number') out.notoriety = s.place.notoriety;
+        if (s.badges?.includes('must_see')) out.mustSee = true;
+        if (s.badges?.includes('glance')) out.glance = true;
       } else out.free = true;
       if (s.travelFromPreviousMin > 0) out.travelMin = s.travelFromPreviousMin;
       return out;
@@ -142,6 +147,7 @@ export function buildReviewRequest(trip, { language, wishes }, rules) {
       category: p.category,
       name: cleanText(displayName(p, language), NAME_MAX),
       indoor: p.indoor === true,
+      ...(typeof p.notoriety === 'number' ? { notoriety: p.notoriety } : {}),
       // Distance (km) au lieu d'ancrage de chaque jour, dans l'ordre des jours.
       km: anchors.map((a) => round1(distanceKm(a, p)))
     };

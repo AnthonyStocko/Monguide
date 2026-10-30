@@ -320,7 +320,39 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
     `terroir` (liste vide : eAmbrosia n'indique pas les régions).
     Tous les pays : `osm`, tuiles statiques par défaut (`docs/osm-tiles.md`),
     Overpass avec `osm.source = "overpass"` ; le repli OpenStreetMap du
-    patrimoine suit le même réglage (aucun repli avec `"off"`).
+    patrimoine suit le même réglage (aucun repli avec `"off"`) ; `notable`
+    (lieux les plus connus de Wikidata : au moins
+    `notoriety.notableQuery.minSitelinks` articles Wikipédia, édifices,
+    œuvres, musées, parcs et attractions, sans communes ni organisations).
+  - Notoriété (`domain/scoring/notoriety.js`) : chaque lieu reçoit
+    `notoriety` (0-100 : articles Wikipédia en échelle logarithmique,
+    articles en français et dans la langue du pays, tags OSM
+    `tourism=attraction|museum` et `heritage` avec `wikidata`, patrimoine
+    mondial ou classement de premier rang), `sitelinks` quand ils sont
+    connus, `notable: true` au-delà de `notoriety.notableScore` (accepté
+    par le profil « équilibré » sans label officiel) et `glance: true` pour
+    un lieu vu en passant (statue, fontaine, façade célèbre : étape courte,
+    `durations.glance`). Les signaux viennent des requêtes Wikidata, ou
+    d'une requête groupée sur les identifiants des lieux Mérimée,
+    Muséofile et OSM (cache 7 jours, échec sans erreur).
+  - Lieux écartés (`domain/scoring/exclusions.js`, tous pays) : communes,
+    quartiers, gares, organisations ; libellés génériques d'inventaire
+    (« Maison traditionnelle », « Immeuble (Lyon) », « Jardin d'enfants
+    n°4 », « Rue du Lombard 30 - 32 ») et natures trop génériques
+    (bâtiment, maison, immeuble) sous `notoriety.exclusion.minSitelinks`
+    articles ; lieux non visitables (école, bureaux, logement, commerce,
+    hôtel) sauf très connus (coup d'œil) ; un seul élément par ensemble
+    (P361) ; lieux fermés ou disparus : date de fermeture ou de dissolution
+    passée (Wikidata P3999, P576), état d'usage fermé, désaffecté ou démoli
+    (P5817), tags OSM `disused:*`, `abandoned:*`, `opening_hours=closed` ;
+    élément dont tous les articles Wikipédia sont des redirections (lieu
+    fusionné ou disparu). Dédoublonnage : le lieu le plus connu est gardé.
+  - Noms Wikidata : premier libellé dans la langue de l'interface, puis en
+    anglais, puis dans les langues du pays (`nameLang`) ; les autres
+    libellés (français, anglais, langues du pays) dans `names`.
+    `nameLang` (facultatif, aussi pour OSM quand il est connu) : avec un
+    nom dans une autre langue que celle de l'interface et que l'anglais,
+    l'application affiche `names.en` s'il existe.
   - Lieux OSM sans nom : gardés seulement pour `osm.unnamedTypes` (points
     de vue, lavoirs, ruines), avec un nom générique traduit (« Point de
     vue ») et `unnamed: true` (score plus bas à la génération).
@@ -477,7 +509,20 @@ rien n'est modifié.
     mi-journée). Étapes avec `start`/`end`
     ("HH:mm", fuseau du séjour), `travelFromPreviousMin`, `badges`
     (`weather_adapted`, `hours_unconfirmed`, `info_missing`,
-    `free_time`), `specialties` (appellations, pause au marché) ; dîner :
+    `free_time`, `must_see` : incontournable, `glance` : coup d'œil),
+    `specialties` (appellations, pause au marché) ; musées et monuments
+    sous le seuil de notoriété de la destination (`notoriety.threshold` :
+    percentile local, minimum absolu, abaissé dans une petite ville) jamais
+    proposés ; incontournables (`notoriety.mustSee` : 5 à 10 lieux les plus
+    connus près du logement) placés d'abord, répartis sur les jours selon
+    leurs horaires et la météo, jamais remplacés par l'arbitrage météo ni
+    par la relecture de l'IA ; visites incontournables en plus et coups
+    d'œil insérés après une étape, sans retarder le gabarit de plus de
+    `notoriety.mustSee.delayToleranceMin` ; lieu fermé à toutes les dates
+    du séjour (horaires connus) écarté ; musée aux horaires inconnus jamais
+    placé un jour de fermeture habituel du pays
+    (`config/museumClosingDays.js` : lundi, lundi et mardi en France) et
+    badge `hours_unconfirmed` (« Horaires à vérifier ») ; dîner :
     restaurant ouvert sur toute la plage du dîner (90 min), jamais déjà
     proposé dans le séjour, près de la dernière étape et de l'hébergement du
     soir ; sans lieu = « Soirée libre » (`dinner: "free"`, sans badge ; ou
@@ -866,3 +911,5 @@ envoi, abonnements après 90 jours sans nouvelles de l'appareil.
 | 1 | 2026-10-16 | Ajouts compatibles : `trip_changes` en direct (Realtime), `step_ids` et `summary_count` ; `last_seen_version` modifiable par chacun ; `push-subscribe` : `tripChanges`. |
 | 1 | 2026-10-16 | Ajouts compatibles : `config.minSharedSchemaVersion` (clé `min_shared_schema_version`) ; `trip-apply-ops` : `schemaVersion`, `409 shared_schema_outdated`, `rejected[].by`. |
 | 1 | 2026-10-16 | Ajouts compatibles : limite `invites` (60 appels par heure) pour les fonctions d'invitation ; invitations effacées après usage (`purge_trip_invites`). |
+| 1 | 2026-10-30 | Ajouts compatibles : `Place.notoriety`, `sitelinks`, `notable`, `glance` ; source `notable` (`places`, `generate`) ; badges d'étape `must_see` et `glance` ; lieux écartés par les règles de `domain/scoring/exclusions.js`. |
+| 1 | 2026-10-30 | Ajouts compatibles : `Place.nameLang` ; libellés Wikidata en français, anglais et langues du pays dans `names` ; lieux fermés écartés ; badge `hours_unconfirmed` sur les musées aux horaires inconnus. |

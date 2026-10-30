@@ -69,7 +69,7 @@ export async function reviewTrip(trip, { rules, language, consent, wishes, clien
   const started = clock();
   let reviewed;
   try {
-    const system = await loadPrompt('review', { maxOps: rules.ai.maxOpsPerTrip });
+    const system = await loadPrompt('review', { maxOps: rules.ai.maxOpsPerTrip, notableScore: rules.notoriety.notableScore });
     const response = await completeFn(
       { system, user: request.text, jsonSchema: schema, timeoutMs: rules.ai.timeoutMs, language },
       { rules, client: await client(), usageStore }

@@ -40,15 +40,16 @@ const wikidataOf = (p) => p.wikidata ?? (p.id.startsWith('wikidata:') ? p.id.sli
  *  3. nom similaire (similarNames) à moins de `maxDistanceM` mètres ; le
  *     doublon écarté transmet alors son identifiant Wikidata au lieu gardé
  *     qui n'en a pas (copie, l'entrée n'est pas modifiée).
- * Les lieux certifiés sont gardés en priorité ; l'ordre d'origine est
- * conservé sinon.
- * @template {{ id: string, name: string, lat: number, lon: number, certified: boolean, wikidata?: string }} P
+ * Le lieu le plus connu (notoriety, scoring/notoriety.js) est gardé en
+ * priorité, puis le lieu certifié ; l'ordre d'origine est conservé sinon
+ * (« Manneken-Pis » l'emporte sur le « Manneken Pis Café » voisin).
+ * @template {{ id: string, name: string, lat: number, lon: number, certified: boolean, wikidata?: string, notoriety?: number }} P
  * @param {P[]} places
  * @param {number} maxDistanceM rules.places.dedupDistanceM
  * @returns {P[]}
  */
 export function dedupePlaces(places, maxDistanceM) {
-  const ordered = [...places].sort((a, b) => Number(b.certified) - Number(a.certified));
+  const ordered = [...places].sort((a, b) => (b.notoriety ?? 0) - (a.notoriety ?? 0) || Number(b.certified) - Number(a.certified));
   /** @type {P[]} */
   const kept = [];
   /** Lieu d'origine de chaque entrée de kept. */
