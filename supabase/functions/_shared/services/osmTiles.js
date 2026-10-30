@@ -255,6 +255,7 @@ function categoryTags(category, subcategory) {
     case 'restaurant':
       return { amenity: 'restaurant' };
     case 'market':
+      if (subcategory === 'food_court') return { amenity: 'food_court' };
       return subcategory === 'covered_market' ? { amenity: 'marketplace', covered: 'yes' } : { amenity: 'marketplace' };
     case 'farm':
       return { shop: 'farm' };

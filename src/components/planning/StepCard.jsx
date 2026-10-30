@@ -43,7 +43,9 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
   const rain = day.weatherAvailable && day.weather ? averageRain(day.weather, step.start, step.end) : null;
   const outdoor = place ? place.indoor !== true : personal && step.indoor === false;
   const status = step.status ?? 'planned';
-  const title = personal ? step.title : place ? placeName(place) : t(freeLabelKey(step));
+  // Temps libre voulu, avec son lieu (hébergement ou place animée) : « Temps libre — lieu ».
+  const freeAt = place && step.badges.includes('free_time');
+  const title = personal ? step.title : freeAt ? t('generation.freeTimeAt', { place: placeName(place) }) : place ? placeName(place) : t(freeLabelKey(step));
   // Toujours une image : photo du lieu, sinon illustration de sa catégorie (ou du type d'étape).
   // Crédit écrit en clair sous la carte (maquette), pas derrière un bouton.
   const photo = usePhoto({ image: personal ? null : place?.image, illustration: illustrationForStep(step), alt: t('image.alt', { name: title }), className: 'size-20 shrink-0 rounded-xl', credit: 'inline' });

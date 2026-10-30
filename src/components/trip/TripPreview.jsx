@@ -79,7 +79,9 @@ export default function TripPreview({ trip, warnings }) {
                   </span>
                   <span className="text-ink-muted">{t(`generation.stepTypes.${step.type}`)}</span>
                 </p>
-                <p className="font-medium">{step.place ? placeName(step.place) : t(freeLabelKey(step))}</p>
+                <p className="font-medium">
+                  {step.place && step.badges.includes('free_time') ? t('generation.freeTimeAt', { place: placeName(step.place) }) : step.place ? placeName(step.place) : t(freeLabelKey(step))}
+                </p>
                 {step.specialties?.length > 0 && <p className="text-ink-muted">{t('generation.specialties', { list: step.specialties.join(', ') })}</p>}
                 {step.badges.filter((b) => b !== 'free_time').length > 0 && (
                   <span className="mt-1 flex flex-wrap gap-2">

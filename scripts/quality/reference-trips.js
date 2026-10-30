@@ -384,6 +384,10 @@ function markdown(results, meta) {
         `- coups d'œil : ${c.glances.join(', ') || 'aucun'}`,
         ...(c.expected ? Object.entries(c.expected).map(([k, v]) => `- ${k} : ${v}`) : []),
         ...(r.excluded ? [`- lieux écartés : ${r.excluded.count} (${Object.entries(r.excluded.reasons).map(([k, v]) => `${k} ${v}`).join(', ')})`] : []),
+        ...c.days.map(
+          (x) =>
+            `- ${x.date} : coucher ${x.sunset}, déjeuner ${x.lunch}, dîner ${x.dinner} (${x.dinnerStart}), temps morts ${x.deadMin} min, visites ${x.visits}, extérieur après coucher − 30 : ${x.lateOutdoor.join(', ') || 'aucune'}, soirée : ${x.eveningActs.join(', ') || 'aucune'}`
+        ),
         ''
       );
     }
@@ -454,6 +458,18 @@ function checks(result, baseline) {
   if (baseline) out.visitsBefore = visits(baseline.trip);
   out.mustSee = steps.filter((s) => s.badges.includes('must_see')).map((s) => displayName(s.place, LANG));
   out.glances = steps.filter((s) => s.badges.includes('glance')).map((s) => displayName(s.place, LANG));
+  // Phase C : nuit, soirée, temps morts, repas.
+  out.days = result.trip.days.map((day, i) => {
+    const sunset = day.sunset ? toMinutes(day.sunset) : null;
+    const meals = (type) => day.steps.filter((s) => s.type === type && s.place).length;
+    const visits = day.steps.filter((s) => s.place && !['lunch', 'dinner'].includes(s.type));
+    const outdoor = (s) => s.place.indoor !== true && !['museum', 'restaurant'].includes(s.place.category) && !s.place.nightSight;
+    const lateOutdoor = sunset === null ? [] : visits.filter((s) => outdoor(s) && toMinutes(s.end) > sunset - 30).map((s) => `${displayName(s.place, LANG)} ${s.start}-${s.end}`);
+    const eveningActs = sunset === null ? [] : visits.filter((s) => toMinutes(s.start) >= sunset && !outdoor(s)).map((s) => `${displayName(s.place, LANG)} ${s.start}`);
+    const dead = result.days[i].deadTimes.reduce((n, g) => n + g.minutes, 0);
+    const lastOutdoorEnd = visits.filter(outdoor).map((s) => s.end).sort().at(-1) ?? null;
+    return { date: day.date, sunset: day.sunset ?? null, lunch: meals('lunch'), dinner: meals('dinner'), dinnerStart: day.steps.find((s) => s.type === 'dinner')?.start ?? null, deadMin: dead, lateOutdoor, eveningActs, lastOutdoorEnd, visits: visits.length };
+  });
   if (result.id === 'bruxelles') {
     out.expected = Object.fromEntries(
       Object.entries(BRUSSELS_EXPECTED).map(([qid, name]) => {

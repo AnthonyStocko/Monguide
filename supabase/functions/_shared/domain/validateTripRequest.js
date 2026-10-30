@@ -1,6 +1,6 @@
 import { countryInfo } from './config/countries.js';
 import { daysBetween, isValidDate, isValidTimeZone } from './dates.js';
-import { DINNER_OPTIONS, FUEL_TYPES, LUNCH_OPTIONS, PROFILES, TRAVEL_MODES } from './model.js';
+import { DINNER_OPTIONS, FUEL_TYPES, LUNCH_OPTIONS, PACES, PROFILES, TRAVEL_MODES } from './model.js';
 import { tripNights } from './tripDraft.js';
 import { validateWishes } from './wishes.js';
 
@@ -34,6 +34,8 @@ export function validateTripRequest(trip, rules) {
   if (trip.mode === 'car' && !FUEL_TYPES.includes(trip.fuelType)) errors.push('fuelType');
   if (trip.fuelConsumption !== undefined && (!isNumber(trip.fuelConsumption) || trip.fuelConsumption <= 0 || trip.fuelConsumption > 30)) errors.push('fuelConsumption');
   if (!PROFILES.includes(trip.profile)) errors.push('profile');
+  // Rythme facultatif : absent (application antérieure) = équilibré.
+  if (trip.pace !== undefined && !PACES.includes(trip.pace)) errors.push('pace');
   if (!LUNCH_OPTIONS.includes(trip.lunch)) errors.push('lunch');
   // Dîner facultatif : absent dans la demande d'une application antérieure (aucun dîner généré).
   if (trip.dinner !== undefined && !DINNER_OPTIONS.includes(trip.dinner)) errors.push('dinner');

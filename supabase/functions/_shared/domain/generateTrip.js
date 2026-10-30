@@ -1,4 +1,8 @@
-import { allowedByProfile, durationsFor, fitsSlot, isMarket } from './activity.js';
+import { activityType, allowedByProfile, durationsFor, fitsSlot, isMarket } from './activity.js';
+import { compactDay } from './compactDay.js';
+import { CHRISTMAS_SEASON } from './config/nightSights.js';
+import { PACES } from './model.js';
+import { sunTimes } from './sun.js';
 import { openOn, planMustSees, selectMustSees } from './mustSee.js';
 import { notorietyThreshold } from './scoring/notoriety.js';
 import { eachDate } from './dates.js';
@@ -13,7 +17,7 @@ import { fromMinutes, toMinutes } from './time.js';
 import { detourKm, scorePlace } from './scorePlace.js';
 import { effectiveRadiusKm, travelMinutes } from './travel.js';
 import { includesRestaurants } from './tripDraft.js';
-import { arbitrateWeather, dayWeather } from './weatherArbitration.js';
+import { arbitrateWeather, averageRain, dayWeather } from './weatherArbitration.js';
 import { computeCarbon, computeFuelCost } from './carbon.js';
 import { dayId } from './stableId.js';
 
@@ -33,7 +37,16 @@ import { dayId } from './stableId.js';
  * toutes les dates du séjour d'après ses horaires connus est écarté ; un musée
  * aux horaires inconnus n'est jamais proposé un jour de fermeture habituel du
  * pays (config/museumClosingDays.js) et porte le badge hours_unconfirmed
- * (« Horaires à vérifier »). Aucun lieu n'est répété ; un créneau sans candidat devient
+ * (« Horaires à vérifier »). Tombée de la nuit (sun.js) : visites en extérieur
+ * finies rules.day.outdoorBeforeSunsetMin avant le coucher du soleil, visite
+ * du soir couverte ou à voir de nuit. Les jours alternent matinée culturelle
+ * et matinée en extérieur (météo et coucher du soleil l'emportent). Chaque
+ * jour a un déjeuner et un dîner au restaurant quand il en existe d'ouverts
+ * (un marché ne remplace le déjeuner que s'il est place.mealCapable). Puis
+ * compaction (compactDay.js) : aucun écart de plus de rules.day.maxGapMin,
+ * temps libre seulement s'il est voulu (rythme tranquille, « Vos envies »).
+ * Durées : scoring/duration.js, rythme du séjour (Trip.pace).
+ * Aucun lieu n'est répété ; un créneau sans candidat devient
  * un "temps libre" (badge free_time) plutôt qu'un lieu inventé. Dîner
  * "libre" : créneau sans lieu ni badge ("Soirée libre") ; trip.dinner absent
  * (demande d'une application antérieure) : aucun dîner.
@@ -56,6 +69,39 @@ export function dayLodgings(lodgings, dates, i) {
   return { start, end };
 }
 
+/**
+ * Lieu à voir de nuit ce jour-là (place.nightSight) : toujours pour un lieu
+ * illuminé ou couvert connu ; marché de Noël pendant la saison seulement
+ * (config/nightSights.js).
+ * @param {{ nightSight?: string }} place
+ * @param {string} date "YYYY-MM-DD"
+ */
+export function nightSightOn(place, date) {
+  if (place.nightSight === 'always') return true;
+  if (place.nightSight !== 'christmas') return false;
+  const day = date.slice(5);
+  const { from, to } = CHRISTMAS_SEASON;
+  return from <= to ? day >= from && day <= to : day >= from || day <= to;
+}
+
+/** Hébergement vu comme le lieu d'un temps libre ; null sans hébergement. */
+function lodgingPlace(lodging) {
+  if (!lodging) return null;
+  return { id: `lodging:${lodging.id}`, name: lodging.name ?? lodging.address, category: 'personal', source: 'lodging', lat: lodging.lat, lon: lodging.lon, certified: false, indoor: null };
+}
+
+/**
+ * Temps libre volontaire (rythme tranquille, ou demandé dans « Vos envies ») :
+ * étape de détente avec son lieu (hébergement ou place animée) et le badge
+ * free_time ; sans lieu, aucun trajet n'est compté vers elle.
+ */
+function freeTimeStep(place, makeId) {
+  return { id: makeId(), type: 'relax', slotStart: '00:00', indoor: null, status: 'planned', customTime: false, locked: false, badges: ['free_time'], ...(place ? { place } : {}) };
+}
+
+/** Envie de temps libre exprimée dans « Vos envies » (mots-clés, français ou anglais). */
+const FREE_TIME_WISH = /(temps libre|quartier libre|se reposer|repos|tranquille|free time|rest\b|relax)/i;
+
 /** Type d'une étape insérée : plein air si le lieu convient au créneau de l'après-midi, sinon culture. */
 const followType = (place) => (place.indoor !== true && fitsSlot(place, 'outdoor') ? 'outdoor' : 'culture');
 
@@ -66,12 +112,12 @@ const followType = (place) => (place.indoor !== true && fitsSlot(place, 'outdoor
  * retenue que si ses trajets ne dépassent pas rules.travel.maxTravelMin, si
  * aucune étape n'est abandonnée, si aucune étape du gabarit
  * ne commence plus de rules.notoriety.mustSee.delayToleranceMin après son
- * heure sans insertion, et si le lieu est ouvert (ou ses horaires inconnus)
- * pendant l'étape.
+ * heure sans insertion, et si route.fits accepte le lieu pendant l'étape
+ * (horaires, coucher du soleil).
  * @param {object[]} raw étapes du gabarit (slotStart)
- * @param {{ from: object | null, to: object | null, mode: string, date: string, countryCode: string }} route
+ * @param {{ from: object | null, to: object | null, mode: string, fits: (place: object, start: number, end: number) => boolean }} route
  */
-function insertFollowSteps(raw, { from, to, mode, date, countryCode }, rules) {
+function insertFollowSteps(raw, { from, to, mode, fits }, rules) {
   let steps = raw;
   const followIds = new Set();
   const base = new Map(scheduleDay(raw, { from, to, mode }, rules).steps.map((s) => [s.id, toMinutes(s.start)]));
@@ -94,8 +140,7 @@ function insertFollowSteps(raw, { from, to, mode, date, countryCode }, rules) {
       if (schedule.steps.length !== trial.length) continue;
       if (schedule.steps.some((s) => base.has(s.id) && toMinutes(s.start) > base.get(s.id) + tolerance)) continue;
       const mine = schedule.steps.find((s) => s.id === newStep.id);
-      const state = openingState(placeOpeningHours(place), { date, from: mine.start, to: mine.end, lat: place.lat, lon: place.lon, countryCode });
-      if (state === 'closed' || state === 'partial') continue;
+      if (!fits(place, toMinutes(mine.start), toMinutes(mine.end))) continue;
       steps = trial;
       followIds.add(newStep.id);
       return true;
@@ -188,7 +233,11 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
   const heritageScores = all.filter((p) => isHeritage(p) && allowedByProfile(p, trip.profile)).map((p) => p.notoriety ?? 0);
   const { threshold } = notorietyThreshold(heritageScores, dates.length * rules.notoriety.threshold.minVisitsPerDay, rules);
   const known = (p) => !isHeritage(p) || (p.notoriety ?? 0) >= threshold;
-  const visits = all.filter((p) => allowedByProfile(p, trip.profile) && !isMarket(p) && known(p));
+  // Marché de Noël : seulement si le séjour tombe pendant la saison.
+  const inSeason = (p) => p.nightSight !== 'christmas' || dates.some((d) => nightSightOn(p, d));
+  const visits = all.filter((p) => allowedByProfile(p, trip.profile) && !isMarket(p) && known(p) && inSeason(p));
+  const pace = PACES.includes(trip.pace) ? trip.pace : 'balanced';
+  const wantsFreeTime = pace === 'relaxed' || FREE_TIME_WISH.test(trip.params?.wishes ?? '');
   const markets = all.filter(isMarket);
   const restaurants = all.filter((p) => p.category === 'restaurant');
   const indoor = all.filter((p) => p.indoor === true && isHeritage(p) && !p.glance && allowedByProfile(p, trip.profile) && known(p));
@@ -222,11 +271,12 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
   };
   const lunchSlot = meals.lunch.window;
   const dinnerSlot = dinnerWindow(slots.dinner, rules);
-  // Durée du déjeuner au restaurant propre au pays (horaires de la journée).
-  const dayRules =
-    meals.lunch.durationMin === rules.durations.restaurant.recommendedMin
-      ? rules
-      : { ...rules, durations: { ...rules.durations, restaurant: { ...rules.durations.restaurant, recommendedMin: meals.lunch.durationMin } } };
+  // Durée du déjeuner au restaurant propre au pays, et rythme du séjour (durées des visites).
+  const dayRules = {
+    ...rules,
+    tripPace: pace,
+    durations: { ...rules.durations, restaurant: { ...rules.durations.restaurant, recommendedMin: meals.lunch.durationMin } }
+  };
 
   const days = [];
   const legsKmByDay = [];
@@ -235,6 +285,32 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
   dates.forEach((date, dayIndex) => {
     const { start: startLodging, end: endLodging } = dayLodgings(trip.lodgings, dates, dayIndex);
     const transition = startLodging && endLodging && startLodging.id !== endLodging.id;
+
+    // Tombée de la nuit : visites en extérieur finies avant outdoorEnd ; après le coucher du soleil,
+    // seulement des lieux couverts ou à voir de nuit.
+    const sun = sunTimes(date, center, trip.timezone);
+    const sunset = sun.sunset ? toMinutes(sun.sunset) : 24 * 60;
+    const outdoorEnd = sunset - rules.day.outdoorBeforeSunsetMin;
+    const weather = dayWeather(weatherDays.find((w) => w.date === date));
+    const nightOk = (p) => p.indoor === true || nightSightOn(p, date);
+    const outdoorish = (p) => p.indoor !== true && !nightSightOn(p, date) && !['restaurant', 'museum'].includes(p.category);
+    /** Lieu possible de start à end (minutes) : coucher du soleil, horaires connus, jours de fermeture habituels. */
+    const rainy = (start, end) => {
+      if (!weather) return false;
+      const rain = averageRain(weather, fromMinutes(start), fromMinutes(Math.min(end, 24 * 60 - 1)));
+      return rain !== null && rain > rules.weather.rainThresholdPct;
+    };
+    const fits = (p, start, end) => {
+      if (outdoorish(p) && end > outdoorEnd) return false;
+      if (start >= sunset && !nightOk(p)) return false;
+      const state = openingState(placeOpeningHours(p), { date, from: fromMinutes(start), to: fromMinutes(Math.min(end, 24 * 60 - 1)), lat: p.lat, lon: p.lon, countryCode });
+      return state === 'open' || (state === 'unknown' && !usuallyClosed(p, date, countryCode));
+    };
+    // Visite ajoutée par la compaction : jamais en plein air sous une pluie annoncée (les créneaux du
+    // gabarit, eux, sont adaptés ensuite par l'arbitrage météo).
+    const fitsFiller = (p, start, end) => fits(p, start, end) && !(outdoorish(p) && rainy(start, end));
+    // Ouvert (et possible) sur tout le créneau commençant à time, pour sa durée conseillée.
+    const openAt = (time) => (p) => fits(p, toMinutes(time), toMinutes(time) + durationsFor(p, dayRules).recommendedMin);
 
     // Proximité : autour de l'hébergement (ou du lieu d'ancrage), ou le long du trajet un jour de transition.
     let anchor = startLodging ?? null;
@@ -246,13 +322,6 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
         .filter((p) => !used.has(p.id) && !reserved.has(p.id) && !p.glance && reachable(from, p))
         .map((p) => ({ p, s: score(p) }))
         .sort((a, b) => b.s - a.s)[0]?.p ?? null;
-    // Horaires connus : ouvert sur tout le créneau (heure du gabarit + durée conseillée) ; inconnus : accepté.
-    const openFor = (slot) => (p) => {
-      const from = slots[slot];
-      const to = fromMinutes(toMinutes(from) + durationsFor(p, dayRules).recommendedMin);
-      const state = openingState(placeOpeningHours(p), { date, from, to, lat: p.lat, lon: p.lon, countryCode });
-      return state === 'open' || (state === 'unknown' && !usuallyClosed(p, date, countryCode));
-    };
     const take = (p) => {
       if (!p) return null;
       used.add(p.id);
@@ -260,58 +329,70 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
       return p;
     };
 
+    // Gabarit du jour : A = matinée culturelle, après-midi en extérieur ; B = l'inverse. Les jours
+    // alternent ; la météo l'emporte (plein air dans la demi-journée sèche), et un après-midi trop
+    // court avant la nuit impose B.
+    let pattern = dayIndex % 2 === 0 ? 'A' : 'B';
+    if (weather) {
+      const morningRain = averageRain(weather, '09:00', '12:00');
+      const afternoonRain = averageRain(weather, '14:00', '17:00');
+      const wet = (r) => r !== null && r > rules.weather.rainThresholdPct;
+      if (wet(afternoonRain) && !wet(morningRain)) pattern = 'B';
+      else if (wet(morningRain) && !wet(afternoonRain)) pattern = 'A';
+    }
+    if (outdoorEnd - toMinutes(slots.outdoor) < 60) pattern = 'B';
+    const morningKind = pattern === 'A' ? 'culture' : 'outdoor';
+    const afternoonKind = pattern === 'A' ? 'outdoor' : 'culture';
+    // Visite du soir : après la tombée de la nuit, un lieu couvert ou à voir de nuit.
+    const evening = toMinutes(slots.relax) >= outdoorEnd;
+    const fitsKind = (p, kind) => (kind === 'relax' && evening ? !['restaurant', 'market', 'farm'].includes(p.category) && nightOk(p) : fitsSlot(p, kind));
+
     // Incontournables du jour d'abord, aux créneaux du gabarit qui leur conviennent.
     const mustVisits = plan.days[dayIndex].filter((p) => !p.glance);
-    const takeMust = (slot, from) => {
-      const i = mustVisits.findIndex((p) => fitsSlot(p, slot) && openFor(slot)(p) && reachable(from, p) && (slot !== 'relax' || dinnerReachable(p)));
+    const takeMust = (kind, time, from) => {
+      const i = mustVisits.findIndex((p) => fitsKind(p, kind) && openAt(time)(p) && reachable(from, p) && (kind !== 'relax' || dinnerReachable(p)));
       return i >= 0 ? take(mustVisits.splice(i, 1)[0]) : null;
     };
-    // Sans hébergement : le lieu d'ancrage est la meilleure visite culturelle autour de la destination.
+    // Sans hébergement : le lieu d'ancrage est la meilleure visite du matin autour de la destination.
     // Détente : avec un dîner au restaurant, un lieu d'où un restaurant est accessible.
-    const slotPool = (slot) => visits.filter((p) => fitsSlot(p, slot) && openFor(slot)(p) && (slot !== 'relax' || dinnerReachable(p)));
-    const culture = takeMust('culture', startLodging) ?? take(best(slotPool('culture'), startLodging));
-    if (!anchor) anchor = culture;
-    const outdoor = takeMust('outdoor', culture ?? startLodging) ?? take(best(slotPool('outdoor'), culture ?? startLodging));
-    const relax = takeMust('relax', outdoor ?? culture ?? startLodging) ?? take(best(slotPool('relax'), outdoor ?? culture ?? startLodging));
+    const slotPool = (kind, time) => visits.filter((p) => fitsKind(p, kind) && openAt(time)(p) && (kind !== 'relax' || dinnerReachable(p)));
+    const morning = takeMust(morningKind, slots.culture, startLodging) ?? take(best(slotPool(morningKind, slots.culture), startLodging));
+    if (!anchor) anchor = morning;
+    const afternoon = takeMust(afternoonKind, slots.outdoor, morning ?? startLodging) ?? take(best(slotPool(afternoonKind, slots.outdoor), morning ?? startLodging));
+    const relax = takeMust('relax', slots.relax, afternoon ?? morning ?? startLodging) ?? take(best(slotPool('relax', slots.relax), afternoon ?? morning ?? startLodging));
 
-    // Pause gourmande : marché ou restaurant (alternance en mode "Les deux"), près des étapes de 10h00 et 14h30.
-    const near = [culture, outdoor].filter(Boolean);
+    // Pause gourmande : restaurant, ou marché où l'on déjeune vraiment (food court, stands :
+    // place.mealCapable). Un autre marché devient une visite, et un vrai déjeuner est ajouté.
+    const near = [morning, afternoon].filter(Boolean);
     const kind = lunchKindForDay(trip.lunch, dayIndex);
+    const restaurantFor = (meal, window, nearPlaces, from) =>
+      pickRestaurant(restaurants, { date, countryCode, meal, window, near: nearPlaces, effectiveRadiusKm: radius, prefs: trip.prefs, usedIds: used, accept: (p) => reachable(from, p) }, rules) ??
+      // Repas garanti : à défaut, le meilleur restaurant ouvert autour de la destination, sans contrainte de trajet.
+      pickRestaurant(restaurants, { date, countryCode, meal, window, near: [anchor ?? center], effectiveRadiusKm: radius, prefs: trip.prefs, usedIds: used }, rules);
     const pickLunch = (k) => {
       if (k === 'restaurant') {
-        const r = pickRestaurant(
-          restaurants,
-          { date, countryCode, window: lunchSlot, near: near.length ? near : [anchor ?? center], effectiveRadiusKm: radius, prefs: trip.prefs, usedIds: used, accept: (p) => reachable(culture ?? startLodging, p) },
-          rules
-        );
+        const r = restaurantFor('lunch', lunchSlot, near.length ? near : [anchor ?? center], morning ?? startLodging);
         return r ? { place: take(r.place), badges: r.badges } : null;
       }
-      const m = take(best(markets.filter(openFor('lunch')), culture ?? startLodging));
+      const m = take(best(markets.filter((p) => p.mealCapable && openAt(slots.lunch)(p)), morning ?? startLodging));
       return m ? { place: m, badges: [], specialties } : null;
     };
-    const lunch = pickLunch(kind) ?? (trip.lunch === 'both' ? pickLunch(kind === 'restaurant' ? 'market' : 'restaurant') : null);
+    let marketVisit = null;
+    let lunch = pickLunch(kind);
+    if (!lunch && kind === 'market') {
+      // Aucun marché où déjeuner : le marché du jour devient une visite avant le repas.
+      marketVisit = best(markets.filter((p) => !p.mealCapable && openAt(slots.culture)(p)), morning ?? startLodging);
+      lunch = pickLunch('restaurant');
+    }
+    if (!lunch && trip.lunch === 'both') lunch = pickLunch(kind === 'restaurant' ? 'market' : 'restaurant');
 
     // Dîner : restaurant ouvert sur la plage du dîner, jamais déjà proposé (déjeuner compris),
-    // près de la dernière étape du jour et de l'hébergement du soir.
+    // près de la dernière étape du jour et de l'hébergement du soir ; garanti s'il en existe un ouvert.
     let dinner = null;
     if (trip.dinner === 'restaurant') {
-      const last = relax ?? outdoor ?? lunch?.place ?? culture;
+      const last = relax ?? afternoon ?? lunch?.place ?? morning;
       const dinnerNear = [last, endLodging].filter(Boolean);
-      const r = pickRestaurant(
-        restaurants,
-        {
-          date,
-          countryCode,
-          meal: 'dinner',
-          window: dinnerSlot,
-          near: dinnerNear.length ? dinnerNear : [anchor ?? center],
-          effectiveRadiusKm: radius,
-          prefs: trip.prefs,
-          usedIds: used,
-          accept: (p) => reachable(last ?? startLodging, p)
-        },
-        rules
-      );
+      const r = restaurantFor('dinner', dinnerSlot, dinnerNear.length ? dinnerNear : [anchor ?? center], last ?? startLodging);
       dinner = r ? { place: take(r.place), badges: r.badges } : null;
     }
 
@@ -322,8 +403,7 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
         if (reserved.has(place.id)) s.badges = [...s.badges, 'must_see'];
         // Musée aux horaires inconnus : « Horaires à vérifier ».
         if (place.category === 'museum' && !placeOpeningHours(place)) s.badges = [...s.badges, 'hours_unconfirmed'];
-      }
-      else {
+      } else {
         s.badges = ['free_time'];
         freeSlots += 1;
       }
@@ -333,9 +413,9 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
     const freeEvening = () => ({ id: makeId(), type: 'dinner', slotStart: slots.dinner, indoor: null, status: 'planned', customTime: false, locked: false, badges: [] });
     const lunchExtra = lunch ? { badges: lunch.badges, ...(lunch.specialties?.length ? { specialties: lunch.specialties } : {}) } : {};
     const raw = [
-      step('culture', slots.culture, culture),
+      step(morningKind, slots.culture, morning),
       step('lunch', slots.lunch, lunch?.place ?? null, lunchExtra),
-      step('outdoor', slots.outdoor, outdoor),
+      step(afternoonKind, slots.outdoor, afternoon),
       step('relax', slots.relax, relax)
     ];
     if (!lunch) raw[1].badges = ['free_time'];
@@ -344,13 +424,15 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
 
     const from = startLodging ? { lat: startLodging.lat, lon: startLodging.lon } : null;
     const to = endLodging ? { lat: endLodging.lat, lon: endLodging.lon } : null;
-    const route = { from, to, mode: trip.mode, date, countryCode };
+    const route = { from, to, mode: trip.mode, fits };
 
-    // Étapes insérées après une étape du gabarit : incontournables restants, leurs coups d'œil,
-    // puis d'autres coups d'œil proches du trajet. Un lieu qui ne trouve pas sa place est libéré.
+    // Étapes insérées après une étape du gabarit : marché visité, incontournables restants, leurs
+    // coups d'œil, puis d'autres coups d'œil proches du trajet. Un lieu qui ne trouve pas sa place est libéré.
     const inserted = insertFollowSteps(raw, route, dayRules);
+    if (marketVisit && inserted.add(step('culture', slots.culture, marketVisit), null)) take(marketVisit);
     for (const p of [...mustVisits, ...plan.days[dayIndex].filter((x) => x.glance)]) {
-      const ok = inserted.add(step(followType(p), slots.culture, p, p.glance ? { badges: ['glance'] } : {}), null);
+      // Coup d'œil incontournable : détour d'au plus deux fois celui d'un coup d'œil ordinaire.
+      const ok = inserted.add(step(followType(p), slots.culture, p, p.glance ? { badges: ['glance'] } : {}), p.glance ? 2 * rules.notoriety.glance.maxDetourMin : null);
       if (ok) take(p);
       else reserved.delete(p.id);
     }
@@ -364,31 +446,54 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
       }
     }
     const followIds = inserted.followIds;
+    const slotOf = new Map(inserted.steps.map((s) => [s.id, s.slotStart]));
     let schedule = scheduleDay(inserted.steps, { from, to, mode: trip.mode }, dayRules);
     // Étape abandonnée (commençant trop tard) : son lieu redevient disponible.
     const kept = new Set(schedule.steps.map((s) => s.id));
     for (const r of inserted.steps) if (!kept.has(r.id) && r.place) used.delete(r.place.id);
 
     const day = { id: dayId(trip.id, date), date, weatherAvailable: Boolean(weatherDays.find((w) => w.date === date)?.available), steps: schedule.steps };
-    const weather = dayWeather(weatherDays.find((w) => w.date === date));
     if (weather) day.weather = weather;
+    if (sun.sunset) day.sunset = sun.sunset;
     const holiday = holidays.find((h) => h.date === date && h.global);
     if (holiday) day.holiday = holiday.localName;
     if (startLodging) day.startLodgingId = startLodging.id;
     if (endLodging) day.endLodgingId = endLodging.id;
 
-    // Arbitrage météo, puis nouveaux horaires si des lieux ont changé.
-    // Lieux couverts de repli : ouverts aux heures du plein air et de la détente (horaires connus).
-    const arbitrated = arbitrateWeather(day, indoor.filter((p) => openFor('outdoor')(p) && openFor('relax')(p)), used, rules);
-    if (arbitrated.swapped) {
-      const rescheduled = scheduleDay(
-        arbitrated.steps.map((s) => ({ ...s, slotStart: slots[s.type], ...(followIds.has(s.id) ? { follow: true } : {}) })),
-        { from, to, mode: trip.mode },
-        dayRules
-      );
-      schedule = rescheduled;
-      day.steps = rescheduled.steps;
-    }
+    // Arbitrage météo. Lieux couverts de repli : ouverts aux heures de l'après-midi et du soir (horaires connus).
+    const arbitrated = arbitrateWeather(day, indoor.filter((p) => openAt(slots.outdoor)(p) && openAt(slots.relax)(p)), used, rules);
+
+    // Compaction : plus de trou de plus de rules.day.maxGapMin (visites ajoutées, visites allongées,
+    // étape suivante avancée ; temps libre seulement s'il est voulu).
+    // Temps libre voulu : près de l'hébergement du soir, sinon sur une place animée proche.
+    const square = wantsFreeTime && !(endLodging ?? startLodging) ? best(visits.filter((p) => activityType(p) === 'square' && fits(p, outdoorEnd - 60, outdoorEnd)), anchor) : null;
+    const freePlace = wantsFreeTime ? (lodgingPlace(endLodging ?? startLodging) ?? take(square)) : null;
+    const fillers = visits
+      .filter((p) => !used.has(p.id) && !reserved.has(p.id))
+      .map((p) => ({ p, s: score(p) }))
+      .sort((a, b) => b.s - a.s)
+      .slice(0, 60)
+      .map(({ p }) => p);
+    const freeTime = wantsFreeTime ? () => freeTimeStep(freePlace, makeId) : null;
+    const compacted = compactDay(
+      arbitrated.steps.map((s) => ({ ...s, slotStart: slotOf.get(s.id) ?? s.start, ...(followIds.has(s.id) ? { follow: true } : {}) })),
+      {
+        from,
+        to,
+        mode: trip.mode,
+        candidates: fillers,
+        fits: fitsFiller,
+        makeStep: (p) => step(followType(p), slots.culture, p, p.glance ? { badges: ['glance'] } : {}),
+        lunchFrom: lunchSlot.start,
+        // Dîner avancé d'au plus une demi-heure, jamais avant l'heure du pays.
+        dinnerFrom: fromMinutes(Math.max(toMinutes(meals.dinner.earliest), toMinutes(slots.dinner) - 30)),
+        freeTime
+      },
+      dayRules
+    );
+    for (const p of compacted.added) take(p);
+    schedule = scheduleDay(compacted.steps, { from, to, mode: trip.mode }, dayRules);
+    day.steps = schedule.steps;
     if (schedule.departure) day.departure = schedule.departure;
     if (schedule.returnTravelMin !== undefined) day.returnTravelMin = schedule.returnTravelMin;
     legsKmByDay.push(schedule.legsKm);

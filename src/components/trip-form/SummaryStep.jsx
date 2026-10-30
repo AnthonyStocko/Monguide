@@ -94,6 +94,7 @@ export default function SummaryStep({ draft, errors, goTo }) {
 
       <Section title={t('tripForm.steps.profile')} step="profile" onEdit={edit} error={err('profile')}>
         <p>{t(`profiles.${draft.profile}.label`)}</p>
+        <p>{t('tripForm.profile.paceSummary', { pace: t(`paces.${draft.pace ?? 'balanced'}.label`) })}</p>
         <p>{t('tripForm.summary.lunch', { value: t(`lunch.${draft.lunch}`) })}</p>
         <p>{t('tripForm.summary.dinner', { value: t(`dinner.${draft.dinner}`) })}</p>
         {draft.wishes?.trim() && <p>{t('tripForm.summary.wishes', { value: draft.wishes.trim() })}</p>}

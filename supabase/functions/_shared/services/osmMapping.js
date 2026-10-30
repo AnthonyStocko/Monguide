@@ -50,6 +50,8 @@ export const SMALL_HERITAGE_HISTORIC = ['wayside_cross', 'memorial', 'ruins'];
 export function osmCategory(tags) {
   if (tags.amenity === 'restaurant') return { category: 'restaurant', type: 'restaurant' };
   if (tags.amenity === 'marketplace') return { category: 'market', type: tags.covered === 'yes' ? 'covered market' : 'marketplace' };
+  // Food court : marché où l'on déjeune (Place.mealCapable).
+  if (tags.amenity === 'food_court') return { category: 'market', type: 'food_court' };
   if (tags.shop === 'farm') return { category: 'farm', type: 'farm' };
   if (tags.leisure === 'park') return { category: 'park', type: 'park' };
   if (tags.boundary === 'protected_area') return { category: 'nature', type: 'protected_area' };
@@ -139,6 +141,8 @@ function withCommonTags(place, tags, food) {
   if (tags.tourism === 'attraction' || tags.tourism === 'museum') signals.osmAttraction = true;
   if (tags.heritage && place.wikidata) signals.osmHeritage = true;
   if (isClosedOsm(tags)) signals.osmClosed = true;
+  // Marché où l'on peut déjeuner : food court, ou marché avec un tag cuisine (stands de restauration).
+  if (place.category === 'market' && (tags.amenity === 'food_court' || tags.cuisine)) place.mealCapable = true;
   if (Object.keys(signals).length) place.signals = signals;
   return place;
 }

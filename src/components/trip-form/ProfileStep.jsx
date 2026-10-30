@@ -1,7 +1,7 @@
 import { Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { countryInfo } from '@domain/config/countries.js';
-import { DINNER_OPTIONS, LUNCH_OPTIONS, PROFILES } from '@domain/model.js';
+import { DINNER_OPTIONS, LUNCH_OPTIONS, PACES, PROFILES } from '@domain/model.js';
 import { includesRestaurants } from '@domain/tripDraft.js';
 import { hasWish, toggleWish, WISH_SUGGESTIONS } from '@domain/wishes.js';
 import { useConfig } from '../../hooks/useConfig.js';
@@ -52,6 +52,14 @@ export default function ProfileStep({ draft, update, errors }) {
           </p>
         )}
       </div>
+
+      <ChoiceGroup
+        name="pace"
+        legend={t('tripForm.profile.pace')}
+        options={PACES.map((p) => ({ value: p, label: t(`paces.${p}.label`), description: t(`paces.${p}.description`) }))}
+        value={draft.pace ?? 'balanced'}
+        onChange={(pace) => update({ pace })}
+      />
 
       <ChoiceGroup
         name="lunch"

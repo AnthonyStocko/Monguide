@@ -1,50 +1,21 @@
 /**
- * Type d'activité d'un lieu (clé de rules.durations) et catégories de lieux
+ * Type d'activité d'un lieu (scoring/duration.js), durées, et catégories de lieux
  * acceptées par chaque créneau du gabarit de journée et chaque profil.
  */
 
-const normalize = (s) =>
-  String(s ?? '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase();
+import { activityType, placeDuration } from './scoring/duration.js';
 
-const CASTLE = /(^|[^a-z])(chateau|castle|castell|castillo|castelo|castello|schloss|burg|zamek|hrad|kasteel|palais|palace|palacio|palazzo)([^a-z]|$)/;
-const TRAIL = /(^|[^a-z])(sentier|randonnee|trail|hiking|chemin de grande randonnee)([^a-z]|$)/;
+export { activityType };
 
 /**
- * Coup d'œil (place.glance : statue, fontaine, façade vue en passant,
- * scoring/exclusions.js) : durée courte, quelle que soit la catégorie.
- * @param {{ category: string, name?: string, glance?: boolean }} place
- * @returns {'museum' | 'castle' | 'monument' | 'smallHeritage' | 'park' | 'trail' | 'market' | 'restaurant' | 'glance'}
+ * Durées { recommendedMin, minimumMin, maximumMin } d'un lieu
+ * (scoring/duration.js), ou d'un temps libre de détente. rules.tripPace :
+ * rythme du séjour (Trip.pace), ajouté aux règles par la génération ; à
+ * défaut, rythme équilibré.
  */
-export function activityType(place) {
-  if (place.glance === true) return 'glance';
-  const name = normalize(place.name);
-  switch (place.category) {
-    case 'museum':
-      return 'museum';
-    case 'monument':
-      return CASTLE.test(name) ? 'castle' : 'monument';
-    case 'small_heritage':
-    case 'viewpoint':
-      return 'smallHeritage';
-    case 'park':
-    case 'nature':
-      return TRAIL.test(name) ? 'trail' : 'park';
-    case 'market':
-    case 'farm':
-      return 'market';
-    case 'restaurant':
-      return 'restaurant';
-    default:
-      return 'monument';
-  }
-}
-
-/** Durées { recommendedMin, minimumMin } d'un lieu (ou d'un temps libre de détente). */
 export function durationsFor(place, rules) {
-  return rules.durations[place ? activityType(place) : 'relax'];
+  if (!place) return { ...rules.durations.relax, maximumMin: Math.round(rules.durations.relax.recommendedMin * rules.durationRules.maxFactor) };
+  return placeDuration(place, rules, { pace: rules.tripPace });
 }
 
 /**

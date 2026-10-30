@@ -127,6 +127,18 @@ export const GLANCE_CLASSES = Object.freeze({
   Q5003624: 'mémorial'
 });
 
+/** Nature précise d'un monument (Place.kind), pour sa durée de visite (scoring/duration.js). */
+export const KIND_CLASSES = Object.freeze({
+  Q16970: 'church',
+  Q1088552: 'church',
+  Q2977: 'church',
+  Q163687: 'church',
+  Q108325: 'church',
+  Q174782: 'square',
+  Q26987258: 'square',
+  Q23413: 'castle'
+});
+
 /** Natures classées comme parc (requête des lieux connus). */
 export const PARK_CLASSES = Object.freeze({
   Q22698: 'parc',

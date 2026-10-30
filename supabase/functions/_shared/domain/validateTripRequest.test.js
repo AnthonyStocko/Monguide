@@ -57,6 +57,12 @@ describe('validateTripRequest', () => {
     expect(validateTripRequest(t, RULES)).toEqual([]);
   });
 
+  it('rythme facultatif : absent ou tranquille, équilibré, soutenu ; toute autre valeur refusée', () => {
+    expect(validateTripRequest(valid(), RULES)).toEqual([]);
+    for (const pace of ['relaxed', 'balanced', 'intense']) expect(validateTripRequest({ ...valid(), pace }, RULES)).toEqual([]);
+    expect(validateTripRequest({ ...valid(), pace: 'fast' }, RULES)).toEqual(['pace']);
+  });
+
   it('refuse deux hébergements pour la même nuit', () => {
     const t = valid();
     t.lodgings.push({ ...t.lodgings[0], id: 'l2' });

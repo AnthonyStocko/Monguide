@@ -35,17 +35,24 @@ export const RULES = Object.freeze({
 
   /**
    * Durées par type d'activité, en minutes : conseillée (durée par défaut
-   * d'une étape) et minimale (en dessous, l'étape n'a plus de sens).
+   * d'une étape) et minimale (en dessous, l'étape n'a plus de sens). Durée
+   * d'un lieu : scoring/duration.js (notoriété, durées connues de
+   * config/durations.json, rythme du séjour : durationRules).
    */
   durations: {
     museum: { recommendedMin: 90, minimumMin: 60 },
+    /** grand musée : notoriété d'au moins durationRules.bigMuseumScore */
+    bigMuseum: { recommendedMin: 150, minimumMin: 90 },
     castle: { recommendedMin: 120, minimumMin: 75 },
-    /** monument, église */
-    monument: { recommendedMin: 60, minimumMin: 30 },
+    monument: { recommendedMin: 45, minimumMin: 20 },
+    /** église, cathédrale, chapelle */
+    church: { recommendedMin: 30, minimumMin: 15 },
+    /** place, quartier */
+    square: { recommendedMin: 40, minimumMin: 20 },
     /** petit patrimoine, point de vue */
     smallHeritage: { recommendedMin: 30, minimumMin: 15 },
     /** parc, espace naturel */
-    park: { recommendedMin: 90, minimumMin: 45 },
+    park: { recommendedMin: 60, minimumMin: 30 },
     /** sentier, randonnée */
     trail: { recommendedMin: 120, minimumMin: 90 },
     /** marché, producteur */
@@ -58,6 +65,38 @@ export const RULES = Object.freeze({
     relax: { recommendedMin: 60, minimumMin: 30 },
     /** « coup d'œil » : lieu vu en passant (statue, fontaine, façade), inséré sur un trajet */
     glance: { recommendedMin: 10, minimumMin: 5 }
+  },
+
+  /**
+   * Modulation des durées (scoring/duration.js) : grand musée au-delà de
+   * bigMuseumScore de notoriété ; monument ou église très connus (au moins
+   * famousScore) : famousBonusMin de plus ; durée maximale = conseillée ×
+   * maxFactor (compaction des journées) ; coefficient du rythme du séjour
+   * (Trip.pace), jamais appliqué aux coups d'œil ni aux repas.
+   */
+  durationRules: {
+    bigMuseumScore: 75,
+    famousScore: 80,
+    famousBonusMin: 15,
+    maxFactor: 1.5,
+    pace: { relaxed: 1.25, balanced: 1, intense: 0.85 }
+  },
+
+  /**
+   * Journées (generateTrip.js, compactDay.js) : visites en extérieur finies
+   * au plus tard outdoorBeforeSunsetMin avant le coucher du soleil ;
+   * compaction jusqu'à ce qu'aucun écart sans étape ne dépasse maxGapMin
+   * (hors temps libre volontaire) ; au plus maxFillers visites ajoutées par
+   * jour ; temps libre volontaire (rythme tranquille ou demandé dans « Vos
+   * envies ») de freeTimeMin en fin d'après-midi ; aucune visite ajoutée ou
+   * allongée ne finit après lastVisitEnd.
+   */
+  day: {
+    outdoorBeforeSunsetMin: 30,
+    lastVisitEnd: '20:00',
+    maxGapMin: 20,
+    maxFillers: 6,
+    freeTimeMin: 60
   },
 
   /** Trajets : toujours des estimations (aucun moteur d'itinéraire). */

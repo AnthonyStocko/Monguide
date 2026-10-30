@@ -198,6 +198,7 @@
     "emptyText": "Créez un séjour pour voir son programme jour par jour.",
     "days": "Jours du séjour",
     "travelDuration": "{{minutes}} min {{mode}}",
+    "fromLastPlace": "Depuis {{place}}",
     "modeSuffix": {
       "walk": "à pied",
       "transit": "en transports en commun",
@@ -488,6 +489,11 @@
     "restaurant": "Restaurant proposé",
     "free": "Libre"
   },
+  "paces": {
+    "relaxed": { "label": "Tranquille", "description": "Visites plus longues et un temps libre en fin d’après-midi." },
+    "balanced": { "label": "Équilibré", "description": "Des journées bien remplies, sans courir." },
+    "intense": { "label": "Soutenu", "description": "Visites plus courtes, pour voir davantage de lieux." }
+  },
   "profiles": {
     "certified": {
       "label": "Patrimoine certifié",
@@ -582,6 +588,8 @@
     },
     "profile": {
       "question": "Profil d’exploration",
+      "pace": "Rythme des journées",
+      "paceSummary": "Rythme : {{pace}}",
       "dataVaries": "Hors de France, la richesse des données sur le patrimoine varie selon les pays.",
       "lunch": "Pause déjeuner",
       "dinner": "Dîner",
@@ -678,6 +686,7 @@
       "personal": "Étape personnelle"
     },
     "freeTime": "Temps libre",
+    "freeTimeAt": "Temps libre — {{place}}",
     "freeEvening": "Soirée libre",
     "specialties": "Spécialités locales : {{list}}",
     "carbonTitle": "Bilan carbone des déplacements",
@@ -744,6 +753,8 @@
       "restaurant": "Un repas au restaurant",
       "dinner": "Un dîner",
       "relax": "Une pause détente",
+      "church": "Une visite d’église",
+      "square": "Une promenade sur la place",
       "glance": "Un coup d’œil"
     },
     "TOO_SHORT": "{{activity}} dure en général au moins {{minimum}}. Vous avez prévu {{duration}}.",

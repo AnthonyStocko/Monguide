@@ -13,13 +13,29 @@ export function placeOpeningHours(place) {
   return place?.food?.openingHours ?? place?.openingHours;
 }
 
+/**
+ * Horaires analysés, gardés en mémoire : l'analyse de la syntaxe OSM coûte
+ * l'essentiel du temps de calcul d'une génération (les mêmes horaires sont
+ * évalués pour chaque créneau de chaque jour). Position arrondie à 0,1°
+ * (seuls les horaires liés au soleil en dépendent) ; au plus PARSED_MAX
+ * entrées, la plus ancienne retirée d'abord.
+ */
+const PARSED_MAX = 2000;
+const parsed = new Map();
+
 function parse(openingHours, { lat, lon, countryCode }) {
   if (!openingHours) return null;
+  const key = `${countryCode}|${Math.round(lat * 10)}|${Math.round(lon * 10)}|${openingHours}`;
+  if (parsed.has(key)) return parsed.get(key);
+  let oh;
   try {
-    return new OpeningHours(openingHours, { lat, lon, address: { country_code: countryCode.toLowerCase(), state: '' } });
+    oh = new OpeningHours(openingHours, { lat, lon, address: { country_code: countryCode.toLowerCase(), state: '' } });
   } catch {
-    return null;
+    oh = null;
   }
+  if (parsed.size >= PARSED_MAX) parsed.delete(parsed.keys().next().value);
+  parsed.set(key, oh);
+  return oh;
 }
 
 /**

@@ -46,7 +46,7 @@ export function buildOverpassQuery(point, radiusKm, rules, { includeRestaurants 
   const lines = [`[out:json][timeout:${timeoutSec}];`];
   if (includeRestaurants) lines.push(`(nw["amenity"="restaurant"]["name"]${rFood};)->.food;`);
   lines.push(
-    `(nw["amenity"="marketplace"]["name"]${r};nw["shop"="farm"]["name"]${r};)->.local;`,
+    `(nw["amenity"~"^(marketplace|food_court)$"]["name"]${r};nw["shop"="farm"]["name"]${r};)->.local;`,
     `(nwr["leisure"="park"]["name"]${r};nwr["boundary"="protected_area"]["name"]${r};)->.nature;`,
     `(nw["historic"~"^(wayside_cross|memorial|ruins)$"]["name"]${r};nw["tourism"="viewpoint"]["name"]${r};` +
       `nw["amenity"="lavoir"]["name"]${r};nw["man_made"="lavoir"]["name"]${r};)->.heritage;`

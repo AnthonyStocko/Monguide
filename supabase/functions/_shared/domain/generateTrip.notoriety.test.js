@@ -131,11 +131,11 @@ describe('generateTrip : notoriété, incontournables, coups d’œil', () => {
     expect(stepsOf(t).filter((s) => s.type === 'dinner').every((s) => s.place)).toBe(true);
   });
 
-  it('petite ville sans lieu connu : autant de visites qu’avant, sans incontournable', () => {
+  it('petite ville sans lieu connu : au moins autant de visites qu’avant, sans incontournable', () => {
     const small = brusselsLike().filter((p) => !p.notable);
     const { trip: t } = generateTrip({ trip: trip(), places: small, makeId }, RULES);
     const visits = stepsOf(t).filter((s) => ['culture', 'outdoor', 'relax'].includes(s.type) && s.place);
-    expect(visits).toHaveLength(9);
+    expect(visits.length).toBeGreaterThanOrEqual(9);
     expect(stepsOf(t).some((s) => s.badges.includes('must_see'))).toBe(false);
   });
 
@@ -160,8 +160,8 @@ describe('scheduleDay : étape insérée (follow)', () => {
       RULES
     );
     expect(steps.map((s) => [s.id, s.start, s.end])).toEqual([
-      ['a', '10:00', '11:00'],
-      ['g', `11:0${steps[1].travelFromPreviousMin}`, steps[1].end],
+      ['a', '10:00', '10:45'],
+      ['g', `10:${45 + steps[1].travelFromPreviousMin}`, steps[1].end],
       ['r', '12:30', '13:45']
     ]);
     expect(toMinutes(steps[1].end) - toMinutes(steps[1].start)).toBe(RULES.durations.glance.recommendedMin);

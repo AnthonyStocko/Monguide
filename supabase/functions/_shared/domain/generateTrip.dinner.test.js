@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RULES } from './config/rules.js';
+import { toMinutes } from './time.js';
 import { destinationPoint } from './geo.js';
 import { eveningRestaurants, generateTrip } from './generateTrip.js';
 import { mealOpeningState } from './pickRestaurant.js';
@@ -83,14 +84,23 @@ describe('generateTrip : dîner', () => {
     const { trip: t } = run();
     const dinners = t.days.map((d) => stepOf(d, 'dinner'));
     const lunches = t.days.map((d) => stepOf(d, 'lunch'));
-    for (const d of t.days) expect(d.steps.map((s) => s.type)).toEqual(['culture', 'lunch', 'outdoor', 'relax', 'dinner']);
+    // Un déjeuner et un dîner par jour (le dîner en dernier) ; visites ajoutées par la compaction entre les deux.
+    for (const d of t.days) {
+      const types = d.steps.map((s) => s.type);
+      expect(types.filter((x) => x === 'lunch')).toHaveLength(1);
+      expect(['culture', 'outdoor']).toContain(types[0]);
+      expect(types.filter((x) => x === 'dinner')).toHaveLength(1);
+      expect(types.at(-1)).toBe('dinner');
+    }
     expect(dinners.every((s) => s.place?.category === 'restaurant')).toBe(true);
     const ids = dinners.map((s) => s.place.id);
     expect(new Set(ids).size).toBe(3);
     for (const l of lunches) expect(ids).not.toContain(l.place.id);
     t.days.forEach((d, i) => {
       const s = dinners[i];
-      expect(s).toMatchObject({ start: '19:30', end: '21:00' });
+      // Dîner à 19:30, ou avancé (restaurant ouvert) sans jamais passer avant l'heure du pays.
+      expect(s.start >= '19:00' && s.start <= '19:30').toBe(true);
+      expect(toMinutes(s.end) - toMinutes(s.start)).toBe(90);
       const where = { date: d.date, lat: s.place.lat, lon: s.place.lon, countryCode: 'FR' };
       expect(mealOpeningState(s.place.food.openingHours, { ...where, meal: 'dinner', window: { start: s.start, end: s.end } }, RULES)).toBe('open');
     });
@@ -142,15 +152,21 @@ describe('generateTrip : dîner', () => {
       const lunch = stepOf(d, 'lunch');
       expect(lunch).toMatchObject({ start: '14:00', end: '15:15' });
       expect(lunch.place.id).not.toMatch(/^early/);
-      expect(stepOf(d, 'outdoor').start >= '15:15').toBe(true);
-      expect(stepOf(d, 'dinner')).toMatchObject({ start: '21:00', end: '22:30' });
+      // Visites de l'après-midi : après le déjeuner grec.
+      const afternoon = d.steps.slice(d.steps.indexOf(lunch) + 1).filter((s) => s.type !== 'dinner');
+      expect(afternoon.every((s) => s.start >= '15:15')).toBe(true);
+      const dinner = stepOf(d, 'dinner');
+      expect(dinner.start >= '20:30' && dinner.start <= '21:00').toBe(true);
     }
   });
 
-  it('en France, déjeuner à 12:30 et plein air à 14:30 (inchangés)', () => {
+  it('en France, déjeuner à 12:30, après-midi enchaîné sans attendre 14:30', () => {
     const { trip: t } = run({ startDate: '2026-10-06', endDate: '2026-10-06' });
-    expect(stepOf(t.days[0], 'lunch').start).toBe('12:30');
-    expect(stepOf(t.days[0], 'outdoor').start).toBe('14:30');
+    const day = t.days[0];
+    const lunch = stepOf(day, 'lunch');
+    expect(lunch.start).toBe('12:30');
+    const next = day.steps[day.steps.indexOf(lunch) + 1];
+    expect(toMinutes(next.start) - (next.travelFromPreviousMin ?? 0) - toMinutes(lunch.end)).toBeLessThanOrEqual(RULES.day.maxGapMin);
   });
 
   it('"Dîner : Libre" : créneau "Soirée libre" sans proposition', () => {

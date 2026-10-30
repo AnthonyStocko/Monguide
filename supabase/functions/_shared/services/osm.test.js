@@ -17,7 +17,7 @@ describe('buildOverpassQuery', () => {
     const q = buildOverpassQuery(POINT, 20, RULES, { includeRestaurants: true });
     expect(q).not.toContain('around');
     const box = (tag) => q.match(new RegExp(`${tag}\\["name"\\]\\(([-\\d.]+),([-\\d.]+),([-\\d.]+),([-\\d.]+)\\)`)).slice(1).map(Number);
-    const [s, w, n, e] = box('nw\\["amenity"="marketplace"\\]');
+    const [s, w, n, e] = box('nw\\["amenity"~"\\^\\(marketplace\\|food_court\\)\\$"\\]');
     expect(n - POINT.lat).toBeCloseTo(0.18, 2); // 20 km ≈ 0,18° de latitude
     expect(POINT.lat - s).toBeCloseTo(0.18, 2);
     expect(e - POINT.lon).toBeGreaterThan(0.25); // plus large en longitude à 46° N

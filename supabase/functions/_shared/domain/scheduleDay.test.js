@@ -12,7 +12,7 @@ describe('scheduleDay', () => {
     const { steps } = scheduleDay([step('10:00', at(1, 0, 'museum')), step('14:30', at(2, 90, 'park'))], { from: null, to: null, mode: 'car' }, RULES);
     expect(steps.map((s) => [s.start, s.end])).toEqual([
       ['10:00', '11:30'],
-      ['14:30', '16:00']
+      ['14:30', '15:30']
     ]);
   });
 

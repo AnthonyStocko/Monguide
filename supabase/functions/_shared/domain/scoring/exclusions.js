@@ -1,4 +1,5 @@
-import { CLOSED_STATES, GENERIC_CLASSES, GLANCE_CLASSES, NON_VISITABLE_CLASSES, NOT_A_PLACE_CLASSES, OPEN_STATES } from '../config/placeClasses.js';
+import { CHRISTMAS_NAMES, ILLUMINATION_NAMES, NIGHT_SIGHT_CLASSES, NIGHT_SIGHT_QIDS } from '../config/nightSights.js';
+import { CLOSED_STATES, GENERIC_CLASSES, GLANCE_CLASSES, KIND_CLASSES, NON_VISITABLE_CLASSES, NOT_A_PLACE_CLASSES, OPEN_STATES } from '../config/placeClasses.js';
 import { articleCount, notorietyScore } from './notoriety.js';
 
 /**
@@ -140,6 +141,20 @@ export function placeVerdict(place, notoriety, rules, { today = '9999-12-31' } =
   return { action: 'keep' };
 }
 
+/**
+ * Lieu à voir de nuit (config/nightSights.js) : "christmas" pour un marché de
+ * Noël (seulement pendant la saison), "always" pour un lieu illuminé ou
+ * couvert connu ; undefined sinon.
+ * @param {{ name: string, wikidata?: string, names?: Record<string, string>, signals?: { types?: string[] } }} place
+ * @returns {'always' | 'christmas' | undefined}
+ */
+export function nightSightOf(place) {
+  const names = [place.name, ...Object.values(place.names ?? {})].map(normalize);
+  if (names.some((n) => CHRISTMAS_NAMES.test(n)) || (place.signals?.types ?? []).some((t) => t in NIGHT_SIGHT_CLASSES)) return 'christmas';
+  if ((place.wikidata && place.wikidata in NIGHT_SIGHT_QIDS) || names.some((n) => ILLUMINATION_NAMES.test(n))) return 'always';
+  return undefined;
+}
+
 /** Rang de deux lieux : meilleure notoriété, puis certifié. */
 const better = (a, b) => (b.notoriety ?? 0) - (a.notoriety ?? 0) || Number(b.certified) - Number(a.certified);
 
@@ -173,8 +188,10 @@ export function collapseEnsembles(places) {
 /**
  * Qualité des lieux collectés : notoriété (place.notoriety, place.sitelinks
  * si connu), lieu connu (place.notable : notoriété d'au moins
- * rules.notoriety.notableScore), coups d'œil (place.glance), lieux écartés
- * et ensembles réduits ; les signaux bruts (place.signals) sont retirés.
+ * rules.notoriety.notableScore), coups d'œil (place.glance), nature précise
+ * d'un monument (place.kind : église, place, château), lieu à voir de nuit
+ * (place.nightSight), lieux écartés et ensembles réduits ; les signaux bruts
+ * (place.signals) sont retirés.
  * @template {{ id: string, name: string, category: string, certified: boolean, wikidata?: string, signals?: import('./notoriety.js').PlaceSignals }} P
  * @param {P[]} places
  * @param {{ today: string }} options today : date du jour, "YYYY-MM-DD" (lieux fermés)
@@ -194,6 +211,10 @@ export function applyPlaceQuality(places, rules, { today }) {
     if (typeof place.signals?.sitelinks === 'number') out.sitelinks = articleCount(place.signals);
     if (notoriety >= rules.notoriety.notableScore) out.notable = true;
     if (verdict.action === 'glance') out.glance = true;
+    const kind = (place.signals?.types ?? []).map((t) => KIND_CLASSES[t]).find(Boolean);
+    if (kind && place.category === 'monument') out.kind = kind;
+    const night = nightSightOf(place);
+    if (night) out.nightSight = night;
     scored.push(out);
   }
   const { places: kept, removed } = collapseEnsembles(scored);

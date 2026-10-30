@@ -38,6 +38,7 @@ export const LODGING_MODES = Object.freeze(['same', 'multiple', 'unknown']);
  * @property {string | null} mode
  * @property {string | null} fuelType
  * @property {string} profile
+ * @property {'relaxed' | 'balanced' | 'intense'} pace rythme du séjour
  * @property {string} lunch
  * @property {'restaurant' | 'free'} dinner
  * @property {string} wishes « Vos envies pour ce séjour » (facultatif, texte libre)
@@ -59,6 +60,7 @@ export function emptyDraft(rules) {
     mode: null,
     fuelType: null,
     profile: 'balanced',
+    pace: 'balanced',
     lunch: 'both',
     dinner: 'restaurant',
     wishes: '',
@@ -257,6 +259,7 @@ export function buildTrip(draft, { id, now, makeId }) {
     travelers: draft.travelers,
     mode: draft.mode,
     profile: draft.profile,
+    pace: draft.pace ?? 'balanced',
     lunch: draft.lunch,
     dinner: draft.dinner,
     // Les préférences ne portent que sur les restaurants.

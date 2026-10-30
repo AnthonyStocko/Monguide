@@ -6,6 +6,7 @@ import { reviewReasons } from '@domain/applyReview.js';
 import Illustration from '../../illustrations/index.jsx';
 import { cascadeProps, useFirstShow, useMotionAllowed } from '../../ui/motion.js';
 import { directionsLink } from '../../platform/directions.js';
+import { usePlaceName } from '../../i18n/usePlaceName.js';
 import Button from '../ui/Button.jsx';
 import StepCard from './StepCard.jsx';
 import TravelTime from './TravelTime.jsx';
@@ -27,7 +28,15 @@ const MODE_ICONS = { walk: Footprints, transit: BusFront, bike: Bike, car: Car }
  */
 export default function DayView({ trip, dayIndex, rules, isToday, readOnly, highlightId, flash = {}, stepRefs, onEditTime, onReplace, onLodging, onAddStep, onEditPersonal, onTrack }) {
   const { t } = useTranslation();
+  const { placeName } = usePlaceName();
   const day = trip.days[dayIndex];
+  // Après une étape sans lieu (temps libre), le trajet part de la dernière position connue.
+  const fromLabel = (i) => {
+    if (i === 0 || day.steps[i - 1].place) return undefined;
+    const last = [...day.steps.slice(0, i)].reverse().find((st) => st.place)?.place;
+    const origin = last ? placeName(last) : start ? lodgingName(start) : null;
+    return origin ? t('planning.fromLastPlace', { place: origin }) : undefined;
+  };
   const lodging = (id) => trip.lodgings.find((l) => l.id === id);
   const start = lodging(day.startLodgingId);
   const end = lodging(day.endLodgingId);
@@ -100,7 +109,7 @@ export default function DayView({ trip, dayIndex, rules, isToday, readOnly, high
             {(i > 0 || start) && step.travelFromPreviousMin > 0 && (
               <m.li {...cascadeProps(i, animate)} className="flex items-center gap-2 pl-6 text-ink-muted">
                 <ModeIcon aria-hidden="true" className="size-5 shrink-0" />
-                <TravelTime minutes={step.travelFromPreviousMin} mode={trip.mode} />
+                <TravelTime minutes={step.travelFromPreviousMin} mode={trip.mode} label={fromLabel(i)} />
               </m.li>
             )}
             <StepCard

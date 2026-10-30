@@ -62,7 +62,9 @@ export function setStepStatus(trip, dayIndex, stepId, status, completedAt) {
  * @param {{ now: string, online: boolean, today?: string }} options now : "HH:mm" à destination
  * @returns {{ dayIndex: number, day: object, changes: object[], warnings: object[], weatherChecked: boolean }}
  */
-export function reevaluatePlanning(trip, dayIndex, stepId, { now, online, today }, rules) {
+export function reevaluatePlanning(trip, dayIndex, stepId, { now, online, today }, baseRules) {
+  // Durées des visites au rythme du séjour (scoring/duration.js).
+  const rules = trip.pace ? { ...baseRules, tripPace: trip.pace } : baseRules;
   const day = trip.days[dayIndex];
   const original = day.steps;
   // Lieu où se trouve le voyageur : la dernière étape terminée (jusqu'à celle-ci).

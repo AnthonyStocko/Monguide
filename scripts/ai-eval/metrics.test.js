@@ -33,7 +33,8 @@ describe('jeu d\'évaluation', () => {
       expect(t.days, f.id).toHaveLength(f.days);
       expect(t.days.flatMap((d) => d.steps).filter((s) => s.place).length, f.id).toBeGreaterThan(f.days * 2);
     }
-  });
+    // Douze générations complètes (compaction comprise) : délai plus long que les 5 s par défaut.
+  }, 30000);
 });
 
 describe('mesures', () => {

@@ -8,12 +8,13 @@ describe('activityType / durationsFor', () => {
   it('donne le type d\'activité et ses durées', () => {
     expect(activityType(p('museum'))).toBe('museum');
     expect(activityType(p('monument', 'Château de Montmelas'))).toBe('castle');
-    expect(activityType(p('monument', 'Église Notre-Dame'))).toBe('monument');
+    expect(activityType(p('monument', 'Église Notre-Dame'))).toBe('church');
+    expect(activityType(p('monument', 'Hôtel de ville'))).toBe('monument');
     expect(activityType(p('viewpoint'))).toBe('smallHeritage');
     expect(activityType(p('park', 'Sentier des Crêtes'))).toBe('trail');
     expect(activityType(p('farm'))).toBe('market');
-    expect(durationsFor(p('monument', 'Château de Joux'), RULES)).toEqual({ recommendedMin: 120, minimumMin: 75 });
-    expect(durationsFor(null, RULES)).toEqual({ recommendedMin: 60, minimumMin: 30 });
+    expect(durationsFor(p('monument', 'Château de Joux'), RULES)).toEqual({ recommendedMin: 120, minimumMin: 75, maximumMin: 180 });
+    expect(durationsFor(null, RULES)).toEqual({ recommendedMin: 60, minimumMin: 30, maximumMin: 90 });
   });
 });
 

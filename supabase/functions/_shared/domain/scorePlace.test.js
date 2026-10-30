@@ -5,9 +5,17 @@ import { detourKm, scorePlace } from './scorePlace.js';
 
 describe('scorePlace', () => {
   const ctx = { distanceKm: 0, effectiveRadiusKm: 10, categoryUses: 0 };
-  it('vaut 100 pour un lieu certifié, très connu, sur place, de catégorie nouvelle', () => {
-    expect(scorePlace({ certified: true, category: 'museum', notoriety: 100 }, ctx, RULES)).toBe(100);
+  it('lieu sur place, de catégorie nouvelle : très connu 85, certifié inconnu 70', () => {
+    expect(scorePlace({ certified: true, category: 'museum', notoriety: 100 }, ctx, RULES)).toBe(85); // 45 + 10 + 30
     expect(scorePlace({ certified: true, category: 'museum' }, ctx, RULES)).toBe(70); // 45 + 15 + 10, notoriété inconnue
+  });
+
+  it('lieu connu : la notoriété compte, pas le label (bonus certifié réservé aux lieux peu connus)', () => {
+    const near = { ...ctx, distanceKm: 1, effectiveRadiusKm: 3 };
+    const famousGarden = scorePlace({ certified: false, category: 'park', notoriety: 56 }, near, RULES);
+    const labelledPark = scorePlace({ certified: true, category: 'park', notoriety: 51 }, near, RULES);
+    expect(famousGarden).toBeGreaterThan(labelledPark);
+    expect(scorePlace({ certified: true, category: 'museum', notoriety: 10 }, ctx, RULES)).toBe(73); // 45 + 15 + 10 + 3
   });
 
   it('aucun bonus de notoriété au-delà du rayon effectif', () => {

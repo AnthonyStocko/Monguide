@@ -33,7 +33,9 @@ const MAX_PASSES = 20;
  * @param {{ today?: string }} [options] today : date du jour à destination (report sur un jour postérieur)
  * @returns {{ error: { code: string, stepId?: string } } | { dayIndex: number, day: object, changes: object[], warnings: { code: string, [k: string]: any }[] }}
  */
-export function replanDay(trip, dayIndex, personal, rules, { today } = {}) {
+export function replanDay(trip, dayIndex, personal, baseRules, { today } = {}) {
+  // Durées des visites au rythme du séjour (scoring/duration.js).
+  const rules = trip.pace ? { ...baseRules, tripPace: trip.pace } : baseRules;
   const day = trip.days[dayIndex];
   const ctx = { trip, dayIndex, day, mode: trip.mode, countryCode: trip.destination.countryCode, today, used: usedPlaceIds(trip), claims: new Set() };
 

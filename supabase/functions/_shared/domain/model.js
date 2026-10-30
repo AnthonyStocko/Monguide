@@ -65,6 +65,11 @@ export const SCHEMA_VERSION = 3;
  * @property {number} [sitelinks] articles Wikipédia de l'élément Wikidata, quand ils sont connus
  * @property {boolean} [notable] lieu connu (notoriété d'au moins rules.notoriety.notableScore) :
  *   accepté par le profil « équilibré » même sans label officiel
+ * @property {'church' | 'square' | 'castle'} [kind] nature précise d'un monument (natures Wikidata), pour sa durée
+ * @property {boolean} [nightSight] lieu à voir de nuit (illuminations, marché de Noël, passage couvert :
+ *   config/nightSights.js), proposé après la tombée de la nuit
+ * @property {boolean} [mealCapable] marché ou food court où l'on peut déjeuner (OSM amenity=food_court, ou
+ *   marché avec un tag cuisine) : seul ce type de marché remplace un déjeuner au restaurant
  * @property {boolean} [glance] « coup d'œil » : lieu vu en passant (statue, fontaine, façade), étape courte
  *   (rules.durations.glance). notoriety, sitelinks, notable et glance : champs facultatifs, rétrocompatibles,
  *   sans changement de schemaVersion.
@@ -108,6 +113,13 @@ export const TRAVEL_MODES = Object.freeze(['walk', 'transit', 'bike', 'car']);
 
 /** Profils d'exploration (Trip.profile). */
 export const PROFILES = Object.freeze(['certified', 'balanced', 'explorer']);
+
+/**
+ * Rythme du séjour (Trip.pace) : tranquille (visites plus longues, temps libre
+ * en fin d'après-midi), équilibré, soutenu (visites plus courtes). Champ
+ * facultatif, rétrocompatible : absent = équilibré.
+ */
+export const PACES = Object.freeze(['relaxed', 'balanced', 'intense']);
 
 /** Choix de la pause déjeuner (Trip.lunch). */
 export const LUNCH_OPTIONS = Object.freeze(['market', 'restaurant', 'both']);
@@ -174,6 +186,8 @@ export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed'
  * @property {boolean} weatherAvailable
  * @property {Record<string, number>} [weather] heure "HH" -> probabilité de pluie en %
  * @property {string} [holiday]
+ * @property {string} [sunset] "HH:mm", coucher du soleil à destination (domain/sun.js) : visites en extérieur
+ *   avant, lieux couverts ou à voir de nuit après. Champ facultatif, rétrocompatible.
  * @property {Step[]} steps
  */
 
@@ -196,6 +210,7 @@ export const STEP_BADGES = Object.freeze(['weather_adapted', 'hours_unconfirmed'
  * @property {string} [fuelType] voir FUEL_TYPES (voiture uniquement)
  * @property {number} [fuelConsumption] L/100 km (défaut rules.fuel.defaultConsumptionL100)
  * @property {'certified' | 'balanced' | 'explorer'} profile
+ * @property {'relaxed' | 'balanced' | 'intense'} [pace] rythme (PACES), absent = équilibré
  * @property {'market' | 'restaurant' | 'both'} lunch
  * @property {{ wishes?: string }} [params] paramètres du séjour gardés pour une éventuelle régénération : wishes =
  *   « Vos envies pour ce séjour » (texte brut, rules.ai.wishesMaxLength au plus, wishes.js). Champ facultatif,

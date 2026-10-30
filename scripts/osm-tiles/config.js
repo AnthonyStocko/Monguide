@@ -43,7 +43,7 @@ export const USER_AGENT = 'MonGuide-osm-tiles/1.0 (+https://github.com/AnthonySt
  * faut la géométrie.
  */
 export const OSMIUM_FILTERS = [
-  'nwr/amenity=restaurant,marketplace,lavoir',
+  'nwr/amenity=restaurant,marketplace,food_court,lavoir',
   'nwr/shop=farm',
   'nwr/leisure=park',
   'nwr/boundary=protected_area',

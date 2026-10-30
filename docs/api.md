@@ -522,7 +522,22 @@ rien n'est modifié.
     du séjour (horaires connus) écarté ; musée aux horaires inconnus jamais
     placé un jour de fermeture habituel du pays
     (`config/museumClosingDays.js` : lundi, lundi et mardi en France) et
-    badge `hours_unconfirmed` (« Horaires à vérifier ») ; dîner :
+    badge `hours_unconfirmed` (« Horaires à vérifier ») ;
+    journées (Prompt 10.0, Phase C) : `Day.sunset` (coucher du soleil,
+    `domain/sun.js`) ; visites en extérieur finies
+    `day.outdoorBeforeSunsetMin` avant lui, visite du soir couverte ou à
+    voir de nuit (`Place.nightSight`, `config/nightSights.js`) ; gabarit
+    alterné d'un jour à l'autre (matinée culturelle / en extérieur, selon la
+    météo et la nuit) ; un déjeuner et un dîner au restaurant chaque jour
+    quand il en existe d'ouverts (un marché ne remplace le déjeuner que s'il
+    est `Place.mealCapable` : food court, stands ; sinon il devient une
+    visite) ; compaction (`domain/compactDay.js`) : aucun écart de plus de
+    `day.maxGapMin` (visites ajoutées, allongées, étape suivante avancée,
+    dîner au plus 30 min plus tôt et jamais avant l'heure du pays) ; temps
+    libre (badge `free_time` avec un `place` : hébergement ou place animée)
+    seulement avec `pace: "relaxed"` ou demandé dans « Vos envies » ;
+    durées par lieu `domain/scoring/duration.js` (`durations`,
+    `durationRules`, `config/durations.json`), au rythme du séjour ; dîner :
     restaurant ouvert sur toute la plage du dîner (90 min), jamais déjà
     proposé dans le séjour, près de la dernière étape et de l'hébergement du
     soir ; sans lieu = « Soirée libre » (`dinner: "free"`, sans badge ; ou
@@ -913,3 +928,4 @@ envoi, abonnements après 90 jours sans nouvelles de l'appareil.
 | 1 | 2026-10-16 | Ajouts compatibles : limite `invites` (60 appels par heure) pour les fonctions d'invitation ; invitations effacées après usage (`purge_trip_invites`). |
 | 1 | 2026-10-30 | Ajouts compatibles : `Place.notoriety`, `sitelinks`, `notable`, `glance` ; source `notable` (`places`, `generate`) ; badges d'étape `must_see` et `glance` ; lieux écartés par les règles de `domain/scoring/exclusions.js`. |
 | 1 | 2026-10-30 | Ajouts compatibles : `Place.nameLang` ; libellés Wikidata en français, anglais et langues du pays dans `names` ; lieux fermés écartés ; badge `hours_unconfirmed` sur les musées aux horaires inconnus. |
+| 1 | 2026-10-30 | Ajouts compatibles : `Trip.pace` (`relaxed` \| `balanced` \| `intense`, facultatif, refusé s'il est invalide : `400 invalid_input` `pace`) ; `Day.sunset` ; `Place.kind`, `nightSight`, `mealCapable` ; étape de temps libre avec un lieu (badge `free_time`) ; lieux OSM `amenity=food_court`. |

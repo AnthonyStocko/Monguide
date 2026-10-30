@@ -83,10 +83,17 @@ const run = (tripPatch = {}, input = {}) =>
 const placeIds = (t) => t.days.flatMap((d) => d.steps.filter((s) => s.place).map((s) => s.place.id));
 
 describe('generateTrip : planning', () => {
-  it('3 jours, profil Équilibré : quatre créneaux par jour, aucun lieu répété', () => {
+  it('3 jours, profil Équilibré : un déjeuner, au moins trois visites, aucun lieu répété', () => {
     const { trip: t } = run();
     expect(t.days.map((d) => d.date)).toEqual(['2026-10-06', '2026-10-07', '2026-10-08']);
-    for (const d of t.days) expect(d.steps.map((s) => s.type)).toEqual(['culture', 'lunch', 'outdoor', 'relax']);
+    for (const d of t.days) {
+    const types = d.steps.map((s) => s.type);
+    expect(types.filter((x) => x === 'lunch')).toHaveLength(1);
+    expect(['culture', 'outdoor']).toContain(types[0]);
+      expect(d.steps.filter((s) => s.place && ['culture', 'outdoor', 'relax'].includes(s.type)).length).toBeGreaterThanOrEqual(3);
+    }
+    // Deux journées consécutives ne suivent pas le même gabarit (matinée culturelle / en extérieur).
+    expect(t.days[0].steps[0].type).not.toBe(t.days[1].steps[0].type);
     const ids = placeIds(t);
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -111,15 +118,28 @@ describe('generateTrip : planning', () => {
     }
   });
 
+  const lunchOf = (d) => d.steps.find((s) => s.type === 'lunch');
+  // Marchés où l'on déjeune vraiment (stands de restauration).
+  const eatingMarkets = () => placesAround(VILLEFRANCHE, 'v').map((p) => (p.category === 'market' ? { ...p, mealCapable: true } : p));
+
   it('alterne restaurant et marché en mode "Les deux" (restaurant le premier jour)', () => {
-    const { trip: t } = run();
-    expect(t.days.map((d) => d.steps[1].place.category)).toEqual(['restaurant', 'market', 'restaurant']);
-    expect(run({ lunch: 'restaurant' }).trip.days.every((d) => d.steps[1].place.category === 'restaurant')).toBe(true);
+    const { trip: t } = run({}, { places: eatingMarkets() });
+    expect(t.days.map((d) => lunchOf(d).place.category)).toEqual(['restaurant', 'market', 'restaurant']);
+    expect(run({ lunch: 'restaurant' }).trip.days.every((d) => lunchOf(d).place.category === 'restaurant')).toBe(true);
   });
 
   it('associe les appellations locales à la pause au marché', () => {
-    const { trip: t } = run({ lunch: 'market' }, { appellations: [{ name: 'Beaujolais', local: false }] });
-    expect(t.days[0].steps[1].specialties).toEqual(['Beaujolais']);
+    const { trip: t } = run({ lunch: 'market' }, { places: eatingMarkets(), appellations: [{ name: 'Beaujolais', local: false }] });
+    expect(lunchOf(t.days[0]).specialties).toEqual(['Beaujolais']);
+  });
+
+  it('marché sans restauration : devient une visite, et un vrai déjeuner au restaurant est ajouté', () => {
+    const { trip: t } = run({ lunch: 'market' });
+    for (const d of t.days) {
+      expect(lunchOf(d).place.category).toBe('restaurant');
+      expect(d.steps.filter((s) => s.type === 'lunch')).toHaveLength(1);
+    }
+    expect(t.days.flatMap((d) => d.steps).some((s) => s.type !== 'lunch' && s.place?.category === 'market')).toBe(true);
   });
 
   it('indique un temps libre plutôt qu\'inventer un lieu', () => {
@@ -151,7 +171,7 @@ describe('generateTrip : météo', () => {
   it('pluie à 80 % : les activités extérieures sont remplacées par des lieux intérieurs', () => {
     const { trip: t } = run({}, { weatherDays: [weatherDay('2026-10-06', 80), weatherDay('2026-10-07', 10)] });
     const rainy = t.days[0];
-    expect(rainy.steps.filter((x) => ['culture', 'outdoor', 'relax'].includes(x.type) && x.place).length).toBe(3);
+    expect(rainy.steps.filter((x) => ['culture', 'outdoor', 'relax'].includes(x.type) && x.place).length).toBeGreaterThanOrEqual(3);
     for (const s of rainy.steps.filter((x) => ['culture', 'outdoor', 'relax'].includes(x.type) && x.place)) {
       expect(s.place.indoor).toBe(true);
     }
@@ -184,7 +204,7 @@ describe('generateTrip : hébergement', () => {
     expect(day.departure.travelMin).toBeGreaterThan(0);
     expect(toMinutes(day.departure.time) + day.departure.travelMin).toBe(toMinutes(day.steps[0].start));
     expect(day.returnTravelMin).toBeGreaterThan(0);
-    expect(day.steps.filter((x) => x.place).length).toBe(4);
+    expect(day.steps.filter((x) => x.place).length).toBeGreaterThanOrEqual(4);
     for (const s of day.steps.filter((x) => x.place)) expect(distanceKm(hotel, s.place)).toBeLessThan(6);
   });
 

@@ -198,6 +198,7 @@
     "emptyText": "Create a trip to see its day-by-day plan.",
     "days": "Trip days",
     "travelDuration": "{{minutes}} min {{mode}}",
+    "fromLastPlace": "From {{place}}",
     "modeSuffix": {
       "walk": "on foot",
       "transit": "by public transport",
@@ -488,6 +489,11 @@
     "restaurant": "Suggested restaurant",
     "free": "Free"
   },
+  "paces": {
+    "relaxed": { "label": "Relaxed", "description": "Longer visits and free time in the late afternoon." },
+    "balanced": { "label": "Balanced", "description": "Full days, without rushing." },
+    "intense": { "label": "Intense", "description": "Shorter visits, to see more places." }
+  },
   "profiles": {
     "certified": {
       "label": "Certified heritage",
@@ -582,6 +588,8 @@
     },
     "profile": {
       "question": "Exploration profile",
+      "pace": "Pace of the days",
+      "paceSummary": "Pace: {{pace}}",
       "dataVaries": "Outside France, the richness of heritage data varies by country.",
       "lunch": "Lunch break",
       "dinner": "Dinner",
@@ -678,6 +686,7 @@
       "personal": "Personal stop"
     },
     "freeTime": "Free time",
+    "freeTimeAt": "Free time — {{place}}",
     "freeEvening": "Free evening",
     "specialties": "Local specialties: {{list}}",
     "carbonTitle": "Travel carbon footprint",
@@ -744,6 +753,8 @@
       "restaurant": "A restaurant meal",
       "dinner": "A dinner",
       "relax": "A relaxing break",
+      "church": "A church visit",
+      "square": "A stroll on the square",
       "glance": "A quick look"
     },
     "TOO_SHORT": "{{activity}} usually takes at least {{minimum}}. You planned {{duration}}.",
