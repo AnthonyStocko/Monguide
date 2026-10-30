@@ -25,9 +25,19 @@ export function slotToInstant(date, time, timezone) {
   if (!DATE.test(date ?? '')) throw new RangeError(`Date invalide : ${date}`);
   const minutes = toMinutes(time);
   const [year, month, day] = date.split('-').map(Number);
-  const dt = DateTime.fromObject({ year, month, day, hour: Math.floor(minutes / 60), minute: minutes % 60 }, { zone: timezone });
+  const wall = { year, month, day, hour: Math.floor(minutes / 60), minute: minutes % 60 };
+  const dt = DateTime.fromObject(wall, { zone: timezone });
   if (!dt.isValid) throw new RangeError(`Date, heure ou fuseau invalide : ${date} ${time} ${timezone} (${dt.invalidReason})`);
-  return dt.toJSDate();
+  // Heure en double (passage à l'heure d'hiver) : Luxon choisit le décalage d'après la date du jour ;
+  // on retient toujours la première occurrence, quel que soit le jour où le calcul est fait.
+  const wallMs = Date.UTC(year, month - 1, day, wall.hour, wall.minute);
+  const sameWall = (ms) => {
+    const d = DateTime.fromMillis(ms, { zone: timezone });
+    return d.year === year && d.month === month && d.day === day && d.hour === wall.hour && d.minute === wall.minute;
+  };
+  const offsets = new Set([-3, 3].map((h) => DateTime.fromMillis(dt.toMillis() + h * 3600000, { zone: timezone }).offset));
+  const instants = [...offsets].map((o) => wallMs - o * 60000).filter(sameWall);
+  return instants.length ? new Date(Math.min(...instants)) : dt.toJSDate();
 }
 
 /**

@@ -32,6 +32,19 @@ describe('slotToInstant', () => {
     expect(slotToInstant('2026-10-24', '10:00', 'Europe/Paris').toISOString()).toBe('2026-10-24T08:00:00.000Z');
   });
 
+  it('heure en double : même résultat quel que soit le jour du calcul (été ou hiver)', () => {
+    const realNow = Settings.now;
+    try {
+      for (const now of [Date.UTC(2026, 6, 1), Date.UTC(2026, 11, 1)]) {
+        Settings.now = () => now;
+        expect(slotToInstant('2026-10-25', '02:30', 'Europe/Paris').toISOString()).toBe('2026-10-25T00:30:00.000Z');
+        expect(slotToInstant('2026-03-29', '02:30', 'Europe/Paris').toISOString()).toBe('2026-03-29T01:30:00.000Z');
+      }
+    } finally {
+      Settings.now = realNow;
+    }
+  });
+
   it('ne dépend pas du fuseau du téléphone (réglé sur New York ou Tokyo)', () => {
     for (const zone of ['America/New_York', 'Asia/Tokyo', 'UTC']) {
       Settings.defaultZone = zone;
