@@ -3,6 +3,7 @@ import { compactDay } from './compactDay.js';
 import { CHRISTMAS_SEASON } from './config/nightSights.js';
 import { PACES } from './model.js';
 import { sunTimes } from './sun.js';
+import { eventActiveOn, eventSlot } from './seasonalEvents.js';
 import { openOn, planMustSees, selectMustSees } from './mustSee.js';
 import { notorietyThreshold } from './scoring/notoriety.js';
 import { eachDate } from './dates.js';
@@ -45,7 +46,9 @@ import { dayId } from './stableId.js';
  * (un marché ne remplace le déjeuner que s'il est place.mealCapable). Puis
  * compaction (compactDay.js) : aucun écart de plus de rules.day.maxGapMin,
  * temps libre seulement s'il est voulu (rythme tranquille, « Vos envies »).
- * Durées : scoring/duration.js, rythme du séjour (Trip.pace).
+ * Durées : scoring/duration.js, rythme du séjour (Trip.pace). Événements de
+ * saison (input.events, seasonalEvents.js) : proposés le premier jour où ils
+ * ont lieu, à leur meilleur créneau, une seule fois.
  * Aucun lieu n'est répété ; un créneau sans candidat devient
  * un "temps libre" (badge free_time) plutôt qu'un lieu inventé. Dîner
  * "libre" : créneau sans lieu ni badge ("Soirée libre") ; trip.dinner absent
@@ -214,11 +217,12 @@ function buildCandidates({ all, visits, markets, restaurants, used, center, radi
  *   holidays?: { date: string, localName: string, global: boolean }[],
  *   co2Factors?: { car: Record<string, number>, transitKgPerPkm: number } | null,
  *   fuel?: { currency: string, prices: Record<string, { average: number }> } | null,
+ *   events?: import('./model.js').Place[],
  *   makeId: () => string
  * }} input
  * @returns {{ trip: import('./model.js').Trip, warnings: { code: string, [k: string]: any }[] }}
  */
-export function generateTrip({ trip, places, appellations = [], weatherDays = [], holidays = [], co2Factors = null, fuel = null, makeId }, rules) {
+export function generateTrip({ trip, places, appellations = [], weatherDays = [], holidays = [], co2Factors = null, fuel = null, events = [], makeId }, rules) {
   const warnings = [];
   const dates = eachDate(trip.startDate, trip.endDate);
   const countryCode = trip.destination.countryCode;
@@ -347,6 +351,10 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
     const evening = toMinutes(slots.relax) >= outdoorEnd;
     const fitsKind = (p, kind) => (kind === 'relax' && evening ? !['restaurant', 'market', 'farm'].includes(p.category) && nightOk(p) : fitsSlot(p, kind));
 
+    // Événements de saison du jour (seasonalEvents.js), une seule fois par séjour, à leur meilleur
+    // créneau : visite du soir (marché de Noël, illuminations) ou après-midi (festival).
+    const takeEvent = (slot, time) => take(events.find((e) => !used.has(e.id) && eventActiveOn(e, date) && eventSlot(e) === slot && openAt(time)(e)) ?? null);
+
     // Incontournables du jour d'abord, aux créneaux du gabarit qui leur conviennent.
     const mustVisits = plan.days[dayIndex].filter((p) => !p.glance);
     const takeMust = (kind, time, from) => {
@@ -358,8 +366,12 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
     const slotPool = (kind, time) => visits.filter((p) => fitsKind(p, kind) && openAt(time)(p) && (kind !== 'relax' || dinnerReachable(p)));
     const morning = takeMust(morningKind, slots.culture, startLodging) ?? take(best(slotPool(morningKind, slots.culture), startLodging));
     if (!anchor) anchor = morning;
-    const afternoon = takeMust(afternoonKind, slots.outdoor, morning ?? startLodging) ?? take(best(slotPool(afternoonKind, slots.outdoor), morning ?? startLodging));
-    const relax = takeMust('relax', slots.relax, afternoon ?? morning ?? startLodging) ?? take(best(slotPool('relax', slots.relax), afternoon ?? morning ?? startLodging));
+    const afternoon =
+      takeEvent('afternoon', slots.outdoor) ?? takeMust(afternoonKind, slots.outdoor, morning ?? startLodging) ?? take(best(slotPool(afternoonKind, slots.outdoor), morning ?? startLodging));
+    const relax =
+      takeEvent('evening', slots.relax) ??
+      takeMust('relax', slots.relax, afternoon ?? morning ?? startLodging) ??
+      take(best(slotPool('relax', slots.relax), afternoon ?? morning ?? startLodging));
 
     // Pause gourmande : restaurant, ou marché où l'on déjeune vraiment (food court, stands :
     // place.mealCapable). Un autre marché devient une visite, et un vrai déjeuner est ajouté.
@@ -403,10 +415,7 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
         if (reserved.has(place.id)) s.badges = [...s.badges, 'must_see'];
         // Musée aux horaires inconnus : « Horaires à vérifier ».
         if (place.category === 'museum' && !placeOpeningHours(place)) s.badges = [...s.badges, 'hours_unconfirmed'];
-      } else {
-        s.badges = ['free_time'];
-        freeSlots += 1;
-      }
+      } else s.badges = ['free_time'];
       return s;
     };
     // Soirée libre choisie : aucune proposition, et ce n'est pas un créneau "sans lieu trouvé".
@@ -475,8 +484,9 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
       .slice(0, 60)
       .map(({ p }) => p);
     const freeTime = wantsFreeTime ? () => freeTimeStep(freePlace, makeId) : null;
+    // Créneau de visite resté sans lieu (aucun candidat) : retiré, son temps est comblé comme un trou.
     const compacted = compactDay(
-      arbitrated.steps.map((s) => ({ ...s, slotStart: slotOf.get(s.id) ?? s.start, ...(followIds.has(s.id) ? { follow: true } : {}) })),
+      arbitrated.steps.filter((s) => s.place || s.type === 'lunch' || s.type === 'dinner').map((s) => ({ ...s, slotStart: slotOf.get(s.id) ?? s.start, ...(followIds.has(s.id) ? { follow: true } : {}) })),
       {
         from,
         to,
@@ -493,7 +503,17 @@ export function generateTrip({ trip, places, appellations = [], weatherDays = []
     );
     for (const p of compacted.added) take(p);
     schedule = scheduleDay(compacted.steps, { from, to, mode: trip.mode }, dayRules);
-    day.steps = schedule.steps;
+    // Trou que rien n'a pu combler (aucun lieu possible) : « Temps libre » visible, sans lieu ni trajet.
+    day.steps = schedule.steps.flatMap((s, i) => {
+      const prev = schedule.steps[i - 1];
+      const gap = prev ? toMinutes(s.start) - (s.travelFromPreviousMin ?? 0) - toMinutes(prev.end) : 0;
+      // Jamais avant une étape sans lieu (soirée libre choisie) : ce temps en fait partie.
+      if (gap <= rules.day.unfilledGapMin || !s.place) return [s];
+      const marker = { id: makeId(), type: 'relax', indoor: null, status: 'planned', customTime: false, locked: false, badges: ['free_time'], start: prev.end, end: fromMinutes(toMinutes(prev.end) + gap), travelFromPreviousMin: 0 };
+      return [marker, s];
+    });
+    // Créneaux restés sans lieu (aucun lieu trouvé) : alerte free_time.
+    freeSlots += day.steps.filter((s) => !s.place && s.badges.includes('free_time')).length;
     if (schedule.departure) day.departure = schedule.departure;
     if (schedule.returnTravelMin !== undefined) day.returnTravelMin = schedule.returnTravelMin;
     legsKmByDay.push(schedule.legsKm);

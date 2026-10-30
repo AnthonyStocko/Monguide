@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { shareFile } from '../../platform/shareFile.js';
+import { getRules } from '../rules.js';
 import { buildTripDocument, exportFileName } from './tripDocument.js';
 
 /**
@@ -14,7 +15,7 @@ import { buildTripDocument, exportFileName } from './tripDocument.js';
 export async function exportTripPdf(trip, { includeAddresses }) {
   const t = i18n.t.bind(i18n);
   const locale = i18n.resolvedLanguage;
-  const content = buildTripDocument(trip, { t, locale, includeAddresses, generatedAt: new Date() });
+  const content = buildTripDocument(trip, { t, locale, includeAddresses, generatedAt: new Date(), rules: getRules() });
   const { loadFonts, renderPdf } = await import('./renderPdf.js');
   const doc = renderPdf(content, { fonts: await loadFonts(), lang: locale, footer: (page, total) => t('export.footer', { page, total }) });
   const fileName = exportFileName(trip);

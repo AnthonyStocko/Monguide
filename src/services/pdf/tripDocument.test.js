@@ -93,3 +93,24 @@ describe('renderPdf', () => {
     expect(out).toContain('DejaVu');
   });
 });
+
+describe('buildTripDocument : groupes et bilan carbone (Prompt 10.0, Phase D)', () => {
+  it('« Pensez à réserver » sur les restaurants d’un groupe de 6, mis en avant le samedi soir', async () => {
+    const { dayWithDinner, rules } = await import('@domain/testing/dayFixture.js');
+    const trip = { ...makeTrip([dayWithDinner('2026-12-12')]), travelers: 6 };
+    const doc = buildTripDocument(trip, { t, locale: 'fr', includeAddresses: false, generatedAt, rules });
+    const restaurants = doc.blocks.filter((b) => b.kind === 'step' && (b.details.includes('Pensez à réserver') || b.details.includes('Pensez à réserver : soir très demandé')));
+    expect(restaurants).toHaveLength(2);
+    expect(text(doc)).toContain('Pensez à réserver : soir très demandé');
+    const pair = buildTripDocument({ ...trip, travelers: 2 }, { t, locale: 'fr', includeAddresses: false, generatedAt, rules });
+    expect(text(pair)).not.toContain('Pensez à réserver');
+  });
+
+  it('bilan carbone : trajet prévu d’abord, puis « Si vous aviez pris… »', () => {
+    const all = text(buildTripDocument({ ...sampleTrip(), mode: 'walk' }, { t, locale: 'fr', includeAddresses: false, generatedAt }));
+    expect(all).toContain('Votre trajet prévu (À pied) : 0 kg');
+    expect(all).toContain('Si vous aviez pris les transports en commun : 0,06 kg');
+    expect(all).toContain('Si vous aviez pris la voiture : 2,9 kg');
+    expect(all.indexOf('Votre trajet prévu')).toBeLessThan(all.indexOf('Si vous aviez pris'));
+  });
+});

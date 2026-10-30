@@ -2,8 +2,9 @@ import { formatDate } from '../i18n/format.js';
 import { freeLabelKey } from '../utils/freeLabel.js';
 
 /**
- * Texte d'une notification de séjour (résumé de la veille ou rappel avant
- * une étape), dans la langue de l'interface.
+ * Texte d'une notification de séjour (résumé de la veille, rappel avant
+ * une étape, ou rappel de réservation d'un dîner de groupe), dans la langue
+ * de l'interface.
  *
  * confidential : texte destiné à quitter l'appareil (rappels de la version
  * web, envoyés par le serveur). Il ne contient alors ni adresse ni titre
@@ -29,6 +30,9 @@ export function renderNotification(n, { t, locale, confidential = false }) {
       lines.unshift(confidential ? t('notifications.confidential.departure', { time: n.data.departure.time }) : t('notifications.summary.departure', n.data.departure));
     }
     return { title: t('notifications.summary.title', { date: day }), body: lines.join('\n') };
+  }
+  if (n.kind === 'booking') {
+    return { title: t('notifications.booking.title', { count: n.data.travelers }), body: t('notifications.booking.body', { name: n.data.name, start: n.data.start, trip: n.data.tripTitle }) };
   }
   const body = t('notifications.reminder.body', { start: n.data.start, end: n.data.end, trip: n.data.tripTitle });
   if (hidden(n.data)) return { title: t('notifications.confidential.personalTitle'), body };

@@ -2,7 +2,7 @@ import { countryInfo } from '../domain/config/countries.js';
 import { log } from '../log.js';
 import { cachedValue } from './cachedValue.js';
 import { runSource } from './sourceRunner.js';
-import { articleLanguages, bindingsToPlaces, buildNotableQuery, buildSignalsQuery, labelLanguages, nameLanguages, runSparql, signalsFromBinding } from './wikidata.js';
+import { articleLanguages, bindingsToPlaces, buildNotableQuery, buildSignalsQuery, labelLanguages, labelsFromBinding, nameLanguages, runSparql, signalsFromBinding } from './wikidata.js';
 
 /**
  * Notoriété des lieux, tous pays : source "notable" (lieux les plus connus
@@ -34,6 +34,17 @@ export function notablePlacesSource(point, radiusKm, ctx) {
     query,
     fetcher: async () => bindingsToPlaces(await runSparql(query, rules.wikidata.timeoutSec), 'notable', { lang, localLanguages: local })
   });
+}
+
+/**
+ * Libellés Wikidata français et anglais ajoutés aux variantes de nom d'un lieu
+ * (place.names) qui n'en a pas : un marché OSM sans name:fr s'affiche avec son
+ * libellé Wikidata français (displayName). Le nom enregistré ne change pas.
+ */
+function withLabels(place, labels = {}) {
+  const extra = Object.fromEntries(['fr', 'en'].filter((l) => labels[l] && labels[l] !== place.name && !place.names?.[l]).map((l) => [l, labels[l]]));
+  const { labels: _labels, ...signals } = place.signals;
+  return Object.keys(extra).length ? { ...place, signals, names: { ...place.names, ...extra } } : { ...place, signals };
 }
 
 /** Empreinte courte (FNV-1a 32 bits) d'une liste d'identifiants, pour la clé de cache. */
@@ -68,20 +79,21 @@ export async function addSignals(places, point, radiusKm, ctx) {
   const local = localLanguages(ctx);
   const { linkBatch, linkTimeoutSec } = rules.wikidata;
   try {
-    const params = { lat: point.lat, lon: point.lon, radius: radiusKm, lang, ids: digest(missing), count: missing.length, format: 2 };
+    const params = { lat: point.lat, lon: point.lon, radius: radiusKm, lang, ids: digest(missing), count: missing.length, format: 3 };
     const found = await cachedValue(cache, 'wikidata-signals', params, rules.cacheTtlSec.wikidata, async () => {
       const out = {};
       for (let i = 0; i < missing.length; i += linkBatch) {
-        const rows = await runSparql(buildSignalsQuery(missing.slice(i, i + linkBatch), articleLanguages(lang, local)), linkTimeoutSec, { post: true });
+        const rows = await runSparql(buildSignalsQuery(missing.slice(i, i + linkBatch), articleLanguages(lang, local), ['fr', 'en']), linkTimeoutSec, { post: true });
         for (const b of rows) {
           const qid = b.item?.value?.split('/').pop();
           const signals = signalsFromBinding(b, { lang, localLanguages: local });
-          if (qid && signals) out[qid] = signals;
+          const labels = labelsFromBinding(b);
+          if (qid && signals) out[qid] = Object.keys(labels).length ? { ...signals, labels } : signals;
         }
       }
       return out;
     });
-    return places.map((p) => (lacks(p) && found[p.wikidata] ? { ...p, signals: { ...found[p.wikidata], ...p.signals } } : p));
+    return places.map((p) => (lacks(p) && found[p.wikidata] ? withLabels({ ...p, signals: { ...found[p.wikidata], ...p.signals } }, found[p.wikidata].labels) : p));
   } catch (err) {
     log('warn', 'wikidata_signals_failed', { message: String(err?.message ?? err), count: missing.length });
     return places;

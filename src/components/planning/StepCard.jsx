@@ -1,8 +1,9 @@
 import { forwardRef } from 'react';
-import { BadgeCheck, CircleCheck, CloudRain, Globe, Navigation, Pencil, Replace, SkipForward, Sparkles, TriangleAlert, UserPen } from 'lucide-react';
+import { BadgeCheck, CalendarClock, CircleCheck, CloudRain, Globe, Navigation, Pencil, Replace, SkipForward, Sparkles, TriangleAlert, UserPen } from 'lucide-react';
 import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { averageRain } from '@domain/weatherArbitration.js';
+import { bookingAdvice } from '@domain/booking.js';
 import { usePlaceName } from '../../i18n/usePlaceName.js';
 import { directionsLink } from '../../platform/directions.js';
 import { webUrl } from '../../utils/navigation.js';
@@ -43,6 +44,8 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
   const rain = day.weatherAvailable && day.weather ? averageRain(day.weather, step.start, step.end) : null;
   const outdoor = place ? place.indoor !== true : personal && step.indoor === false;
   const status = step.status ?? 'planned';
+  // Groupe : « Pensez à réserver », mis en avant pour les dîners du vendredi et du samedi.
+  const booking = bookingAdvice(trip, day.date, step, rules);
   // Temps libre voulu, avec son lieu (hébergement ou place animée) : « Temps libre — lieu ».
   const freeAt = place && step.badges.includes('free_time');
   const title = personal ? step.title : freeAt ? t('generation.freeTimeAt', { place: placeName(place) }) : place ? placeName(place) : t(freeLabelKey(step));
@@ -112,6 +115,12 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
                 {t(`certifications.${place.certification}`)}
               </Badge>
             )}
+            {booking && (
+              <Badge tone={booking.highlight ? 'warning' : 'neutral'} icon={booking.highlight ? CalendarClock : undefined}>
+                {t(booking.highlight ? 'badges.book_ahead_busy' : 'badges.book_ahead')}
+              </Badge>
+            )}
+            {place?.source === 'event' && <Badge tone="accent">{t('badges.event')}</Badge>}
             {step.badges.includes('must_see') && <Badge tone="accent">{t('badges.must_see')}</Badge>}
             {step.badges.includes('glance') && <Badge tone="neutral">{t('badges.glance')}</Badge>}
             {step.badges.includes('weather_adapted') && <Badge tone="secondary">{t('badges.weather_adapted')}</Badge>}
@@ -129,7 +138,7 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
       </div>
       {photo.creditBlock}
 
-      {place?.food && <RestaurantDetails place={place} date={day.date} countryCode={trip.destination.countryCode} badges={step.badges} />}
+      {place?.food && <RestaurantDetails place={place} date={day.date} countryCode={trip.destination.countryCode} badges={step.badges} bookAhead={Boolean(booking)} />}
 
       {isToday && status === 'planned' && !readOnly && (
         <div className="grid grid-cols-2 gap-2">

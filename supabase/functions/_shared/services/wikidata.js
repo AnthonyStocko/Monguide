@@ -191,13 +191,15 @@ export function buildNotableQuery(point, radiusKm, languages, { minSitelinks, li
  * Identifiants limités à Q suivi de chiffres (aucune injection).
  * @param {string[]} qids
  * @param {string[]} wikis
+ * @param {string[]} [names] langues des libellés rapportés (variantes de noms des lieux OSM)
  */
-export function buildSignalsQuery(qids, wikis) {
+export function buildSignalsQuery(qids, wikis, names = []) {
   const values = qids.filter((q) => /^Q\d+$/.test(q)).map((q) => `wd:${q}`).join(' ');
   return [
-    `SELECT ?item ${SIGNAL_AGGREGATES} WHERE {`,
+    `SELECT ?item ${SIGNAL_AGGREGATES}${names.length ? ` ${LABEL_AGGREGATE}` : ''} WHERE {`,
     `    VALUES ?item { ${values} }`,
     ...signalClauses(wikis),
+    ...(names.length ? [`    OPTIONAL { ?item rdfs:label ?label . FILTER(LANG(?label) IN (${names.map((l) => `"${l}"`).join(', ')})) }`] : []),
     '} GROUP BY ?item'
   ].join('\n');
 }

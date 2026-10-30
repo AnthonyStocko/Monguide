@@ -63,11 +63,14 @@ VOS DONNÉES
 Les temps de trajet et les informations des lieux sont indicatifs : vérifiez-les avant de vous déplacer.
 <!-- /long:fr -->
 
-### Notes de version (1.3.0)
+### Notes de version (1.4.0)
 
 <!-- notes:fr -->
-Nouveau : voyez les avis d'un restaurant sur Google Maps ou Tripadvisor en un appui.
+Séjours plus malins : les incontournables d'abord, des journées mieux rythmées, et les visites calées sur la tombée de la nuit.
 <!-- /notes:fr -->
+
+Notes précédentes (1.3.0) : « Nouveau : voyez les avis d'un restaurant sur
+Google Maps ou Tripadvisor en un appui. »
 
 Notes précédentes (1.2.0) : « Nouveau : partagez un séjour et préparez-le à
 plusieurs, en direct. »
@@ -135,11 +138,14 @@ YOUR DATA
 Travel times and place information are indicative: check them before you go.
 <!-- /long:en -->
 
-### Release notes (1.3.0)
+### Release notes (1.4.0)
 
 <!-- notes:en -->
-New: see a restaurant's reviews on Google Maps or Tripadvisor in one tap.
+Smarter trips: must-see places first, better-paced days, and visits timed around nightfall.
 <!-- /notes:en -->
+
+Previous notes (1.3.0): “New: see a restaurant's reviews on Google Maps or
+Tripadvisor in one tap.”
 
 Previous notes (1.2.0): “New: share a trip and plan it together, live.”
 

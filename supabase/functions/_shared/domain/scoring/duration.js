@@ -65,7 +65,7 @@ export function activityType(place) {
 const round5 = (n) => Math.max(5, Math.round(n / 5) * 5);
 
 /**
- * @param {{ category: string, name?: string, glance?: boolean, kind?: string, notoriety?: number, wikidata?: string }} place
+ * @param {{ category: string, name?: string, glance?: boolean, kind?: string, notoriety?: number, wikidata?: string, event?: { durationMin?: number } }} place
  * @param {any} rules
  * @param {{ pace?: 'relaxed' | 'balanced' | 'intense' }} [options] rythme du séjour (Trip.pace)
  * @returns {{ recommendedMin: number, minimumMin: number, maximumMin: number }}
@@ -76,7 +76,8 @@ export function placeDuration(place, rules, { pace = 'balanced' } = {}) {
   const notoriety = place.notoriety ?? 0;
   const base = type === 'museum' && notoriety >= dr.bigMuseumScore ? rules.durations.bigMuseum : rules.durations[type];
   let recommended = base.recommendedMin;
-  const known = type !== 'glance' && place.wikidata ? KNOWN[place.wikidata] : undefined;
+  // Événement de saison : sa durée saisie ; lieu célèbre : sa durée connue.
+  const known = place.event?.durationMin ?? (type !== 'glance' && place.wikidata ? KNOWN[place.wikidata] : undefined);
   if (known) recommended = known;
   else if (['monument', 'church', 'square', 'castle'].includes(type) && notoriety >= dr.famousScore) recommended += dr.famousBonusMin;
   const factor = type === 'glance' || type === 'restaurant' ? 1 : (dr.pace[pace] ?? 1);

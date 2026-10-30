@@ -145,8 +145,10 @@ describe('generateTrip : planning', () => {
   it('indique un temps libre plutôt qu\'inventer un lieu', () => {
     const { trip: t, warnings } = generateTrip({ trip: trip({ profile: 'certified' }), places: [place('m', 'museum', VILLEFRANCHE, 1, 0, { openingHours: 'Mo-Su 09:00-19:00' })], co2Factors: FACTORS, makeId }, RULES);
     expect(t.days[0].steps[0].place.id).toBe('m');
-    expect(t.days[0].steps[2]).toMatchObject({ badges: ['free_time'] });
-    expect(t.days[0].steps[2].place).toBeUndefined();
+    // Après-midi sans lieu possible : « Temps libre » visible, sans lieu.
+    const free = t.days[0].steps.filter((s) => s.badges.includes('free_time'));
+    expect(free.length).toBeGreaterThan(0);
+    expect(free.every((s) => s.place === undefined)).toBe(true);
     expect(warnings).toContainEqual(expect.objectContaining({ code: 'free_time' }));
   });
 

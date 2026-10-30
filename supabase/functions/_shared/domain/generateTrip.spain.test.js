@@ -96,10 +96,11 @@ describe('generateTrip : habitudes espagnoles', () => {
       expect(dinner.end <= '23:00').toBe(true);
       const afternoon = d.steps.slice(d.steps.indexOf(lunch) + 1).filter((s) => s.type !== 'dinner');
       expect(afternoon.every((s) => s.start >= lunch.end)).toBe(true);
-      const visits = d.steps.filter((s) => ['culture', 'outdoor', 'relax'].includes(s.type));
+      const visits = d.steps.filter((s) => s.place && ['culture', 'outdoor', 'relax'].includes(s.type));
       expect(visits.every((s) => s.end <= '20:00')).toBe(true);
       // Visite du soir à 18:30, ou plus tôt si la compaction l'avance.
-      expect(stepOf(d, 'relax').start <= '18:30').toBe(true);
+      const relax = stepOf(d, 'relax');
+      if (relax) expect(relax.start <= '18:30').toBe(true);
     }
   });
 

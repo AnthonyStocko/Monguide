@@ -140,7 +140,8 @@ describe('generateTrip : notoriété, incontournables, coups d’œil', () => {
   });
 
   it('écarte de la génération les monuments sous le seuil de la destination, gardés dans la réserve', () => {
-    const famous = Array.from({ length: 14 }, (_, i) => place(`connu-${i}`, 'monument', 1 + i * 0.05, i * 25, { notoriety: 50 + i }));
+    // Assez de lieux connus pour remplir les journées (rules.notoriety.threshold.minVisitsPerDay × 3 jours).
+    const famous = Array.from({ length: 30 }, (_, i) => place(`connu-${i}`, 'monument', 0.6 + i * 0.03, i * 12, { notoriety: 50 + i }));
     const { trip: t } = generateTrip({ trip: trip(), places: [...brusselsLike(), ...famous], makeId }, RULES);
     expect(placeIds(t).some((id) => id.startsWith('inventaire'))).toBe(false);
     expect(t.candidates.some((p) => p.id.startsWith('inventaire'))).toBe(true);

@@ -84,3 +84,10 @@ describe('remindersSignature', () => {
     expect(remindersSignature([list[0]])).not.toBe(remindersSignature(list));
   });
 });
+
+describe('renderNotification : rappel de réservation (groupe)', () => {
+  it('« Réserver le dîner de demain pour 6 personnes », restaurant et heure', () => {
+    const n = { kind: 'booking', date: '2026-12-12', data: { tripTitle: 'Bruxelles', start: '19:30', name: 'Chez Léon', travelers: 6, type: 'dinner' } };
+    expect(renderNotification(n, options)).toEqual({ title: 'Réserver le dîner de demain pour 6 personnes', body: 'Chez Léon à 19:30 · Bruxelles' });
+  });
+});

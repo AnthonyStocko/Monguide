@@ -420,6 +420,44 @@ npx supabase start
 npx supabase functions serve
 ```
 
+### Ajouter un événement de saison
+
+Les marchés de Noël, illuminations et festivals sont saisis à la main dans
+la table `seasonal_events` : aucune nouvelle version de l'application, et
+aucune date inventée (un événement n'est proposé que s'il est dans la table).
+La fonction `generate` lit la table à chaque génération : un événement
+ajouté, modifié ou supprimé compte dès le séjour suivant (les séjours déjà
+générés ne changent pas).
+
+Un événement est proposé si le séjour tombe entre ses dates et qu'il est à
+moins du rayon d'exploration de la destination (ou d'un hébergement), une
+seule fois par séjour, le premier jour où il a lieu : en fin de journée
+(visite du soir) pour un marché de Noël ou des illuminations, l'après-midi
+pour un festival. Ses horaires, s'ils sont saisis, sont respectés.
+
+Dans le tableau de bord Supabase, **SQL Editor** :
+
+```sql
+insert into public.seasonal_events (name, city, lat, lon, start_date, end_date, opening_hours, type, duration_min, url)
+values ('Plaisirs d''Hiver', 'Bruxelles', 50.8467, 4.3525, '2026-11-27', '2027-01-04',
+        'Mo-Su 12:00-22:00', 'christmas_market', 75, 'https://www.plaisirsdhiver.be');
+```
+
+| Colonne | Contenu |
+|---|---|
+| `name`, `city` | nom affiché, ville (1 à 120 et 1 à 80 caractères) |
+| `lat`, `lon` | position (point central de l'événement) |
+| `start_date`, `end_date` | premier et dernier jour, inclus (`end_date ≥ start_date`) |
+| `opening_hours` | facultatif, syntaxe OpenStreetMap (`Mo-Su 12:00-22:00`, `Fr-Su 17:00-23:00`) ; vide = horaires inconnus |
+| `type` | `christmas_market`, `illuminations` ou `festival` |
+| `duration_min` | durée de visite proposée, 10 à 480 minutes (60 par défaut) |
+| `url` | facultatif, site de l'événement |
+
+Retirer un événement : `delete from public.seasonal_events where name = 'Plaisirs d''Hiver';`
+(ou **Table Editor**, table `seasonal_events`). La table est interne :
+seules les Edge Functions y accèdent (RLS sans règle, droits pour
+`service_role` seulement).
+
 ## Séjours partagés : charge et offre gratuite de Supabase
 
 Estimation du 2026-10-16 pour **1 000 séjours partagés actifs**. Limites de

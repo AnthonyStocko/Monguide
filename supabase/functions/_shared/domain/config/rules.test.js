@@ -73,7 +73,8 @@ describe('RULES', () => {
     expect(RULES.api.generateTimeoutMs).toBe(35000);
     expect(RULES.places.dedupDistanceM).toBe(50);
     expect(RULES.lodging.farFactor).toBe(1.5);
-    expect(RULES.notifications).toEqual({ eveningSummaryTime: '19:00', reminderLeadMin: 60 });
+    expect(RULES.notifications).toEqual({ eveningSummaryTime: '19:00', reminderLeadMin: 60, bookingReminderTime: '10:00' });
+    expect(RULES.groups).toEqual({ bookAheadFrom: 5, busyDinnerDays: [5, 6] });
     expect(RULES.ui.undoDelaySec).toBe(10);
     expect(RULES.storage.localCacheMaxMb).toBe(20);
     expect(RULES.rateLimits.generatePerWindow).toBe(30);

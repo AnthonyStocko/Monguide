@@ -537,7 +537,14 @@ rien n'est modifié.
     libre (badge `free_time` avec un `place` : hébergement ou place animée)
     seulement avec `pace: "relaxed"` ou demandé dans « Vos envies » ;
     durées par lieu `domain/scoring/duration.js` (`durations`,
-    `durationRules`, `config/durations.json`), au rythme du séjour ; dîner :
+    `durationRules`, `config/durations.json`), au rythme du séjour ;
+    événements de saison (table `seasonal_events`, README « Ajouter un
+    événement de saison » ; `domain/seasonalEvents.js`) : lieux de source
+    `event` (`Place.event`), proposés une fois à leur meilleur créneau ;
+    groupes (`domain/booking.js`, `groups.bookAheadFrom` = 5 voyageurs) :
+    « Pensez à réserver » calculé à l'affichage, mis en avant pour les dîners
+    du vendredi et du samedi, avec un rappel local la veille
+    (`notifications.bookingReminderTime`, notification de type `booking`) ; dîner :
     restaurant ouvert sur toute la plage du dîner (90 min), jamais déjà
     proposé dans le séjour, près de la dernière étape et de l'hébergement du
     soir ; sans lieu = « Soirée libre » (`dinner: "free"`, sans badge ; ou
@@ -929,3 +936,4 @@ envoi, abonnements après 90 jours sans nouvelles de l'appareil.
 | 1 | 2026-10-30 | Ajouts compatibles : `Place.notoriety`, `sitelinks`, `notable`, `glance` ; source `notable` (`places`, `generate`) ; badges d'étape `must_see` et `glance` ; lieux écartés par les règles de `domain/scoring/exclusions.js`. |
 | 1 | 2026-10-30 | Ajouts compatibles : `Place.nameLang` ; libellés Wikidata en français, anglais et langues du pays dans `names` ; lieux fermés écartés ; badge `hours_unconfirmed` sur les musées aux horaires inconnus. |
 | 1 | 2026-10-30 | Ajouts compatibles : `Trip.pace` (`relaxed` \| `balanced` \| `intense`, facultatif, refusé s'il est invalide : `400 invalid_input` `pace`) ; `Day.sunset` ; `Place.kind`, `nightSight`, `mealCapable` ; étape de temps libre avec un lieu (badge `free_time`) ; lieux OSM `amenity=food_court`. |
+| 1 | 2026-10-30 | Ajouts compatibles : table interne `seasonal_events` (événements de saison saisis à la main, lus par `generate`) ; `Place.event`, lieux de source `event` ; règles `groups` et `notifications.bookingReminderTime`. |

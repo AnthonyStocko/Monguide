@@ -177,3 +177,31 @@ La politique de confidentialité doit être en ligne avant l'envoi sur Google Pl
    Maps ou Tripadvisor en un appui. »), fiche FR et EN reprise de
    `store/listing.md` (ligne « Voir les avis Google Maps et Tripadvisor en un
    appui »).
+
+## 9. Mise à jour 1.4.0 : « Séjours plus malins » (Prompt 10.0)
+
+Le serveur (lieux, rythme des journées, événements) est déployé avec le push
+sur `main` ; la version 1.4.0 apporte le choix du rythme, les badges
+« Incontournable », « Coup d'œil », « Pensez à réserver », « Événement » et le
+rappel de réservation des dîners de groupe.
+
+1. [ ] **Migration** `20261030100000_seasonal_events.sql` appliquée (job
+   `db-tests` puis déploiement) ; table `seasonal_events` visible dans le
+   tableau de bord.
+2. [ ] **Événement d'essai** : saisir un marché de Noël à Bruxelles (README,
+   « Ajouter un événement de saison »), générer un séjour à ses dates : il
+   apparaît en fin de journée ; le supprimer, regénérer : il a disparu.
+3. [ ] **Essais sur appareil** : formulaire « Rythme des journées » ; séjour
+   Bruxelles à 6 voyageurs du vendredi au dimanche : « Pensez à réserver » sur
+   chaque restaurant, mis en avant le vendredi et le samedi soir, rappel
+   « Réserver le dîner de demain pour 6 personnes » la veille à 10:00 ; à 2
+   voyageurs, aucun badge ; bilan carbone « Votre trajet prévu » puis « Si vous
+   aviez pris… » ; export PDF avec les mêmes libellés.
+4. [ ] **Sécurité des données** : rien à changer (aucune donnée nouvelle
+   collectée ; le rappel de réservation est une notification locale).
+5. [ ] **Version** : `git tag v1.4.0 && git push origin v1.4.0` (versionName
+   1.4.0, versionCode = numéro d'exécution de `release.yml`).
+6. [ ] **Play Console** : téléverser l'`.aab`, notes de version de
+   `store/listing.md` (« Séjours plus malins : les incontournables d'abord,
+   des journées mieux rythmées, et les visites calées sur la tombée de la
+   nuit. »).

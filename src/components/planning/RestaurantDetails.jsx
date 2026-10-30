@@ -6,10 +6,11 @@ import Badge from '../ui/Badge.jsx';
 
 /**
  * Détails d'un restaurant (données OpenStreetMap) : cuisine, badges, horaires
- * du jour en clair, boutons Appeler et Site web s'ils existent.
- * @param {{ place: object, date: string, countryCode: string, badges: string[] }} props
+ * du jour en clair, boutons Appeler et Site web s'ils existent (« Réserver en
+ * ligne » quand le groupe doit réserver : bookAhead).
+ * @param {{ place: object, date: string, countryCode: string, badges: string[], bookAhead?: boolean }} props
  */
-export default function RestaurantDetails({ place, date, countryCode, badges }) {
+export default function RestaurantDetails({ place, date, countryCode, badges, bookAhead = false }) {
   const { t, i18n } = useTranslation();
   const food = place.food;
   const hours = openingHoursOfDay(food.openingHours, { date, lat: place.lat, lon: place.lon, countryCode });
@@ -45,7 +46,7 @@ export default function RestaurantDetails({ place, date, countryCode, badges }) 
           {food.website && (
             <a href={webUrl(food.website)} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-secondary-strong px-4 font-semibold text-secondary-strong hover:bg-secondary-soft">
               <Globe aria-hidden="true" className="size-5" />
-              {t('restaurant.website')}
+              {t(bookAhead ? 'restaurant.bookOnline' : 'restaurant.website')}
             </a>
           )}
         </div>

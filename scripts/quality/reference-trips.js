@@ -1,6 +1,8 @@
 // Séjours de référence (Prompt 10.0) : génère des séjours aux paramètres fixes avec les fonctions
 // de production (geocode, generate, places), comme l'application, puis écrit un diagnostic :
-//   node --use-system-ca scripts/quality/reference-trips.js [--only bruxelles,lyon] [--local] [--tag phaseB]
+//   node --use-system-ca scripts/quality/reference-trips.js [--only bruxelles,lyon] [--local] [--tag phaseB] [--save-fixtures]
+// --save-fixtures (avec --local) : fige les lieux collectés dans scripts/quality/fixtures/ (test CI
+// reference.test.js, sans réseau).
 // --local : génération par le code de ce dépôt (sources réelles, lieux OSM de production), pour
 // valider un changement avant de le déployer ; résultats dans results/<date>-local/.
 // Adresse et clé publique lues dans .env. Écrit scripts/quality/results/<date>/<séjour>.json
@@ -445,7 +447,7 @@ async function generateLocal(request) {
   let seq = 0;
   const { trip, warnings } = generateTrip({ trip: request, places: pool, appellations: terroir.data ?? [], co2Factors: co2, makeId: () => `local-${(seq += 1)}` }, RULES);
   const sources = [...heritage, terroir, notable, { name: 'osm', status: 'ok', message: `production (${osm.length} lieux)` }].map(({ data: _d, query: _q, ...x }) => x);
-  return { trip, warnings, sources, pool, poolSources: sources, excluded };
+  return { trip, warnings, sources, pool, poolSources: sources, excluded, fixture: { request, collected: await addSignals(collected, point, d.radiusKm, ctx), appellations: terroir.data ?? [], co2 } };
 }
 
 /** Critères de validation (Prompt 10.0, Phase A). */
@@ -497,7 +499,13 @@ for (const f of REFERENCE_TRIPS.filter((t) => !only || only.includes(t.id))) {
   try {
     const request = await tripRequest(f, rules);
     const started = Date.now();
-    const { trip, warnings, sources, pool, poolSources, excluded } = local ? await generateLocal(request) : await generateRemote(request);
+    const { trip, warnings, sources, pool, poolSources, excluded, fixture } = local ? await generateLocal(request) : await generateRemote(request);
+    // --save-fixtures (avec --local) : lieux collectés (signaux compris) figés pour le test CI des séjours de référence.
+    if (fixture && args.includes('--save-fixtures')) {
+      const slim = (p) => { const { image: _i, description: _d, url: _u, ...rest } = p; return rest; };
+      mkdirSync(join(root, 'scripts', 'quality', 'fixtures'), { recursive: true });
+      writeFileSync(join(root, 'scripts', 'quality', 'fixtures', `${f.id}.json`), JSON.stringify({ request: { ...fixture.request, createdAt: 'x', updatedAt: 'x' }, today: date, appellations: fixture.appellations, co2: fixture.co2, collected: fixture.collected.map(slim) }));
+    }
     const generateMs = Date.now() - started;
     const d = request.destination;
     const languages = labelLanguages(LANG, countryInfo(d.countryCode)?.languages ?? []);

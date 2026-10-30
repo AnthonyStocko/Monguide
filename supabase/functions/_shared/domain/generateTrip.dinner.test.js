@@ -135,12 +135,16 @@ describe('generateTrip : dîner', () => {
     expect(stepOf(t.days[0], 'dinner')).toMatchObject({ place: { id: 'unknown' }, badges: ['hours_unconfirmed'] });
   });
 
-  it('à Barcelone, le dîner est proposé à 21:00', () => {
+  it('à Barcelone, le dîner est proposé à 21:00 (ou avancé, jamais avant 20:30)', () => {
     const { trip: t } = run(
       { destination: { name: 'Barcelona', countryCode: 'ES', ...BARCELONA, radiusKm: 20 }, timezone: 'Europe/Madrid', currency: 'EUR' },
       placesAround(BARCELONA)
     );
-    for (const d of t.days) expect(stepOf(d, 'dinner')).toMatchObject({ start: '21:00', end: '22:30' });
+    for (const d of t.days) {
+      const dinner = stepOf(d, 'dinner');
+      expect(dinner.start >= '20:30' && dinner.start <= '21:00').toBe(true);
+      expect(toMinutes(dinner.end) - toMinutes(dinner.start)).toBe(90);
+    }
   });
 
   it('à Athènes, déjeuner à 14:00 (plage décalée, plein air ensuite) et dîner à 21:00', () => {

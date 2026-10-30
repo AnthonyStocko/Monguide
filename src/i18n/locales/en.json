@@ -692,6 +692,13 @@
     "carbonTitle": "Travel carbon footprint",
     "carbonTotal": "{{value}} kg CO₂e for {{km}} km of estimated travel.",
     "kg": "{{value}} kg",
+    "carbonActual": "Your planned travel ({{mode}}): {{value}}",
+    "carbonIf": {
+      "transit": "If you had taken public transport: {{value}}",
+      "car": "If you had taken the car: {{value}}",
+      "walk": "If you had walked: {{value}}",
+      "bike": "If you had cycled: {{value}}"
+    },
     "fuelCost": "Estimated fuel cost: {{amount}} (consumption {{consumption}} L/100 km).",
     "estimates": "Travel times, distances and emissions are estimates."
   },
@@ -701,6 +708,9 @@
     "hours_to_check": "Check opening hours",
     "info_missing": "Information not provided",
     "must_see": "Must-see",
+    "book_ahead": "Remember to book",
+    "book_ahead_busy": "Remember to book: busy evening",
+    "event": "Event",
     "glance": "Quick look"
   },
   "restaurant": {
@@ -713,6 +723,7 @@
     "hoursOfDay": "Opening hours on {{day}}: {{hours}}",
     "call": "Call",
     "website": "Website",
+    "bookOnline": "Book online",
     "osmNotice": "OpenStreetMap information, to be checked with the restaurant."
   },
   "reviews": {
@@ -1052,6 +1063,10 @@
       "departure": "Suggested departure at {{time}} from {{lodgingName}}",
       "dinner": "{{start}} Dinner: {{name}}",
       "freeEvening": "{{start}} Free evening"
+    },
+    "booking": {
+      "title": "Book tomorrow's dinner for {{count}} people",
+      "body": "{{name}} at {{start}} · {{trip}}"
     },
     "reminder": {
       "title": "In one hour: {{name}}",

@@ -68,6 +68,8 @@ export const SCHEMA_VERSION = 3;
  * @property {'church' | 'square' | 'castle'} [kind] nature précise d'un monument (natures Wikidata), pour sa durée
  * @property {boolean} [nightSight] lieu à voir de nuit (illuminations, marché de Noël, passage couvert :
  *   config/nightSights.js), proposé après la tombée de la nuit
+ * @property {{ type: 'christmas_market' | 'illuminations' | 'festival', startDate: string, endDate: string, durationMin: number }} [event]
+ *   événement de saison (source "event", table seasonal_events, seasonalEvents.js). Champ facultatif, rétrocompatible.
  * @property {boolean} [mealCapable] marché ou food court où l'on peut déjeuner (OSM amenity=food_court, ou
  *   marché avec un tag cuisine) : seul ce type de marché remplace un déjeuner au restaurant
  * @property {boolean} [glance] « coup d'œil » : lieu vu en passant (statue, fontaine, façade), étape courte

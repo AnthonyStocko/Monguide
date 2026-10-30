@@ -692,6 +692,13 @@
     "carbonTitle": "Bilan carbone des déplacements",
     "carbonTotal": "{{value}} kg CO₂e pour {{km}} km de trajets estimés.",
     "kg": "{{value}} kg",
+    "carbonActual": "Votre trajet prévu ({{mode}}) : {{value}}",
+    "carbonIf": {
+      "transit": "Si vous aviez pris les transports en commun : {{value}}",
+      "car": "Si vous aviez pris la voiture : {{value}}",
+      "walk": "Si vous vous étiez déplacés à pied : {{value}}",
+      "bike": "Si vous vous étiez déplacés à vélo : {{value}}"
+    },
     "fuelCost": "Coût carburant estimé : {{amount}} (consommation {{consumption}} L/100 km).",
     "estimates": "Temps de trajet, distances et émissions sont des estimations."
   },
@@ -701,6 +708,9 @@
     "hours_to_check": "Horaires à vérifier",
     "info_missing": "Information non renseignée",
     "must_see": "Incontournable",
+    "book_ahead": "Pensez à réserver",
+    "book_ahead_busy": "Pensez à réserver : soir très demandé",
+    "event": "Événement",
     "glance": "Coup d’œil"
   },
   "restaurant": {
@@ -713,6 +723,7 @@
     "hoursOfDay": "Horaires du {{day}} : {{hours}}",
     "call": "Appeler",
     "website": "Site web",
+    "bookOnline": "Réserver en ligne",
     "osmNotice": "Informations OpenStreetMap, à vérifier auprès du restaurant."
   },
   "reviews": {
@@ -1052,6 +1063,10 @@
       "departure": "Départ conseillé à {{time}} de {{lodgingName}}",
       "dinner": "{{start}} Dîner : {{name}}",
       "freeEvening": "{{start}} Soirée libre"
+    },
+    "booking": {
+      "title": "Réserver le dîner de demain pour {{count}} personnes",
+      "body": "{{name}} à {{start}} · {{trip}}"
     },
     "reminder": {
       "title": "Dans une heure : {{name}}",

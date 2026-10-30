@@ -6,8 +6,11 @@ import { usePlaceName } from '../../i18n/usePlaceName.js';
 import Badge from '../ui/Badge.jsx';
 import Card from '../ui/Card.jsx';
 import { freeLabelKey } from '../../utils/freeLabel.js';
+import { bookingAdvice } from '@domain/booking.js';
+import { carbonLines } from '../../utils/carbonLines.js';
+import { useConfig } from '../../hooks/useConfig.js';
 
-const BADGE_TONES = { weather_adapted: 'secondary', hours_unconfirmed: 'warning', info_missing: 'warning', free_time: 'neutral', must_see: 'accent', glance: 'neutral' };
+const BADGE_TONES = { weather_adapted: 'secondary', hours_unconfirmed: 'warning', info_missing: 'warning', free_time: 'neutral', must_see: 'accent', glance: 'neutral', book_ahead: 'neutral', book_ahead_busy: 'warning' };
 
 /**
  * Aperçu d'un séjour généré : journées et étapes, bilan carbone, coût
@@ -16,6 +19,12 @@ const BADGE_TONES = { weather_adapted: 'secondary', hours_unconfirmed: 'warning'
  * @param {{ trip: import('@domain/model.js').Trip, warnings: { code: string, [k: string]: any }[] }} props
  */
 export default function TripPreview({ trip, warnings }) {
+  const { rules } = useConfig().config;
+  // Badges de l'étape (sans « temps libre ») et conseil de réservation d'un groupe (booking.js).
+  const shownBadges = (day, step) => {
+    const booking = bookingAdvice(trip, day.date, step, rules);
+    return [...step.badges.filter((b) => b !== 'free_time'), ...(booking ? [booking.highlight ? 'book_ahead_busy' : 'book_ahead'] : [])];
+  };
   const { t } = useTranslation();
   const format = useFormat();
   const { placeName } = usePlaceName();
@@ -83,10 +92,9 @@ export default function TripPreview({ trip, warnings }) {
                   {step.place && step.badges.includes('free_time') ? t('generation.freeTimeAt', { place: placeName(step.place) }) : step.place ? placeName(step.place) : t(freeLabelKey(step))}
                 </p>
                 {step.specialties?.length > 0 && <p className="text-ink-muted">{t('generation.specialties', { list: step.specialties.join(', ') })}</p>}
-                {step.badges.filter((b) => b !== 'free_time').length > 0 && (
+                {shownBadges(day, step).length > 0 && (
                   <span className="mt-1 flex flex-wrap gap-2">
-                    {step.badges
-                      .filter((b) => b !== 'free_time')
+                    {shownBadges(day, step)
                       .map((b) => (
                         <Badge key={b} tone={BADGE_TONES[b]}>
                           {t(b === 'hours_unconfirmed' && !step.place?.food ? 'badges.hours_to_check' : `badges.${b}`)}
@@ -113,10 +121,10 @@ export default function TripPreview({ trip, warnings }) {
               km: format.number(trip.carbon.distanceKm, { maximumFractionDigits: 1 })
             })}
           </p>
-          <ul className="grid grid-cols-2 gap-2">
-            {['walk', 'bike', 'transit', 'car'].map((m) => (
-              <li key={m} className={`rounded-xl px-3 py-2 ${m === trip.mode ? 'bg-primary-soft font-semibold' : 'bg-subtle'}`}>
-                {t(`modes.${m}`)} : {t('generation.kg', { value: format.number(trip.carbon.byMode[m], { maximumFractionDigits: 2 }) })}
+          <ul className="space-y-2">
+            {carbonLines(trip).map((line) => (
+              <li key={line.mode} className={`rounded-xl px-3 py-2 ${line.actual ? 'bg-primary-soft font-semibold' : 'bg-subtle'}`}>
+                {t(line.key, { mode: t(`modes.${line.mode}`), value: t('generation.kg', { value: format.number(line.kg, { maximumFractionDigits: 2 }) }) })}
               </li>
             ))}
           </ul>

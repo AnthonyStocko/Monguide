@@ -1,4 +1,6 @@
 import { EU_MEMBERS } from '@domain/config/countries.js';
+import { bookingAdvice } from '@domain/booking.js';
+import { carbonLines } from '../../utils/carbonLines.js';
 import { sourcesFor } from '@domain/config/dataSources.js';
 import { displayName } from '@domain/displayName.js';
 import { formatDate, formatNumber } from '../../i18n/format.js';
@@ -19,7 +21,7 @@ import { freeLabelKey } from '../../utils/freeLabel.js';
  * @param {{ t: Function, locale: string, includeAddresses: boolean, generatedAt: Date }} options
  * @returns {{ title: string, blocks: object[] }}
  */
-export function buildTripDocument(trip, { t, locale, includeAddresses, generatedAt }) {
+export function buildTripDocument(trip, { t, locale, includeAddresses, generatedAt, rules = null }) {
   const blocks = [];
   const push = (kind, text) => blocks.push({ kind, text });
   const day = (date, style) => formatDate(`${date}T12:00:00Z`, locale, { ...style, timeZone: 'UTC' });
@@ -54,6 +56,9 @@ export function buildTripDocument(trip, { t, locale, includeAddresses, generated
       if (personal && !s.place) details.push(t('personal.travelUnknown'));
       if (s.customTime && !personal) details.push(t('planning.customTime'));
       if (s.specialties?.length) details.push(t('generation.specialties', { list: s.specialties.join(', ') }));
+      // Groupe : « Pensez à réserver » (mis en avant le vendredi et le samedi soir).
+      const booking = rules ? bookingAdvice(trip, d.date, s, rules) : null;
+      if (booking) details.push(t(booking.highlight ? 'badges.book_ahead_busy' : 'badges.book_ahead'));
       if (s.note) details.push(s.note);
       blocks.push({ kind: 'step', time: `${s.start} – ${s.end}`, title: personal ? s.title : s.place ? displayName(s.place, locale) : t(freeLabelKey(s)), details });
     });
@@ -63,7 +68,7 @@ export function buildTripDocument(trip, { t, locale, includeAddresses, generated
   if (trip.carbon) {
     push('heading', t('generation.carbonTitle'));
     push('text', t('generation.carbonTotal', { value: number(trip.carbon.totalKgCo2e, 2), km: number(trip.carbon.distanceKm, 1) }));
-    push('text', ['walk', 'bike', 'transit', 'car'].map((m) => `${t(`modes.${m}`)} : ${t('generation.kg', { value: number(trip.carbon.byMode[m], 2) })}`).join(' · '));
+    for (const line of carbonLines(trip)) push('text', t(line.key, { mode: t(`modes.${line.mode}`), value: t('generation.kg', { value: number(line.kg, 2) }) }));
     if (trip.fuelCost) {
       push(
         'text',

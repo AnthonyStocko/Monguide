@@ -17,6 +17,8 @@ import { clientId } from '../_shared/rateLimit.js';
 import { collectPlaces } from '../_shared/services/collectPlaces.js';
 import { createProgress } from '../_shared/services/generationProgress.js';
 import { fetchHolidays, holidaysBetween } from '../_shared/services/holidays.js';
+import { eventsForTrip } from '../_shared/domain/seasonalEvents.js';
+import { loadSeasonalEvents } from '../_shared/services/seasonalEvents.js';
 import { fetchHourlyForecast } from '../_shared/services/weather.js';
 import { withDeadline } from '../_shared/services/withDeadline.js';
 import { readJsonBody } from '../_shared/validate.js';
@@ -82,15 +84,18 @@ async function generate({ trip, lang, countryCode, provider, appConfig, review, 
   const holidaysJob = Promise.all(years.map((y) => cached('holidays', { country: countryCode, year: y }, rules.cacheTtlSec.holidays, () => fetchHolidays(countryCode, y))));
   const co2Job = provider.co2Factors(countryCode);
   const fuelJob = trip.mode === 'car' ? provider.fuel(point, trip.destination.radiusKm, ctx) : Promise.resolve(null);
+  // Événements de saison saisis à la main (table seasonal_events), lus sans cache.
+  const eventsJob = loadSeasonalEvents(trip);
   [...placeJobs, weatherJob, holidaysJob, fuelJob].forEach(keepAlive);
 
   const emptyPlaces = { places: [], appellations: [], sources: [] };
-  const [placeResults, weather, holidays, co2, fuel] = await Promise.all([
+  const [placeResults, weather, holidays, co2, fuel, eventRows] = await Promise.all([
     Promise.all(placeJobs.map((job) => withDeadline(job, left(), emptyPlaces))),
     withDeadline(weatherJob, left(), null),
     withDeadline(holidaysJob, left(), null),
     withDeadline(co2Job, left(), null),
-    withDeadline(fuelJob, left(), null)
+    withDeadline(fuelJob, left(), null),
+    withDeadline(eventsJob, left(), [])
   ]);
 
   progress.timeoutPending();
@@ -120,6 +125,7 @@ async function generate({ trip, lang, countryCode, provider, appConfig, review, 
       holidays: holidays.value ? holidaysBetween(holidays.value.flat(), trip.startDate, trip.endDate) : [],
       co2Factors: co2.value,
       fuel: fuel.value?.data ?? null,
+      events: eventsForTrip(eventRows.value ?? [], trip),
       makeId: () => crypto.randomUUID()
     },
     rules

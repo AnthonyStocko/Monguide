@@ -98,8 +98,19 @@ export function compactDay(raw, ctx, rules) {
 
     // 3 : avancer l'étape suivante (jamais un repas avant sa plage ou l'heure du pays).
     const earliest = next.type === 'lunch' ? toMinutes(ctx.lunchFrom) : next.type === 'dinner' ? toMinutes(ctx.dinnerFrom) : 0;
-    const advanced = Math.max(earliest, prevEnd + (next.travelFromPreviousMin ?? 0));
+    let advanced = Math.max(earliest, prevEnd + (next.travelFromPreviousMin ?? 0));
+    // Visite du soir suivie du dîner : jamais avancée au point de ne plus pouvoir rejoindre le dîner en s'allongeant.
+    const after = schedule[gapAt + 1];
+    if (next.type === 'relax' && after?.type === 'dinner') {
+      const { maximumMin } = stepDurations(steps[gapAt], rules);
+      advanced = Math.max(advanced, toMinutes(after.start) - (after.travelFromPreviousMin ?? 0) - (maximumMin ?? 0) - maxGapMin);
+    }
     const meal = next.type === 'lunch' || next.type === 'dinner';
+    // Lieu à voir de nuit (marché de Noël, illuminations) : jamais avancé vers le jour.
+    if (next.type === 'relax' && next.place?.nightSight) {
+      tried.add(next.id);
+      continue;
+    }
     const length = toMinutes(next.end) - toMinutes(next.start);
     if (advanced < toMinutes(next.start) && (!meal || ctx.fits(next.place, advanced, advanced + length))) {
       steps = steps.map((s) => (s.id === next.id ? { ...s, slotStart: fromMinutes(advanced) } : s));

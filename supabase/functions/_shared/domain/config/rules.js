@@ -94,6 +94,8 @@ export const RULES = Object.freeze({
   day: {
     outdoorBeforeSunsetMin: 30,
     lastVisitEnd: '20:00',
+    /** Trou qui reste après la compaction au-delà de cette durée : « Temps libre » visible (aucun lieu possible). */
+    unfilledGapMin: 45,
     maxGapMin: 20,
     maxFillers: 6,
     freeTimeMin: 60
@@ -245,7 +247,7 @@ export const RULES = Object.freeze({
      * distribution locale des scores, jamais sous minScore ; abaissé quand il
      * reste moins de minVisitsPerDay × jours lieux au-dessus (petite ville).
      */
-    threshold: { percentile: 75, minScore: 15, minVisitsPerDay: 4 },
+    threshold: { percentile: 75, minScore: 15, minVisitsPerDay: 8 },
     /** Lieu connu : accepté par le profil « équilibré » même sans label officiel. */
     notableScore: 40,
     /** Lieux à écarter : nature générique ou libellé générique sous minSitelinks articles ; non visitable sous glanceScore. */
@@ -360,7 +362,19 @@ export const RULES = Object.freeze({
     /** Heure du résumé envoyé la veille de chaque journée (modifiable dans les réglages). */
     eveningSummaryTime: '19:00',
     /** Délai du rappel avant une étape, en minutes. */
-    reminderLeadMin: 60
+    reminderLeadMin: 60,
+    /** Heure du rappel de réservation, la veille d'un dîner de groupe un jour chargé (booking.js). */
+    bookingReminderTime: '10:00'
+  },
+
+  /**
+   * Groupes (booking.js) : « Pensez à réserver » sur chaque restaurant à
+   * partir de bookAheadFrom voyageurs ; dîners mis en avant, avec un rappel
+   * la veille, les jours busyDinnerDays (0 = dimanche … 6 = samedi).
+   */
+  groups: {
+    bookAheadFrom: 5,
+    busyDinnerDays: [5, 6]
   },
 
   ui: {

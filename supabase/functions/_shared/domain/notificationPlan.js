@@ -1,4 +1,5 @@
 import { addDays } from './dates.js';
+import { bookingAdvice } from './booking.js';
 import { stepDisplayName } from './displayName.js';
 import { slotToInstant } from './time.js';
 
@@ -22,7 +23,7 @@ import { slotToInstant } from './time.js';
  * @param {string} tripId
  * @param {string} date "YYYY-MM-DD"
  * @param {string} slot identifiant de l'étape, ou "summary"
- * @param {'summary' | 'reminder'} kind
+ * @param {'summary' | 'reminder' | 'booking'} kind
  * @returns {number}
  */
 export function notificationId(tripId, date, slot, kind) {
@@ -38,7 +39,7 @@ export function notificationId(tripId, date, slot, kind) {
 /**
  * @typedef {object} PlannedNotification
  * @property {number} id
- * @property {'summary' | 'reminder'} kind
+ * @property {'summary' | 'reminder' | 'booking'} kind booking : réserver le dîner du lendemain (groupe, jour chargé)
  * @property {Date} at instant de déclenchement
  * @property {string} tripId
  * @property {string} date jour du séjour concerné
@@ -84,6 +85,20 @@ export function planTripNotifications(trip, { now, summaries, reminders, summary
       }
     }
     if (!reminders) continue;
+    // Groupe, dîner d'un jour chargé (booking.js) : rappel de réservation la veille.
+    for (const s of planned.filter((x) => x.type === 'dinner' && bookingAdvice(trip, day.date, x, rules)?.highlight)) {
+      const at = slotToInstant(addDays(day.date, -1), rules.notifications.bookingReminderTime, trip.timezone);
+      if (at.getTime() <= now) continue;
+      out.push({
+        id: notificationId(trip.id, day.date, s.id, 'booking'),
+        kind: 'booking',
+        at,
+        tripId: trip.id,
+        date: day.date,
+        stepId: s.id,
+        data: { tripTitle: trip.title, date: day.date, start: s.start, name: nameOf(s), travelers: trip.travelers, type: s.type }
+      });
+    }
     for (const s of planned) {
       if (!s.place && s.type !== 'personal') continue;
       const at = new Date(slotToInstant(day.date, s.start, trip.timezone).getTime() - lead);
