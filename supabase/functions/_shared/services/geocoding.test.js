@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { photonToAddress, photonToResult, reverseAddress, reverseCity, searchAddresses, searchCities } from './geocoding.js';
+import { isFallback, photonToAddress, photonToResult, reverseAddress, reverseCity, searchAddresses, searchCities } from './geocoding.js';
 
 const feature = (props, coords = [4.726611, 45.9864749]) => ({
   type: 'Feature',
@@ -112,5 +112,64 @@ describe('adresses', () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ features: [house({})] })));
     expect(await reverseAddress({ lat: 45.9, lon: 6.12 }, 'fr')).toHaveLength(1);
     expect(new URL(fetchMock.mock.calls[0][0]).pathname).toBe('/reverse');
+  });
+});
+
+describe('secours IGN quand Photon est indisponible', () => {
+  let fetchMock;
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const caen = {
+    type: 'Feature',
+    properties: { type: 'municipality', name: 'Caen', city: 'Caen', postcode: '14000', context: '14, Calvados, Normandie' },
+    geometry: { type: 'Point', coordinates: [-0.363, 49.181] }
+  };
+  const json = (body, status = 200) => new Response(JSON.stringify(body), { status });
+
+  it('Photon refuse (403) : les communes viennent de l\'IGN, marquées comme secours', async () => {
+    fetchMock.mockResolvedValueOnce(json({}, 403)).mockResolvedValueOnce(json({ features: [caen] }));
+    const results = await searchCities('caen', 'fr', 10);
+    expect(results).toEqual([{ name: 'Caen', region: 'Calvados', country: 'France', countryCode: 'FR', lat: 49.181, lon: -0.363 }]);
+    expect(isFallback(results)).toBe(true);
+    expect(fetchMock.mock.calls).toHaveLength(2);
+    const url = new URL(fetchMock.mock.calls[1][0]);
+    expect(url.origin + url.pathname).toBe('https://data.geopf.fr/geocodage/search');
+    expect(url.searchParams.get('type')).toBe('municipality');
+  });
+
+  it('Photon répond : pas de secours', async () => {
+    fetchMock.mockResolvedValue(json({ features: [] }));
+    const results = await searchCities('caen', 'fr', 10);
+    expect(isFallback(results)).toBe(false);
+    expect(fetchMock.mock.calls).toHaveLength(1);
+  });
+
+  it('Photon et l\'IGN indisponibles : 502 external_unavailable (source ign)', async () => {
+    fetchMock.mockResolvedValue(json({}, 403));
+    await expect(searchCities('caen', 'fr', 10)).rejects.toMatchObject({ status: 502, code: 'external_unavailable', source: 'ign' });
+  });
+
+  it('recherche inverse de commune et adresses par l\'IGN', async () => {
+    fetchMock.mockResolvedValueOnce(json({}, 429)).mockResolvedValueOnce(json({ features: [caen] }));
+    expect(await reverseCity({ lat: 49.18, lon: -0.36 }, 'en')).toHaveLength(1);
+    expect(new URL(fetchMock.mock.calls[1][0]).pathname).toBe('/geocodage/reverse');
+
+    const house = { properties: { type: 'housenumber', name: '12 Rue Royale', housenumber: '12', street: 'Rue Royale', postcode: '74000', city: 'Annecy' }, geometry: { coordinates: [6.12, 45.9] } };
+    fetchMock.mockResolvedValueOnce(json({}, 403)).mockResolvedValueOnce(json({ features: [house, house] }));
+    const addresses = await searchAddresses('12 rue Royale', 'fr', 5, { lat: 45.9, lon: 6.1 });
+    expect(addresses).toEqual([{ address: '12 Rue Royale, 74000 Annecy', countryCode: 'FR', lat: 45.9, lon: 6.12 }]);
+    expect(new URL(fetchMock.mock.calls[3][0]).searchParams.get('lat')).toBe('45.9');
+
+    fetchMock.mockResolvedValueOnce(json({}, 403)).mockResolvedValueOnce(json({ features: [house] }));
+    expect(await reverseAddress({ lat: 45.9, lon: 6.12 }, 'fr')).toHaveLength(1);
   });
 });

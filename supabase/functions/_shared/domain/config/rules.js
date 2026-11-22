@@ -470,6 +470,8 @@ export const RULES = Object.freeze({
   cacheTtlSec: {
     config: 300,
     geocode: 2592000,
+    /** Résultats du secours IGN (Photon indisponible) : 1 h, pour revenir vite à Photon. */
+    geocodeFallback: 3600,
     weather: 3600,
     heritage: 2592000,
     osm: 604800,

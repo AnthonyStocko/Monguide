@@ -2,7 +2,7 @@ import { cached } from '../_shared/cache.js';
 import { isSupportedCountry } from '../_shared/domain/config/countries.js';
 import { roundCoord } from '../_shared/domain/geo.js';
 import { serveFunction } from '../_shared/handler.js';
-import { reverseAddress, reverseCity, searchAddresses, searchCities } from '../_shared/services/geocoding.js';
+import { isFallback, reverseAddress, reverseCity, searchAddresses, searchCities } from '../_shared/services/geocoding.js';
 import { timezoneAt } from '../_shared/services/timezone.js';
 import { readEnum, readPoint, readString } from '../_shared/validate.js';
 
@@ -22,9 +22,17 @@ function withTimezones(results, ttlSec) {
   );
 }
 
+/**
+ * Durée de cache : normale pour Photon, courte pour les résultats du secours
+ * IGN (France seulement), pour retrouver tous les pays dès le retour de Photon.
+ */
+function geocodeTtl(rules) {
+  return (results) => (isFallback(results) ? rules.cacheTtlSec.geocodeFallback : rules.cacheTtlSec.geocode);
+}
+
 /** Commune : recherche (q) ou recherche inverse (lat, lon). */
 async function cities(params, lang, rules) {
-  const ttlSec = rules.cacheTtlSec.geocode;
+  const ttlSec = geocodeTtl(rules);
   let results;
   if (params.has('lat') || params.has('lon')) {
     const exact = readPoint(params.get('lat'), params.get('lon'));
@@ -57,7 +65,7 @@ async function addresses(params, lang, rules) {
     bias = { lat: roundCoord(b.lat, 1), lon: roundCoord(b.lon, 1) };
   }
   const key = { q, lang, ...(bias ? { biasLat: String(bias.lat), biasLon: String(bias.lon) } : {}) };
-  return cached('geocode-address', key, rules.cacheTtlSec.geocode, () => searchAddresses(q, lang, rules.geocode.maxResults, bias));
+  return cached('geocode-address', key, geocodeTtl(rules), () => searchAddresses(q, lang, rules.geocode.maxResults, bias));
 }
 
 // GET /functions/v1/geocode?kind=city|address&q=…&lang=…  ou  ?lat=…&lon=…  (docs/api.md)

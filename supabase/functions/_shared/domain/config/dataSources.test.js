@@ -6,7 +6,7 @@ const ids = (list) => list.map((s) => s.id);
 
 describe('sourcesFor', () => {
   it('France : sources françaises, carburants seulement en voiture', () => {
-    expect(ids(sourcesFor('FR', 'walk', EU_MEMBERS))).toEqual(['osm', 'photon', 'openMeteo', 'nagerDate', 'ademe', 'culture', 'geoApi', 'inao', 'wikidata', 'commons']);
+    expect(ids(sourcesFor('FR', 'walk', EU_MEMBERS))).toEqual(['osm', 'photon', 'openMeteo', 'nagerDate', 'ademe', 'culture', 'ign', 'geoApi', 'inao', 'wikidata', 'commons']);
     expect(ids(sourcesFor('FR', 'car', EU_MEMBERS))).toContain('fuelFr');
   });
 

@@ -1160,6 +1160,7 @@
       "ember": "intensité carbone de l’électricité",
       "oilBulletin": "prix des carburants",
       "ecb": "taux de change",
+      "ign": "recherche de communes et d’adresses (secours)",
       "geoApi": "découpage administratif (départements)",
       "commons": "photos des lieux"
     }

@@ -86,7 +86,7 @@ export async function cacheSet(key, source, value, ttlSec) {
  * @template T
  * @param {string} source
  * @param {Record<string, unknown>} params paramètres de la clé (voir cacheKey)
- * @param {number} ttlSec
+ * @param {number | ((value: T) => number)} ttlSec durée, ou fonction de la valeur calculée
  * @param {() => Promise<T>} producer
  * @returns {Promise<T>}
  */
@@ -95,6 +95,6 @@ export async function cached(source, params, ttlSec, producer) {
   const hit = await cacheGet(key);
   if (hit !== undefined) return /** @type {T} */ (hit);
   const value = await producer();
-  await cacheSet(key, source, value, ttlSec);
+  await cacheSet(key, source, value, typeof ttlSec === 'function' ? ttlSec(value) : ttlSec);
   return value;
 }

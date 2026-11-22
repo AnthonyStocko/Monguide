@@ -153,7 +153,7 @@ même type JSON que la valeur par défaut, sinon la surcharge est ignorée
 
 ### `geocode` — recherche de destination
 
-Autocomplétion des villes et villages (source : Photon, OpenStreetMap).
+Autocomplétion des villes et villages (source : Photon, OpenStreetMap ; secours : IGN pour la France).
 
 - **Méthode** : `GET`
 - **Entrée** (paramètres d'URL), l'une ou l'autre forme :
@@ -191,7 +191,11 @@ Autocomplétion des villes et villages (source : Photon, OpenStreetMap).
 - **Cache serveur** : 30 jours (`cacheTtlSec.geocode`), clé = texte
   normalisé + langue (+ biais), ou position arrondie à 0,01° (communes).
 - **Erreurs** : codes communs (`400 invalid_input` si `q` trop court ou
-  position invalide, `502 external_unavailable` si Photon ne répond pas).
+  position invalide, `502 external_unavailable` si Photon et son secours ne répondent pas).
+- **Secours** : si Photon est indisponible (panne, 5xx, 403/429), la
+  recherche est refaite auprès du géocodeur de l'IGN (France uniquement,
+  même format de résultats), mis en cache 1 h seulement
+  (`cacheTtlSec.geocodeFallback`).
 
 ### `weather` — prévisions par jour
 

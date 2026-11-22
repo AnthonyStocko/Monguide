@@ -516,6 +516,7 @@ fortiori commerciale.
 | OpenStreetMap (extraits Geofabrik) | lieux (parcs, restaurants, marchés, petit patrimoine), importés chaque mois dans des tuiles (voir « Lieux OpenStreetMap ») | données ODbL 1.0, « © contributeurs OpenStreetMap » ; extraits Geofabrik : un téléchargement par pays et par mois, User-Agent identifié |
 | Tuiles tile.openstreetmap.org | fond de carte | ODbL ; politique d'usage de la fondation OSM : pas d'usage intensif, prévoir un fournisseur de tuiles pour une diffusion large |
 | Photon (komoot) | recherche d'adresses et de communes | données OpenStreetMap, ODbL 1.0 ; instance publique à usage raisonnable |
+| Géoplateforme de l'IGN (géocodage) | secours de Photon pour la France (communes, adresses) | Base Adresse Nationale, Licence Ouverte (Etalab) ; sans clé |
 | Open-Meteo | prévisions météo | données CC BY 4.0 ; API gratuite pour un usage **non commercial** (abonnement payant sinon) |
 | Wikidata | patrimoine et musées hors de France ; identifiant et photo principale (P18) des lieux et des villes | CC0 1.0 |
 | Wikimedia Commons | photos des lieux et des destinations (miniatures) | licence propre à chaque photo, seules CC0, domaine public, CC BY et CC BY-SA sont retenues ; auteur et licence affichés avec chaque photo |

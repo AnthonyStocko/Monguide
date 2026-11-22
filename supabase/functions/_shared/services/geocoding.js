@@ -1,4 +1,7 @@
+import { ExternalError } from '../errors.js';
 import { fetchExternalJson } from '../http.js';
+import { log } from '../log.js';
+import { ignReverseAddress, ignReverseCity, ignSearchAddresses, ignSearchCities } from './geocodingIgn.js';
 
 /**
  * Recherche de destination avec Photon (photon.komoot.io, données
@@ -8,6 +11,12 @@ import { fetchExternalJson } from '../http.js';
  * L'instance publique de Photon est réservée à un usage raisonnable. Pour une
  * diffusion large, passer à une instance dédiée (auto-hébergée ou payante) :
  * il suffit de définir le secret PHOTON_URL, sans changer le code.
+ *
+ * SECOURS : si Photon est indisponible (panne, 5xx, ou 403/429 quand
+ * l'instance publique refuse les serveurs Supabase), chaque recherche est
+ * refaite auprès du géocodeur de l'IGN (services/geocodingIgn.js), qui ne
+ * couvre que la France. Les résultats de secours sont repérables avec
+ * isFallback(), pour ne les garder en cache que peu de temps.
  */
 const PHOTON_URL = () => globalThis.Deno?.env.get('PHOTON_URL') ?? 'https://photon.komoot.io';
 
@@ -64,7 +73,7 @@ function photonParams(lang) {
  * @param {number} maxResults
  * @returns {Promise<GeocodeResult[]>}
  */
-export async function searchCities(q, lang, maxResults) {
+async function photonSearchCities(q, lang, maxResults) {
   // On demande plus de résultats que nécessaire : certains sont filtrés
   // (doublons, résultats qui ne sont pas des communes).
   const params = new URLSearchParams({ q, limit: String(maxResults * 2), ...photonParams(lang) });
@@ -78,7 +87,7 @@ export async function searchCities(q, lang, maxResults) {
  * @param {string} lang
  * @returns {Promise<GeocodeResult[]>} 0 ou 1 résultat
  */
-export async function reverseCity(point, lang) {
+async function photonReverseCity(point, lang) {
   const params = new URLSearchParams({ lat: String(point.lat), lon: String(point.lon), limit: '1', ...photonParams(lang) });
   const json = await fetchExternalJson(`${PHOTON_URL()}/reverse?${params}`, { source: 'photon' });
   return (json.features ?? []).map(photonToResult).filter(Boolean).slice(0, 1);
@@ -129,7 +138,7 @@ function uniqueAddresses(results) {
  * @param {{ lat: number, lon: number } | null} bias
  * @returns {Promise<AddressResult[]>}
  */
-export async function searchAddresses(q, lang, maxResults, bias) {
+async function photonSearchAddresses(q, lang, maxResults, bias) {
   const params = new URLSearchParams([
     ['q', q],
     ['limit', String(maxResults * 2)],
@@ -152,7 +161,7 @@ export async function searchAddresses(q, lang, maxResults, bias) {
  * @param {string} lang
  * @returns {Promise<AddressResult[]>} 0 ou 1 résultat
  */
-export async function reverseAddress(point, lang) {
+async function photonReverseAddress(point, lang) {
   const params = new URLSearchParams([
     ['lat', String(point.lat)],
     ['lon', String(point.lon)],
@@ -163,4 +172,87 @@ export async function reverseAddress(point, lang) {
   ]);
   const json = await fetchExternalJson(`${PHOTON_URL()}/reverse?${params}`, { source: 'photon' });
   return (json.features ?? []).map(photonToAddress).filter(Boolean).slice(0, 1);
+}
+
+/** Résultats obtenus par le secours (IGN), à ne pas garder longtemps en cache. */
+const fallbackResults = new WeakSet();
+
+/**
+ * Les résultats viennent-ils du secours IGN (Photon indisponible) ?
+ * @param {unknown} results
+ */
+export function isFallback(results) {
+  return typeof results === 'object' && results !== null && fallbackResults.has(results);
+}
+
+/**
+ * Appelle Photon ; s'il est indisponible, appelle le secours IGN. Une erreur
+ * du secours est renvoyée telle quelle (502 external_unavailable).
+ * @template T
+ * @param {() => Promise<T[]>} primary
+ * @param {() => Promise<T[]>} fallback
+ * @returns {Promise<T[]>}
+ */
+async function withFallback(primary, fallback) {
+  try {
+    return await primary();
+  } catch (err) {
+    if (!(err instanceof ExternalError)) throw err;
+    log('warn', 'geocode_fallback', { from: 'photon', to: 'ign', upstreamStatus: err.upstreamStatus, failure: err.failure });
+    const results = await fallback();
+    fallbackResults.add(results);
+    return results;
+  }
+}
+
+/**
+ * Recherche de communes (3 caractères au moins).
+ * @param {string} q
+ * @param {string} lang
+ * @param {number} maxResults
+ * @returns {Promise<Omit<GeocodeResult, 'timezone'>[]>}
+ */
+export function searchCities(q, lang, maxResults) {
+  return withFallback(
+    () => photonSearchCities(q, lang, maxResults),
+    () => ignSearchCities(q, lang, maxResults)
+  );
+}
+
+/**
+ * Commune à une position ("Utiliser ma position").
+ * @param {{ lat: number, lon: number }} point
+ * @param {string} lang
+ */
+export function reverseCity(point, lang) {
+  return withFallback(
+    () => photonReverseCity(point, lang),
+    () => ignReverseCity(point, lang)
+  );
+}
+
+/**
+ * Adresses et lieux nommés, favorisant la destination.
+ * @param {string} q
+ * @param {string} lang
+ * @param {number} maxResults
+ * @param {{ lat: number, lon: number } | null} bias
+ */
+export function searchAddresses(q, lang, maxResults, bias) {
+  return withFallback(
+    () => photonSearchAddresses(q, lang, maxResults, bias),
+    () => ignSearchAddresses(q, maxResults, bias)
+  );
+}
+
+/**
+ * Adresse la plus proche d'une position.
+ * @param {{ lat: number, lon: number }} point
+ * @param {string} lang
+ */
+export function reverseAddress(point, lang) {
+  return withFallback(
+    () => photonReverseAddress(point, lang),
+    () => ignReverseAddress(point)
+  );
 }

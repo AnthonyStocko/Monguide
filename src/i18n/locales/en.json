@@ -1160,6 +1160,7 @@
       "ember": "carbon intensity of electricity",
       "oilBulletin": "fuel prices",
       "ecb": "exchange rates",
+      "ign": "town and address search (fallback)",
       "geoApi": "administrative areas (départements)",
       "commons": "place photos"
     }
