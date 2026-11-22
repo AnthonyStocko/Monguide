@@ -1,4 +1,5 @@
 import { cached } from '../_shared/cache.js';
+import { RULES } from '../_shared/domain/config/rules.js';
 import { isSupportedCountry } from '../_shared/domain/config/countries.js';
 import { roundCoord } from '../_shared/domain/geo.js';
 import { serveFunction } from '../_shared/handler.js';
@@ -27,7 +28,11 @@ function withTimezones(results, ttlSec) {
  * IGN (France seulement), pour retrouver tous les pays dès le retour de Photon.
  */
 function geocodeTtl(rules) {
-  return (results) => (isFallback(results) ? rules.cacheTtlSec.geocodeFallback : rules.cacheTtlSec.geocode);
+  // Valeurs par défaut de rules.js si la configuration en cache (5 min) date
+  // d'une version qui ne les connaissait pas.
+  const normal = rules.cacheTtlSec.geocode ?? RULES.cacheTtlSec.geocode;
+  const fallback = rules.cacheTtlSec.geocodeFallback ?? RULES.cacheTtlSec.geocodeFallback;
+  return (results) => (isFallback(results) ? fallback : normal);
 }
 
 /** Commune : recherche (q) ou recherche inverse (lat, lon). */
