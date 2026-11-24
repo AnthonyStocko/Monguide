@@ -218,7 +218,7 @@ de logique métier.
   par `app_config` sans nouvelle version (`docs/api.md`) ; liste complète
   et liens suivis dans `docs/liens-publics.md`. Pages statiques
   (`decouvrir.html`, `confidentialite.html`, `mentions-legales.html`,
-  `suppression-compte.html`) dans `public/`, publiées avec la version web.
+  `suppression-compte.html`, `suppression-donnees.html`) dans `public/`, publiées avec la version web.
   La variable GitHub `WEB_APP_URL` ne sert plus qu'aux anciennes pages
   GitHub Pages (`site/`, `pages.yml`).
 - **Liens ouverts par l'application Android** (Android App Links, depuis

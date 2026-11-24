@@ -17,6 +17,7 @@ les mettre à jour à la main si l'une d'elles change.
 | `privacy` (confidentialité) | https://monguide.mgapp.workers.dev/confidentialite.html |
 | `legal` (mentions légales) | https://monguide.mgapp.workers.dev/mentions-legales.html |
 | `accountDeletion` (suppression du compte) | https://monguide.mgapp.workers.dev/suppression-compte.html |
+| (Meta, app Instagram : suppression des données) | https://monguide.mgapp.workers.dev/suppression-donnees.html |
 | `contactEmail` | monguide.app@outlook.com |
 
 Play Console : « Règles de confidentialité » = `privacy`, « Suppression des

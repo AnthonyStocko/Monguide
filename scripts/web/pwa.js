@@ -45,7 +45,7 @@ export const WEB_HEAD_TAGS = [
  * worker ni par Cloudflare (wrangler.jsonc ne renvoie vers index.html que
  * les adresses sans fichier).
  */
-export const STATIC_PAGES = ['decouvrir', 'confidentialite', 'mentions-legales', 'suppression-compte'];
+export const STATIC_PAGES = ['decouvrir', 'confidentialite', 'mentions-legales', 'suppression-compte', 'suppression-donnees'];
 
 /** Limites du cache des tuiles de la carte. */
 export const TILE_CACHE = { cacheName: 'map-tiles', maxEntries: 200, maxAgeSeconds: SEVEN_DAYS_IN_SECONDS };
