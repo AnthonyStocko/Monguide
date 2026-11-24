@@ -795,8 +795,11 @@
     "deleteNamed": "Supprimer le séjour {{name}}",
     "leaveNamed": "Quitter le séjour {{name}}",
     "confirmTitle": "Supprimer ce séjour ?",
-    "confirmText": "Le séjour à {{name}} sera supprimé de ce téléphone.",
-    "confirm": "Supprimer"
+    "confirmText": "Le séjour « {{name}} » sera supprimé définitivement, avec toutes ses étapes, notes et données. Cette action est irréversible. Si vous êtes connecté, il sera aussi supprimé de votre compte et de vos autres appareils.",
+    "confirm": "Supprimer définitivement",
+    "deleteFailed": "Le séjour n’a pas pu être supprimé. Il est conservé : réessayez dans un instant.",
+    "deleted": "Le séjour « {{name}} » a été supprimé.",
+    "deleteTrip": "Supprimer le séjour"
   },
   "auth": {
     "title": "Se connecter",
