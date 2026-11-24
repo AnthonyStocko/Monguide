@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react';
-import { CirclePlus, CloudCheck, LogOut, Trash2, UserRound } from 'lucide-react';
+import { CircleCheck, CirclePlus, CloudCheck, LogOut, Trash2, UserRound } from 'lucide-react';
 import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import Page from '../components/layout/Page.jsx';
+import DeleteTripDialog from '../components/trip/DeleteTripDialog.jsx';
 import TripImageCard from '../components/trip/TripImageCard.jsx';
 import Button from '../components/ui/Button.jsx';
 import Card from '../components/ui/Card.jsx';
 import Dialog from '../components/ui/Dialog.jsx';
 import EmptyState from '../components/ui/EmptyState.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
+import Toast from '../components/ui/Toast.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 import { hapticConfirm } from '../services/haptics.js';
 import { leaveTrip } from '../services/sharing.js';
-import { deleteTrip, listTrips, onTripsChanged } from '../services/tripsStore.js';
+import { listTrips, onTripsChanged } from '../services/tripsStore.js';
 import { cascadeProps, useFirstShow, useMotionAllowed } from '../ui/motion.js';
 
 /**
@@ -25,6 +27,14 @@ export default function FavoritesPage() {
   const navigate = useNavigate();
   const [trips, setTrips] = useState(null);
   const [confirm, setConfirm] = useState(null);
+  const location = useLocation();
+  // Séjour supprimé depuis son écran : message de succès après le retour à la liste.
+  const [deletedTitle, setDeletedTitle] = useState(location.state?.deletedTitle ?? null);
+  useEffect(() => {
+    if (!deletedTitle) return undefined;
+    const timer = setTimeout(() => setDeletedTitle(null), 5000);
+    return () => clearTimeout(timer);
+  }, [deletedTitle]);
   const { session, email, syncStatus } = useAuth();
 
   const load = () => listTrips().then(setTrips).catch(() => setTrips([]));
@@ -40,8 +50,7 @@ export default function FavoritesPage() {
   const remove = async () => {
     setFailed(false);
     try {
-      if (notMine(confirm)) await leaveTrip(confirm.id);
-      else await deleteTrip(confirm.id);
+      await leaveTrip(confirm.id);
     } catch {
       setFailed(true);
       return;
@@ -106,9 +115,21 @@ export default function FavoritesPage() {
           </m.li>
         ))}
       </ul>
-      {confirm && (
+      {confirm && !notMine(confirm) && (
+        <DeleteTripDialog
+          trip={confirm}
+          onClose={() => setConfirm(null)}
+          onDeleted={(title) => {
+            setConfirm(null);
+            setDeletedTitle(title);
+            load();
+          }}
+        />
+      )}
+      {deletedTitle && <Toast tone="success" icon={CircleCheck} message={t('trips.deleted', { name: deletedTitle })} onClose={() => setDeletedTitle(null)} />}
+      {confirm && notMine(confirm) && (
         <Dialog
-          title={notMine(confirm) ? t('sharing.confirm.leave.title') : t('trips.confirmTitle')}
+          title={t('sharing.confirm.leave.title')}
           onClose={() => {
             setConfirm(null);
             setFailed(false);
@@ -118,13 +139,13 @@ export default function FavoritesPage() {
               <Button variant="secondary" onClick={() => setConfirm(null)}>
                 {t('common.cancel')}
               </Button>
-              <Button icon={notMine(confirm) ? LogOut : Trash2} onClick={remove}>
-                {notMine(confirm) ? t('sharing.confirm.leave.action') : t('trips.confirm')}
+              <Button icon={LogOut} onClick={remove}>
+                {t('sharing.confirm.leave.action')}
               </Button>
             </>
           }
         >
-          <p>{notMine(confirm) ? t('sharing.confirm.leave.text', { title: confirm.title }) : t('trips.confirmText', { name: confirm.title })}</p>
+          <p>{t('sharing.confirm.leave.text', { title: confirm.title })}</p>
           {failed && (
             <p role="alert" className="mt-2 text-danger-on-soft">
               {t('sharing.errors.leaveOffline')}

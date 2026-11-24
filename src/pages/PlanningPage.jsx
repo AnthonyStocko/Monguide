@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CirclePlus, FileDown, History, ImageOff, Share2, Users } from 'lucide-react';
+import { CirclePlus, FileDown, History, ImageOff, Share2, Trash2, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { applyChanges } from '@domain/applyChanges.js';
@@ -26,6 +26,7 @@ import ReplaceStepDialog from '../components/planning/ReplaceStepDialog.jsx';
 import TimeEditorDialog from '../components/planning/TimeEditorDialog.jsx';
 import TripHero from '../components/planning/TripHero.jsx';
 import UndoBar from '../components/planning/UndoBar.jsx';
+import DeleteTripDialog from '../components/trip/DeleteTripDialog.jsx';
 import LiveToast from '../components/sharing/LiveToast.jsx';
 import PendingBanner from '../components/sync/PendingBanner.jsx';
 import UpdateForTrip from '../components/sync/UpdateForTrip.jsx';
@@ -121,6 +122,8 @@ export default function PlanningPage() {
   const members = useTripMembers(shownTripId);
   const shared = synced && (members?.length ?? 0) > 1;
   const { session } = useAuth();
+  // Un séjour d'un autre organisateur se quitte (écran Participants), il ne se supprime pas.
+  const canDelete = status === 'ready' && (!trip.ownerId || trip.ownerId === session?.user?.id);
   const isOwner = synced && (!trip.ownerId || trip.ownerId === session?.user?.id);
   useEffect(() => {
     if (synced && navigator.onLine) tripMembers(shownTripId).catch(() => {});
@@ -359,6 +362,11 @@ export default function PlanningPage() {
         <Button variant="secondary" icon={FileDown} onClick={() => setDialog({ kind: 'export' })}>
           {t('export.button')}
         </Button>
+        {canDelete && (
+          <Button variant="secondary" icon={Trash2} onClick={() => setDialog({ kind: 'delete' })}>
+            {t('trips.deleteTrip')}
+          </Button>
+        )}
         {isOwner && (
           <Button variant="secondary" icon={Share2} onClick={() => navigate(`/planning/${trip.id}/participants`)}>
             {t('sharing.shareButton')}
@@ -512,6 +520,13 @@ export default function PlanningPage() {
           onDismiss={panel.onDismiss}
           onApply={panel.onApply}
           onClose={() => setProposal(null)}
+        />
+      )}
+      {dialog?.kind === 'delete' && (
+        <DeleteTripDialog
+          trip={trip}
+          onClose={() => setDialog(null)}
+          onDeleted={(title) => navigate('/favorites', { replace: true, state: { deletedTitle: title } })}
         />
       )}
       <LiveToast toast={liveToast} raised={Boolean(undo)} />

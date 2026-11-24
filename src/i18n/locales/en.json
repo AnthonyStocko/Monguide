@@ -795,8 +795,11 @@
     "deleteNamed": "Delete the trip {{name}}",
     "leaveNamed": "Leave the trip {{name}}",
     "confirmTitle": "Delete this trip?",
-    "confirmText": "The trip to {{name}} will be deleted from this phone.",
-    "confirm": "Delete"
+    "confirmText": "The trip “{{name}}” will be permanently deleted, with all its steps, notes and data. This cannot be undone. If you are signed in, it will also be deleted from your account and your other devices.",
+    "deleteFailed": "The trip could not be deleted. It has been kept: please try again in a moment.",
+    "deleted": "The trip “{{name}}” has been deleted.",
+    "confirm": "Delete permanently",
+    "deleteTrip": "Delete the trip"
   },
   "auth": {
     "title": "Sign in",
