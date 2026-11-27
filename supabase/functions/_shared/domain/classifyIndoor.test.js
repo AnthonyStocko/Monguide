@@ -27,6 +27,11 @@ describe('classifyIndoor', () => {
     expect(classifyIndoor({ category, name: 'Château d\'eau' })).toBe(false);
   });
 
+  it('classe un aquarium (monument sans label) en intérieur', () => {
+    expect(classifyIndoor({ category: 'monument', name: 'Aquarium de La Rochelle' })).toBe(true);
+    expect(classifyIndoor({ category: 'monument', name: 'Acuario de Sevilla' })).toBe(true);
+  });
+
   it('distingue marché de plein air et halles couvertes', () => {
     expect(classifyIndoor({ category: 'market', name: 'Marché du samedi' })).toBe(false);
     expect(classifyIndoor({ category: 'market', name: 'Les Halles de Villefranche' })).toBe(true);

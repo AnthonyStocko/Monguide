@@ -240,7 +240,8 @@ export const RULES = Object.freeze({
       osmHeritage: 4,
       worldHeritage: 15,
       topDesignation: 8,
-      tentativeHeritage: 5
+      tentativeHeritage: 5,
+      sight: 20
     },
     /**
      * Seuil adaptatif des visites (musées, monuments) : percentile de la
@@ -262,8 +263,13 @@ export const RULES = Object.freeze({
     mustSee: { min: 5, max: 10, perDay: 3, minScore: 40, radiusKm: 5, maxVisitsPerDay: 3, maxGlancesPerDay: 3, delayToleranceMin: 15 },
     /** Autres coups d'œil insérés sur les trajets : au plus maxPerDay par jour, détour d'au plus maxDetourMin. */
     glance: { maxPerDay: 2, maxDetourMin: 10 },
-    /** Requête Wikidata des lieux connus (toutes natures) : au moins minSitelinks articles, les limit plus connus. */
-    notableQuery: { minSitelinks: 5, limit: 150 }
+    /**
+     * Requête Wikidata des lieux connus (toutes natures) : au moins minSitelinks
+     * articles, les limit plus connus. Les grands sites (aquariums, zoos, parcs
+     * d'attractions : SIGHT_CLASSES) sont gardés dès sightMinSitelinks articles
+     * et passent avant les autres dans la limite.
+     */
+    notableQuery: { minSitelinks: 5, sightMinSitelinks: 2, limit: 150 }
   },
 
   /** Recherche de destination (fonction geocode). */

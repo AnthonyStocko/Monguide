@@ -1,5 +1,5 @@
 import { classifyIndoor } from '../domain/classifyIndoor.js';
-import { ATTRACTION_CLASSES, PARK_CLASSES, REDIRECT_BADGES } from '../domain/config/placeClasses.js';
+import { ATTRACTION_CLASSES, PARK_CLASSES, REDIRECT_BADGES, SIGHT_CLASSES } from '../domain/config/placeClasses.js';
 import { ExternalError } from '../errors.js';
 import { fetchExternal } from '../http.js';
 import { userAgent } from '../meta.js';
@@ -165,23 +165,27 @@ export function buildMuseumsQuery(point, radiusKm, languages, limit, wikis = [],
  * communes, quartiers, la ville elle-même), et seulement les édifices et
  * œuvres (désignation patrimoniale, architecte, style, créateur) ou les
  * musées, parcs et attractions (ATTRACTION_CLASSES) : ni organisations, ni
- * événements, ni lignes de transport.
+ * événements, ni lignes de transport. Les grands sites (SIGHT_CLASSES :
+ * aquariums, zoos, parcs d'attractions) ont un seuil d'articles plus bas
+ * (sightMinSitelinks) et passent en premier.
  * @param {{ lat: number, lon: number }} point
  * @param {number} radiusKm
  * @param {string[]} languages
- * @param {{ minSitelinks: number, limit: number }} options rules.notoriety.notableQuery
+ * @param {{ minSitelinks: number, sightMinSitelinks?: number, limit: number }} options rules.notoriety.notableQuery
  * @param {string[]} [wikis]
  * @param {string[]} [names]
  */
-export function buildNotableQuery(point, radiusKm, languages, { minSitelinks, limit }, wikis = [], names = []) {
+export function buildNotableQuery(point, radiusKm, languages, { minSitelinks, sightMinSitelinks = minSitelinks, limit }, wikis = [], names = []) {
+  const sights = Object.keys(SIGHT_CLASSES).map((q) => `wd:${q}`).join(' ');
   const kinds = [...Object.keys(MUSEUM_TYPES), ...Object.keys(PARK_CLASSES), ...Object.keys(ATTRACTION_CLASSES)].map((q) => `wd:${q}`).join(' ');
   const builtOrArtwork = [P.heritageDesignation, P.architect, P.architecturalStyle, P.creator].map((p) => `wdt:${p}`).join('|');
   const inner =
     `SELECT ?item ?c ?links WHERE { ${around(point, radiusKm)} ?item wikibase:sitelinks ?links . ` +
-    `FILTER(?links >= ${Number(minSitelinks)}) FILTER NOT EXISTS { ?item wdt:${P.population} [] . } ` +
+    `BIND(EXISTS { VALUES ?sight { ${sights} } ?item wdt:${P.instanceOf} ?sight . } AS ?isSight) ` +
+    `FILTER(?links >= ${Number(minSitelinks)} || (?isSight && ?links >= ${Number(sightMinSitelinks)})) FILTER NOT EXISTS { ?item wdt:${P.population} [] . } ` +
     `FILTER(EXISTS { ?item ${builtOrArtwork} [] . } || EXISTS { VALUES ?kind { ${kinds} } ?item wdt:${P.instanceOf} ?kind . }) } ` +
     // Départage par identifiant : à égalité d'articles au seuil, toujours les mêmes lieux.
-    `ORDER BY DESC(?links) ?item LIMIT ${Number(limit)}`;
+    `ORDER BY DESC(?isSight) DESC(?links) ?item LIMIT ${Number(limit)}`;
   return [`SELECT ?item ?itemLabel ${SIGNAL_VARS} WHERE {`, ...withSignals(inner, wikis, names), `  ${labels(languages)}`, '}'].join('\n');
 }
 

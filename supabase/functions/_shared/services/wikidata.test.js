@@ -78,16 +78,17 @@ describe('requêtes SPARQL', () => {
   });
 
   it('lieux connus : articles minimum, les plus connus d’abord, ni communes, ni organisations', () => {
-    const q = buildNotableQuery(BARCELONA, 10, LANGS, { minSitelinks: 5, limit: 150 }, ['fr']);
+    const q = buildNotableQuery(BARCELONA, 10, LANGS, { minSitelinks: 5, sightMinSitelinks: 2, limit: 150 }, ['fr']);
     const inner = q.slice(q.indexOf('{ SELECT ?item ?c ?links'));
     expect(inner.slice(inner.indexOf('WHERE {') + 7).trim().startsWith('SERVICE wikibase:around')).toBe(true);
-    expect(q).toContain('FILTER(?links >= 5)');
+    expect(q).toContain('FILTER(?links >= 5 || (?isSight && ?links >= 2))');
+    expect(q).toContain('VALUES ?sight { wd:Q2281788 wd:Q43501 wd:Q194195 }');
     expect(q).toContain('FILTER NOT EXISTS { ?item wdt:P1082 [] . }');
     expect(q).toContain('?item wdt:P1435|wdt:P84|wdt:P149|wdt:P170 [] .');
     expect(q).toContain('wd:Q33506');
     expect(q).toContain('wd:Q22698');
     expect(q).toContain('wd:Q570116');
-    expect(q).toMatch(/ORDER BY DESC\(\?links\) \?item LIMIT 150/);
+    expect(q).toMatch(/ORDER BY DESC\(\?isSight\) DESC\(\?links\) \?item LIMIT 150/);
     expect(q).not.toContain('P279');
   });
 

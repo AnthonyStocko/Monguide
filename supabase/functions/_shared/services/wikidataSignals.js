@@ -27,8 +27,8 @@ export function notablePlacesSource(point, radiusKm, ctx) {
   return runSource({
     name: 'notable',
     cacheSource: 'wikidata-notable',
-    // format 2 : libellés de toutes les langues utiles, fermetures, redirections.
-    params: { lat: point.lat, lon: point.lon, radius: radiusKm, lang, min: options.minSitelinks, limit: options.limit, format: 2 },
+    // format 3 : + grands sites (aquariums, zoos…) à seuil d'articles réduit ; 2 : libellés de toutes les langues utiles, fermetures, redirections.
+    params: { lat: point.lat, lon: point.lon, radius: radiusKm, lang, min: options.minSitelinks, sightMin: options.sightMinSitelinks, limit: options.limit, format: 3 },
     ttlSec: rules.cacheTtlSec.wikidata,
     cache,
     query,

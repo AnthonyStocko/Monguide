@@ -1,4 +1,4 @@
-import { TOP_DESIGNATIONS } from '../config/placeClasses.js';
+import { SIGHT_CLASSES, TOP_DESIGNATIONS } from '../config/placeClasses.js';
 
 /**
  * Notoriété d'un lieu : score 0-100 (fonction pure), et seuil adaptatif des
@@ -32,7 +32,9 @@ import { TOP_DESIGNATIONS } from '../config/placeClasses.js';
  *  - signaux secondaires : article dans la langue de l'interface, dans une
  *    langue du pays, tags OSM tourism=attraction|museum et heritage avec
  *    wikidata, désignation de premier rang (TOP_DESIGNATIONS) : patrimoine
- *    mondial, liste indicative, ou classement national de premier rang.
+ *    mondial, liste indicative, ou classement national de premier rang ;
+ *    grand site de visite (SIGHT_CLASSES : aquarium, zoo, parc d'attractions),
+ *    qui a peu d'articles malgré sa fréquentation.
  * @param {PlaceSignals | undefined} signals
  * @returns {number} arrondi à l'unité
  */
@@ -45,6 +47,7 @@ export function notorietyScore(signals, rules) {
   if (signals.localArticle) score += w.localArticle;
   if (signals.osmAttraction) score += w.osmAttraction;
   if (signals.osmHeritage) score += w.osmHeritage;
+  if ((signals.types ?? []).some((t) => t in SIGHT_CLASSES)) score += w.sight;
   const ranks = new Set((signals.designations ?? []).map((q) => TOP_DESIGNATIONS[q]).filter(Boolean));
   if (ranks.has('world_heritage')) score += w.worldHeritage;
   else if (ranks.has('top')) score += w.topDesignation;

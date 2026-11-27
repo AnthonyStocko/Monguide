@@ -28,6 +28,7 @@ describe('notorietyScore', () => {
     expect(notorietyScore({ sitelinks: 10, designations: ['Q10387684'] }, RULES)).toBe(base + w.topDesignation);
     // Monument classé bruxellois : désignation courante, aucun bonus.
     expect(notorietyScore({ sitelinks: 10, designations: ['Q19346745'] }, RULES)).toBe(base);
+    expect(notorietyScore({ sitelinks: 10, types: ['Q2281788'] }, RULES)).toBe(base + w.sight);
   });
 
   it('classe Grand-Place et Manneken-Pis loin devant une maison d’inventaire, dans 0-100', () => {
@@ -83,5 +84,16 @@ describe('notorietyThreshold', () => {
 
   it('sans lieu : minimum absolu', () => {
     expect(notorietyThreshold([], 8, RULES).threshold).toBe(RULES.notoriety.threshold.minScore);
+  });
+});
+
+describe("grands sites de visite (aquarium, zoo, parc d'attractions)", () => {
+  it("l'aquarium de La Rochelle (4 articles) est un lieu connu et un incontournable possible", () => {
+    const score = notorietyScore({ sitelinks: 4, types: ['Q2281788', 'Q33506'], langArticle: true, localArticle: true }, RULES);
+    expect(score).toBeGreaterThanOrEqual(RULES.notoriety.notableScore);
+    expect(score).toBeGreaterThanOrEqual(RULES.notoriety.mustSee.minScore);
+  });
+  it('un lieu ordinaire de 4 articles reste sous le seuil des lieux connus', () => {
+    expect(notorietyScore({ sitelinks: 4, langArticle: true, localArticle: true }, RULES)).toBeLessThan(RULES.notoriety.notableScore);
   });
 });

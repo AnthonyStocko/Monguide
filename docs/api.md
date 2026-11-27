@@ -327,12 +327,16 @@ Rassemble en parallèle les lieux autour d'une destination. Une source en
     patrimoine suit le même réglage (aucun repli avec `"off"`) ; `notable`
     (lieux les plus connus de Wikidata : au moins
     `notoriety.notableQuery.minSitelinks` articles Wikipédia, édifices,
-    œuvres, musées, parcs et attractions, sans communes ni organisations).
+    œuvres, musées, parcs et attractions, sans communes ni organisations ;
+    les grands sites aquariums, zoos et parcs d'attractions sont gardés dès
+    `notoriety.notableQuery.sightMinSitelinks` articles et passent en
+    premier dans la limite).
   - Notoriété (`domain/scoring/notoriety.js`) : chaque lieu reçoit
     `notoriety` (0-100 : articles Wikipédia en échelle logarithmique,
     articles en français et dans la langue du pays, tags OSM
     `tourism=attraction|museum` et `heritage` avec `wikidata`, patrimoine
-    mondial ou classement de premier rang), `sitelinks` quand ils sont
+    mondial ou classement de premier rang, bonus `weights.sight` pour un
+    aquarium, un zoo ou un parc d'attractions), `sitelinks` quand ils sont
     connus, `notable: true` au-delà de `notoriety.notableScore` (accepté
     par le profil « équilibré » sans label officiel) et `glance: true` pour
     un lieu vu en passant (statue, fontaine, façade célèbre : étape courte,
