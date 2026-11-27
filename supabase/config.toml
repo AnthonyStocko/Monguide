@@ -32,8 +32,8 @@ enabled = false
 # key_path = "../certs/my-key.pem"
 
 [db]
-# Port to use for the local database URL.
-port = 54322
+# Port to use for the local database URL (hors 54322 : occupé sur les runners GitHub Actions).
+port = 54342
 # Port used by db diff command to initialize the shadow database.
 shadow_port = 54320
 # Maximum amount of time to wait for health check when starting the local database.
