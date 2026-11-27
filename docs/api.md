@@ -488,6 +488,9 @@ l'application ne parle jamais à l'agent et ne connaît ni son adresse ni sa cl�
 - **Contrat attendu de l'agent** : `GET <INSTAGRAM_AGENT_URL>/lieux-commentes`
   renvoie `{ "places": [...] }` comme ci-dessus, uniquement pour les posts dont
   le commentaire est marqué **publié** (statut `postee`), un élément par post.
+  Chaque élément doit porter de quoi situer le lieu : `name` et au moins l'un
+  de `city`, `lat`/`lon` ou `placeId` (sans cela, le post ne peut être relié à
+  aucune étape : un nom seul ne suffit jamais).
 - **Correspondance** (`_shared/domain/instagramPlaces.js`) : identifiant
   commun (`placeId` = id du lieu ou identifiant Wikidata), sinon même nom
   (sans accents, casse, articles ni tirets) **et** coordonnées à moins de

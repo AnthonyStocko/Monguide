@@ -81,3 +81,17 @@ describe('parseInstagramPlaces', () => {
     expect(entry.lat).toBeUndefined();
   });
 });
+
+describe('cas de l\'aquarium de La Rochelle', () => {
+  const aquarium = { id: 'osm:node/42', name: 'Aquarium de La Rochelle', lat: 46.1475, lon: -1.1707 };
+  const rochelle = (over = {}) => ({ url: 'https://www.instagram.com/p/AQUA1/', name: 'Aquarium La Rochelle', city: 'La Rochelle', ...over });
+  it('relie le post par nom normalisé et ville de la destination', () => {
+    expect(findInstagramPost(aquarium, [rochelle()], 'La Rochelle')).toBe('https://www.instagram.com/p/AQUA1/');
+  });
+  it('relie le post par coordonnées, même sans ville', () => {
+    expect(findInstagramPost(aquarium, [rochelle({ city: undefined, lat: 46.15, lon: -1.17 })], 'La Rochelle')).toBe('https://www.instagram.com/p/AQUA1/');
+  });
+  it('ne relie rien si l\'agent n\'enregistre ni ville, ni coordonnées, ni identifiant', () => {
+    expect(findInstagramPost(aquarium, [rochelle({ city: undefined })], 'La Rochelle')).toBeNull();
+  });
+});
