@@ -162,6 +162,19 @@ export const ATTRACTION_CLASSES = Object.freeze({
 });
 
 /**
+ * Grands sites de visite (sous-ensemble d'ATTRACTION_CLASSES) : aquariums,
+ * zoos, parcs d'attractions. Ils sont visités pour eux-mêmes mais ont peu
+ * d'articles Wikipédia (l'aquarium de La Rochelle : 4 liens) : la requête
+ * des lieux connus les garde dès rules.notoriety.notableQuery.sightMinSitelinks
+ * articles, et leur notoriété reçoit rules.notoriety.weights.sight.
+ */
+export const SIGHT_CLASSES = Object.freeze({
+  Q2281788: 'aquarium public',
+  Q43501: 'parc zoologique',
+  Q194195: "parc d'attractions"
+});
+
+/**
  * États d'usage (P5817) d'un lieu fermé, disparu ou pas encore ouvert :
  * écarté. Valeurs les plus courantes de P5817 relevées le 2026-10-30
  * (requête de comptage sur wikidata.org).

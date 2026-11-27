@@ -29,6 +29,7 @@ export const INDOOR_MONUMENT_WORDS = [
   'temple', 'synagogue', 'mosquee', 'mosque',
   'hotel de ville', 'town hall', 'theatre', 'theater', 'opera',
   'halle', 'halles', 'covered market',
+  'aquarium', 'aquarien', 'acuario', 'aquari', 'acquario',
   // espagnol, catalan, portugais
   'iglesia', 'esglesia', 'igreja', 'catedral', 'basilica', 'capilla', 'capella', 'capela',
   'castillo', 'castell', 'castelo', 'palacio', 'palau', 'monasterio', 'monestir', 'mosteiro', 'convento',
