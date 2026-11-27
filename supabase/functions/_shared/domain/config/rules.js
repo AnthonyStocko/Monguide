@@ -484,7 +484,9 @@ export const RULES = Object.freeze({
     admin: 2592000,
     fuel: 3600,
     /** Photos Wikimedia Commons, y compris les "pas d'image" : 30 jours. */
-    images: 2592000
+    images: 2592000,
+    /** Lieux commentés par l'agent Instagram (lien « Voir sur Instagram ») : 4 h. */
+    instagram: 14400
   },
 
   /**

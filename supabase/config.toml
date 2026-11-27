@@ -518,3 +518,8 @@ entrypoint = "./functions/trip-join/index.js"
 verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/trip-invites-claim/index.js"
+
+[functions.instagram-places]
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/instagram-places/index.js"

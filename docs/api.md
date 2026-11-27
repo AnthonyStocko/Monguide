@@ -467,6 +467,31 @@ Source : Nager.Date (`/api/v3/PublicHolidays/{année}/{pays}`), tous les pays.
 - **Cache serveur** : 30 jours par pays et année (`cacheTtlSec.holidays`).
 - **Erreurs** : codes communs ; `400 unsupported_country`.
 
+### `instagram-places` — lieux commentés sur Instagram
+
+Alimente le lien « Voir sur Instagram » des étapes. Mon guide interroge
+l'agent Instagram (application séparée) en lecture seule, depuis le serveur :
+l'application ne parle jamais à l'agent et ne connaît ni son adresse ni sa clé.
+
+- **Méthode** : `GET`, sans paramètre.
+- **Sortie** : `{ "places": [{ "url": "https://www.instagram.com/p/…/", "name": "Mont-Saint-Michel", "city": "Le Mont-Saint-Michel", "account": "…", "lat": 48.636, "lon": -1.511, "placeId": "…", "postedAt": "2026-11-20T10:00:00Z" }] }`.
+  `url` et `name` sont obligatoires ; seules les adresses de posts
+  `https://(www.)instagram.com/(p|reel|tv)/…` sont gardées. Toujours `200` :
+  agent non configuré, en panne ou illisible = `{ "places": [] }`.
+- **Secrets Supabase** (projet de Mon guide) : `INSTAGRAM_AGENT_URL` (adresse de
+  base de l'agent, sans `/lieux-commentes`) et `INSTAGRAM_AGENT_API_KEY`
+  (envoyée dans l'en-tête `x-api-key`). Sans eux, aucun lien n'est affiché.
+- **Contrat attendu de l'agent** : `GET <INSTAGRAM_AGENT_URL>/lieux-commentes`
+  renvoie `{ "places": [...] }` comme ci-dessus, uniquement pour les posts dont
+  le commentaire est marqué **publié** (statut `postee`), un élément par post.
+- **Correspondance** (`_shared/domain/instagramPlaces.js`) : identifiant
+  commun (`placeId` = id du lieu ou identifiant Wikidata), sinon même nom
+  (sans accents, casse, articles ni tirets) **et** coordonnées à moins de
+  2 km ou, sans coordonnées, même ville que la destination du séjour. Si
+  plusieurs posts correspondent, le plus récent (`postedAt`) est retenu.
+- **Cache serveur** : 4 h (`cacheTtlSec.instagram`) ; 5 min si l'agent n'a pas
+  répondu. L'application garde en mémoire la liste 3 h (5 min si vide).
+
 ### `fuel` — prix des carburants
 
 - **Méthode** : `GET`
@@ -941,3 +966,4 @@ envoi, abonnements après 90 jours sans nouvelles de l'appareil.
 | 1 | 2026-10-30 | Ajouts compatibles : `Place.nameLang` ; libellés Wikidata en français, anglais et langues du pays dans `names` ; lieux fermés écartés ; badge `hours_unconfirmed` sur les musées aux horaires inconnus. |
 | 1 | 2026-10-30 | Ajouts compatibles : `Trip.pace` (`relaxed` \| `balanced` \| `intense`, facultatif, refusé s'il est invalide : `400 invalid_input` `pace`) ; `Day.sunset` ; `Place.kind`, `nightSight`, `mealCapable` ; étape de temps libre avec un lieu (badge `free_time`) ; lieux OSM `amenity=food_court`. |
 | 1 | 2026-10-30 | Ajouts compatibles : table interne `seasonal_events` (événements de saison saisis à la main, lus par `generate`) ; `Place.event`, lieux de source `event` ; règles `groups` et `notifications.bookingReminderTime`. |
+| 1 | 2026-11-27 | Ajout compatible : fonction `instagram-places` (lieux commentés par l'agent Instagram, lien « Voir sur Instagram »). |

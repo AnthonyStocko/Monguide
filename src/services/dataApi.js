@@ -1,3 +1,4 @@
+import { parseInstagramPlaces } from '@domain/instagramPlaces.js';
 import { callFunction, streamFunction } from './api.js';
 import { getRules } from './rules.js';
 
@@ -95,4 +96,19 @@ export async function generateTrip(tripRequest, lang, { onEvent, signal, review 
 export function sendAiFeedback(event) {
   if (!navigator.onLine) return;
   callFunction('ai-feedback', { method: 'POST', body: { event } }).catch(() => {});
+}
+
+/**
+ * Lieux commentés par l'agent Instagram (fonction instagram-places), pour le
+ * lien « Voir sur Instagram » des étapes. Jamais bloquant : agent absent, hors
+ * ligne ou erreur, la liste est vide et aucune erreur n'est affichée.
+ * @returns {Promise<import('@domain/instagramPlaces.js').InstagramPlace[]>}
+ */
+export async function getInstagramPlaces() {
+  try {
+    const { data } = await callFunction('instagram-places', { method: 'GET', cacheKey: 'instagram-places' });
+    return parseInstagramPlaces(data);
+  } catch {
+    return [];
+  }
 }
