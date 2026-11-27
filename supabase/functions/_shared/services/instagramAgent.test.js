@@ -44,4 +44,18 @@ describe('fetchInstagramPlaces', () => {
     expect(await fetchInstagramPlaces()).toEqual({ places: [], ok: false });
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it('lit une réponse { lieux } ou un tableau nu, coordonnées en texte comprises', async () => {
+    const entry = { postUrl: 'https://www.instagram.com/p/AQUA1/', placeName: 'Aquarium La Rochelle', ville: 'La Rochelle', latitude: '46.1475', longitude: '-1.1707' };
+    const expected = { url: 'https://www.instagram.com/p/AQUA1/', name: 'Aquarium La Rochelle', city: 'La Rochelle', lat: 46.1475, lon: -1.1707 };
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ lieux: [entry] })));
+    expect(await fetchInstagramPlaces()).toEqual({ places: [expected], ok: true });
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify([entry])));
+    expect(await fetchInstagramPlaces()).toEqual({ places: [expected], ok: true });
+  });
+
+  it("ne garde pas longtemps en cache une réponse dont aucun élément n'est lisible", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ places: [{ url: 'https://exemple.fr/x', name: 'Aquarium' }] })));
+    expect(await fetchInstagramPlaces()).toEqual({ places: [], ok: false });
+  });
 });
