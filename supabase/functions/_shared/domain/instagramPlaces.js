@@ -52,6 +52,28 @@ const POST_URL = /^https:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[A-Za-z0-9_-]+
 
 const isCoord = (value, max) => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= max;
 const text = (value, max) => (typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : undefined);
+/** Coordonnée en nombre, ou en texte numérique (« 46.15 ») : certaines bases la renvoient ainsi. */
+const coord = (value) => (typeof value === 'string' && value.trim() !== '' ? Number(value) : value);
+
+/** Premier champ présent parmi les noms possibles (l'agent est une application séparée). */
+const pick = (item, keys) => keys.map((key) => item[key]).find((value) => value !== undefined && value !== null);
+
+/** Liste brute de la réponse : { places: [...] } (contrat), ou { lieux: [...] } / tableau nu. */
+function rawList(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw?.places)) return raw.places;
+  if (Array.isArray(raw?.lieux)) return raw.lieux;
+  return [];
+}
+
+/**
+ * Nombre d'éléments reçus de l'agent dans sa réponse, valides ou non : sert à
+ * repérer une réponse que le contrat ne permet pas de lire (journal serveur).
+ * @param {unknown} raw
+ */
+export function countRawInstagramPlaces(raw) {
+  return rawList(raw).length;
+}
 
 /**
  * Lit la réponse de l'agent ({ places: [...] }) sans jamais lever d'erreur :
@@ -61,26 +83,28 @@ const text = (value, max) => (typeof value === 'string' && value.trim() ? value.
  * @returns {InstagramPlace[]}
  */
 export function parseInstagramPlaces(raw) {
-  const list = Array.isArray(raw?.places) ? raw.places : [];
+  const list = rawList(raw);
   /** @type {InstagramPlace[]} */
   const places = [];
   for (const item of list.slice(0, MAX_INSTAGRAM_PLACES)) {
     if (!item || typeof item !== 'object') continue;
-    const url = text(item.url, 300);
-    const name = text(item.name, 200);
+    const url = text(pick(item, ['url', 'postUrl', 'permalink']), 300);
+    const name = text(pick(item, ['name', 'placeName', 'nom']), 200);
     if (!url || !POST_URL.test(url) || !name || !normalizeName(name)) continue;
     const entry = { url, name };
     const account = text(item.account, 60);
-    const city = text(item.city, 100);
+    const city = text(pick(item, ['city', 'ville']), 100);
     const placeId = text(item.placeId, 100);
     const postedAt = text(item.postedAt, 40);
     if (account) entry.account = account;
     if (city) entry.city = city;
     if (placeId) entry.placeId = placeId;
     if (postedAt && Number.isFinite(Date.parse(postedAt))) entry.postedAt = postedAt;
-    if (isCoord(item.lat, 90) && isCoord(item.lon, 180)) {
-      entry.lat = item.lat;
-      entry.lon = item.lon;
+    const lat = coord(pick(item, ['lat', 'latitude']));
+    const lon = coord(pick(item, ['lon', 'lng', 'longitude']));
+    if (isCoord(lat, 90) && isCoord(lon, 180)) {
+      entry.lat = lat;
+      entry.lon = lon;
     }
     places.push(entry);
   }

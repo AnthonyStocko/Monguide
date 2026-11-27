@@ -1,4 +1,4 @@
-import { parseInstagramPlaces } from '../domain/instagramPlaces.js';
+import { countRawInstagramPlaces, parseInstagramPlaces } from '../domain/instagramPlaces.js';
 import { fetchExternalJson } from '../http.js';
 import { log } from '../log.js';
 
@@ -25,7 +25,14 @@ export async function fetchInstagramPlaces() {
       timeoutMs: 5000,
       maxAttempts: 1
     });
-    return { places: parseInstagramPlaces(json), ok: true };
+    const places = parseInstagramPlaces(json);
+    const received = countRawInstagramPlaces(json);
+    // Réponse reçue mais illisible (format inattendu, adresses de posts refusées) : on le journalise
+    // et on ne garde pas la liste vide 4 h en cache (ok: false = nouvel essai dans 5 min).
+    if (received > places.length) log('warn', 'instagram_agent_entries_ignored', { received, kept: places.length });
+    if (received > 0 && places.length === 0) return { places, ok: false };
+    if (received === 0 && !Array.isArray(json?.places)) log('warn', 'instagram_agent_unreadable_response', {});
+    return { places, ok: true };
   } catch (err) {
     log('warn', 'instagram_agent_unavailable', { message: String(err?.message ?? err) });
     return { places: [], ok: false };
