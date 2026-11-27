@@ -726,6 +726,11 @@
     "bookOnline": "Réserver en ligne",
     "osmNotice": "Informations OpenStreetMap, à vérifier auprès du restaurant."
   },
+  "instagram": {
+    "view": "Voir sur Instagram",
+    "viewNamed": "Voir sur Instagram : {{name}}",
+    "external": " (ouvre Instagram)"
+  },
   "reviews": {
     "open": "Voir les avis",
     "short": "Avis",

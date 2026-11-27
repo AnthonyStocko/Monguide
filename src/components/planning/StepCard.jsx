@@ -1,9 +1,11 @@
 import { forwardRef } from 'react';
-import { BadgeCheck, CalendarClock, CircleCheck, CloudRain, Globe, Navigation, Pencil, Replace, SkipForward, Sparkles, TriangleAlert, UserPen } from 'lucide-react';
+import { BadgeCheck, CalendarClock, CircleCheck, CloudRain, Camera, Globe, Navigation, Pencil, Replace, SkipForward, Sparkles, TriangleAlert, UserPen } from 'lucide-react';
 import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { averageRain } from '@domain/weatherArbitration.js';
 import { bookingAdvice } from '@domain/booking.js';
+import { useInstagramLink } from '../../hooks/useInstagramLink.js';
+import { openExternalUrl } from '../../platform/externalUrl.js';
 import { usePlaceName } from '../../i18n/usePlaceName.js';
 import { directionsLink } from '../../platform/directions.js';
 import { webUrl } from '../../utils/navigation.js';
@@ -40,6 +42,8 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
   const { t } = useTranslation();
   const { placeName } = usePlaceName();
   const place = step.place;
+  // Lien « Voir sur Instagram » : post le plus récent commenté sur ce lieu ; null si aucun ou si l'agent ne répond pas.
+  const instagramUrl = useInstagramLink(step.place, trip.destination.name);
   const personal = step.type === 'personal';
   const rain = day.weatherAvailable && day.weather ? averageRain(day.weather, step.start, step.end) : null;
   const outdoor = place ? place.indoor !== true : personal && step.indoor === false;
@@ -170,6 +174,22 @@ const StepCard = forwardRef(function StepCard({ step, day, trip, rules, onEditTi
           >
             <Globe aria-hidden="true" className="size-5" />
             {t('planning.website')}
+          </a>
+        )}
+        {instagramUrl && (
+          <a
+            href={instagramUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            onClick={(event) => {
+              event.preventDefault();
+              openExternalUrl(instagramUrl);
+            }}
+            aria-label={t('instagram.viewNamed', { name: title }) + t('instagram.external')}
+            className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-secondary-strong px-4 font-semibold text-secondary-strong hover:bg-secondary-soft"
+          >
+            <Camera aria-hidden="true" className="size-5" />
+            {t('instagram.view')}
           </a>
         )}
         {place && <ReviewLinks place={place} city={trip.destination.name} name={title} variant="link" />}

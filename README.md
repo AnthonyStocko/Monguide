@@ -331,6 +331,13 @@ des carburants) ; les autres pays utilisent Wikidata et OpenStreetMap.
    `AI_API_KEY_OPENROUTER` ou `AI_API_KEY_GEMINI`) ; sans clé, le planning
    est livré sans relecture (voir docs/ai-review.md).
 
+   Facultatifs : lien « Voir sur Instagram » des étapes
+   (`docs/api.md`, fonction `instagram-places`) : `INSTAGRAM_AGENT_URL`
+   (adresse de base de l'agent Instagram) et `INSTAGRAM_AGENT_API_KEY` (sa clé
+   d'API, en lecture seule). Secrets Supabase de Mon guide uniquement, jamais
+   dans l'application ; sans eux, ou si l'agent est en panne, aucun lien et
+   aucune erreur.
+
 4. **Déployer les fonctions**, dont `delete-account` (suppression du compte
    et, en cascade, de ses séjours ; seule fonction qui utilise la clé
    `service_role`, fournie par Supabase côté serveur) :
