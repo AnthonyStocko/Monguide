@@ -107,8 +107,12 @@ export function sendAiFeedback(event) {
 export async function getInstagramPlaces() {
   try {
     const { data } = await callFunction('instagram-places', { method: 'GET', cacheKey: 'instagram-places' });
-    return parseInstagramPlaces(data);
-  } catch {
+    const places = parseInstagramPlaces(data);
+    // Trace de diagnostic (console de l'application) : liste reçue vide = agent absent ou non configuré côté serveur.
+    if (!places.length) console.warn('[instagram] liste vide reçue de instagram-places (agent non configuré, injoignable ou sans post publié)');
+    return places;
+  } catch (err) {
+    console.warn('[instagram] appel à instagram-places impossible :', err?.code ?? err?.message ?? 'inconnu');
     return [];
   }
 }

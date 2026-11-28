@@ -43,6 +43,10 @@ describe('fetchInstagramPlaces', () => {
     env = {};
     expect(await fetchInstagramPlaces()).toEqual({ places: [], ok: false });
     expect(fetchMock).not.toHaveBeenCalled();
+    // Le journal nomme les secrets manquants (jamais leur valeur).
+    const logged = console.warn.mock.calls.map((call) => String(call[0])).join('\n');
+    expect(logged).toContain('instagram_agent_not_configured');
+    expect(logged).toContain('INSTAGRAM_AGENT_URL');
   });
 
   it('lit une réponse { lieux } ou un tableau nu, coordonnées en texte comprises', async () => {
