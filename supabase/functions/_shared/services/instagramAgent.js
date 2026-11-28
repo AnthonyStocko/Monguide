@@ -16,7 +16,11 @@ import { log } from '../log.js';
 export async function fetchInstagramPlaces() {
   const base = globalThis.Deno?.env.get('INSTAGRAM_AGENT_URL');
   const apiKey = globalThis.Deno?.env.get('INSTAGRAM_AGENT_API_KEY');
-  if (!base || !apiKey) return { places: [], ok: false };
+  if (!base || !apiKey) {
+    // Cause la plus probable d'un lien absent : secrets Supabase non renseignés (on journalise lesquels, jamais leur valeur).
+    log('warn', 'instagram_agent_not_configured', { missing: [!base && 'INSTAGRAM_AGENT_URL', !apiKey && 'INSTAGRAM_AGENT_API_KEY'].filter(Boolean) });
+    return { places: [], ok: false };
+  }
   try {
     const url = `${base.replace(/\/+$/, '')}/lieux-commentes`;
     const json = await fetchExternalJson(url, {
